@@ -1,22 +1,38 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState('judiciales');
+  const [activeTab, setActiveTab] = useState('inicio');
+  const [saludo, setSaludo] = useState('');
+  const [fechaActual, setFechaActual] = useState('');
+
+  // Datos
   const [clientes, setClientes] = useState([]);
   const [expedientes, setExpedientes] = useState([]);
-  const [tareas, setTareas] = useState([]);
+  const [eventos, setEventos] = useState([
+    { id: 1, titulo: 'AUDIENCIA MEDIACION', tipo: 'Audiencia', fecha: '2026-09-08', hora: '19:25', mail: 'fede@estudio.com' }
+  ]);
+  const [mailsEstudio, setMailsEstudio] = useState(['fede@estudio.com']);
 
   // Formularios
   const [clienteForm, setClienteForm] = useState({ nombre: '', dni: '', telefono: '', email: '' });
-  const [expedienteForm, setExpedienteForm] = useState({ 
-    caratula: '', numero: '', tipoCausa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', estado: 'En Tramite', fechaAudiencia: '', clienteId: '', abogadoAsignado: '' 
-  });
-  const [tareaForm, setTareaForm] = useState({ titulo: '', fechaVencimiento: '', expedienteId: '', responsableMail: '' });
+  const [expedienteForm, setExpedienteForm] = useState({ caratula: '', numero: '', tipoCausa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', clienteId: '' });
+  const [eventoForm, setEventoForm] = useState({ titulo: '', tipo: 'Audiencia', fecha: '2026-09-09', hora: '10:00', mailDestino: '' });
+  const [nuevoMail, setNuevoMail] = useState('');
+
+  useEffect(() => {
+    const hora = new Date().getHours();
+    if (hora >= 6 && hora < 12) setSaludo('¡Buenos días!');
+    else if (hora >= 12 && hora < 20) setSaludo('¡Buenas tardes!');
+    else setSaludo('¡Buenas noches!');
+
+    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    setFechaActual(new Date().toLocaleDateString('es-AR', opciones));
+  }, []);
 
   const addCliente = (e) => {
     e.preventDefault();
-    if (!clienteForm.nombre || !clienteForm.dni) return;
+    if (!clienteForm.nombre) return;
     setClientes([...clientes, { ...clienteForm, id: Date.now() }]);
     setClienteForm({ nombre: '', dni: '', telefono: '', email: '' });
   };
@@ -24,180 +40,200 @@ export default function Home() {
   const addExpediente = (e) => {
     e.preventDefault();
     if (!expedienteForm.caratula) return;
-    const clienteObj = clientes.find(c => c.id.toString() === expedienteForm.clienteId);
-    setExpedientes([...expedientes, { ...expedienteForm, id: Date.now(), clienteNombre: clienteObj ? clienteObj.nombre : 'Rentas / Estado' }]);
-    setExpedienteForm({ caratula: '', numero: '', tipoCausa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', estado: 'En Tramite', fechaAudiencia: '', clienteId: '', abogadoAsignado: '' });
+    setExpedientes([...expedientes, { ...expedienteForm, id: Date.now() }]);
+    setExpedienteForm({ caratula: '', numero: '', tipoCausa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', clienteId: '' });
   };
 
-  const addTarea = (e) => {
+  const addEvento = (e) => {
     e.preventDefault();
-    if (!tareaForm.titulo || !tareaForm.fechaVencimiento) return;
-    setTareas([...tareas, { ...tareaForm, id: Date.now(), completada: false }]);
-    setTareaForm({ titulo: '', fechaVencimiento: '', expedienteId: '', responsableMail: '' });
+    if (!eventoForm.titulo) return;
+    setEventos([...eventos, { ...eventoForm, id: Date.now() }]);
+    setEventoForm({ titulo: '', tipo: 'Audiencia', fecha: '2026-09-09', hora: '10:00', mailDestino: '' });
   };
 
-  const expedientesJudiciales = expedientes.filter(e => e.tipoCausa === 'Judicial');
-  const expedientesExtrajudiciales = expedientes.filter(e => e.tipoCausa === 'Extrajudicial');
+  const addMail = (e) => {
+    e.preventDefault();
+    if (!nuevoMail || mailsEstudio.includes(nuevoMail)) return;
+    setMailsEstudio([...mailsEstudio, nuevoMail]);
+    setNuevoMail('');
+  };
+
+  const tipoColors = {
+    Plazo: '#3b82f6',
+    Tarea: '#10b981',
+    Audiencia: '#ef4444',
+    Cita: '#06b6d4',
+    Vencimiento: '#f59e0b',
+    Cuota: '#8b5cf6'
+  };
 
   return (
-    <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#000000', color: '#e2e8f0', minHeight: '100vh', padding: '20px' }}>
-      <div style={{ maxWidth: '1050px', margin: '0 auto', backgroundColor: '#0a0a0a', borderRadius: '16px', padding: '28px', border: '1px solid #1a1a1a', boxShadow: '0 20px 40px rgba(0,0,0,0.9)' }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#000000', color: '#e2e8f0', minHeight: '100vh', padding: '20px' }}>
+      <div style={{ maxWidth: '1100px', margin: '0 auto', backgroundColor: '#0a0a0a', borderRadius: '16px', padding: '28px', border: '1px solid #1a1a1a' }}>
         
-        {/* LOGO M&M Y ENCABEZADO */}
-        <header style={{ display: 'flex', alignItems: 'center', gap: '18px', borderBottom: '1px solid #1a1a1a', paddingBottom: '20px', marginBottom: '28px' }}>
-          <div style={{ backgroundColor: '#000000', border: '2px solid #282828', width: '64px', height: '64px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '900', letterSpacing: '-4px', paddingRight: '4px', boxShadow: '0 4px 12px rgba(255,107,0,0.15)' }}>
-            <span style={{ color: '#ff6b00', zIndex: 1 }}>M</span>
-            <span style={{ color: '#c0c0c0', marginLeft: '-10px', zIndex: 0 }}>M</span>
-          </div>
-          <div>
-            <h1 style={{ margin: 0, fontSize: '24px', color: '#ffffff', letterSpacing: '0.5px' }}>ESTUDIO JURÍDICO M&M</h1>
-            <p style={{ margin: 0, fontSize: '13px', color: '#ff6b00', fontWeight: '600' }}>GESTIÓN JUDICIAL, EXTRAJUDICIAL Y RENTAS DE CÓRDOBA</p>
+        {/* LOGO MM SOBRE FONDO NEGRO */}
+        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1a1a1a', paddingBottom: '20px', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+            <div style={{ backgroundColor: '#000000', border: '2px solid #282828', width: '64px', height: '64px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '900', letterSpacing: '-5px', paddingRight: '5px' }}>
+              <span style={{ color: '#ff6b00', zIndex: 1 }}>M</span>
+              <span style={{ color: '#c0c0c0', marginLeft: '-11px', zIndex: 0 }}>M</span>
+            </div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '24px', color: '#ffffff' }}>ESTUDIO JURÍDICO MM</h1>
+              <p style={{ margin: 0, fontSize: '12px', color: '#ff6b00', fontWeight: 'bold' }}>GESTIÓN JUDICIAL, EXTRAJUDICIAL Y RENTAS CÓRDOBA</p>
+            </div>
           </div>
         </header>
 
-        {/* NAVEGACIÓN PRINCIPAL */}
+        {/* NAVEGACIÓN */}
         <nav style={{ display: 'flex', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => setActiveTab('judiciales')}
-            style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'judiciales' ? '#ff6b00' : '#121212', color: activeTab === 'judiciales' ? '#ffffff' : '#888888', fontWeight: 'bold', cursor: 'pointer', minWidth: '140px' }}
-          >
-            ⚖️ Causas Judiciales ({expedientesJudiciales.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('extrajudiciales')}
-            style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'extrajudiciales' ? '#ff6b00' : '#121212', color: activeTab === 'extrajudiciales' ? '#ffffff' : '#888888', fontWeight: 'bold', cursor: 'pointer', minWidth: '140px' }}
-          >
-            🏛️ Extrajudiciales / Rentas ({expedientesExtrajudiciales.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('tareas')}
-            style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'tareas' ? '#ff6b00' : '#121212', color: activeTab === 'tareas' ? '#ffffff' : '#888888', fontWeight: 'bold', cursor: 'pointer', minWidth: '140px' }}
-          >
-            📅 Plazos y Tareas ({tareas.length})
-          </button>
-          <button 
-            onClick={() => setActiveTab('clientes')}
-            style={{ flex: 1, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: activeTab === 'clientes' ? '#ff6b00' : '#121212', color: activeTab === 'clientes' ? '#ffffff' : '#888888', fontWeight: 'bold', cursor: 'pointer', minWidth: '140px' }}
-          >
-            👤 Clientes ({clientes.length})
-          </button>
+          <button onClick={() => setActiveTab('inicio')} style={tabStyle(activeTab === 'inicio')}>🏠 Dashboard / Mi Día</button>
+          <button onClick={() => setActiveTab('calendario')} style={tabStyle(activeTab === 'calendario')}>📅 Calendario Yúdico</button>
+          <button onClick={() => setActiveTab('judiciales')} style={tabStyle(activeTab === 'judiciales')}>⚖️ Judiciales ({expedientes.filter(e => e.tipoCausa === 'Judicial').length})</button>
+          <button onClick={() => setActiveTab('rentas')} style={tabStyle(activeTab === 'rentas')}>🏛️ Rentas ({expedientes.filter(e => e.tipoCausa === 'Extrajudicial').length})</button>
+          <button onClick={() => setActiveTab('clientes')} style={tabStyle(activeTab === 'clientes')}>👤 Clientes ({clientes.length})</button>
         </nav>
 
-        {/* SECCIÓN CAUSAS (JUDICIALES / EXTRAJUDICIALES) */}
-        {(activeTab === 'judiciales' || activeTab === 'extrajudiciales') && (
+        {/* PANTALLA INICIO (ESTILO FOTO 1) */}
+        {activeTab === 'inicio' && (
           <div>
-            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>
-              ➕ Cargar {activeTab === 'judiciales' ? 'Causa Judicial' : 'Causa Extrajudicial / Rentas'}
-            </h2>
-            <form onSubmit={addExpediente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '32px', backgroundColor: '#111111', padding: '20px', borderRadius: '12px', border: '1px solid #222222' }}>
-              <select value={expedienteForm.tipoCausa} onChange={e => setExpedienteForm({...expedienteForm, tipoCausa: e.target.value})} style={inputDarkStyle}>
-                <option value="Judicial">Tipo: Causa Judicial</option>
-                <option value="Extrajudicial">Tipo: Extrajudicial / Rentas Córdoba</option>
-              </select>
+            <div style={{ backgroundColor: '#111111', padding: '20px', borderRadius: '12px', border: '1px solid #222222', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '22px', color: '#ffffff', margin: 0 }}>{saludo}</h2>
+              <p style={{ color: '#888888', margin: '4px 0 0 0', fontSize: '14px' }}>{fechaActual} • {eventos.length} plazos próximos y 0 tareas pendientes</p>
+            </div>
 
-              <input type="text" placeholder="Carátula / Deudor (ej: Rentas c/ Perez...)" value={expedienteForm.caratula} onChange={e => setExpedienteForm({...expedienteForm, caratula: e.target.value})} style={inputDarkStyle} required />
-              <input type="text" placeholder="N° Expediente / Matrícula / Cuit" value={expedienteForm.numero} onChange={e => setExpedienteForm({...expedienteForm, numero: e.target.value})} style={inputDarkStyle} />
+            {/* CARTEL DE ALERTA URGENTE */}
+            <div style={{ backgroundColor: '#ef444415', border: '1px solid #ef444444', padding: '14px 18px', borderRadius: '10px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ color: '#ef4444', fontWeight: 'bold', fontSize: '12px', textTransform: 'uppercase' }}>Alerta urgente</span>
+              <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '14px' }}>AUDIENCIA MEDIACION HOY</span>
+            </div>
+
+            {/* SECCIÓN MI DÍA */}
+            <h3 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '4px' }}>Mi Día</h3>
+            <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 16px 0' }}>Plazos, tareas y audiencias de hoy</p>
+
+            <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
+              {eventos.map(ev => (
+                <div key={ev.id} style={{ backgroundColor: '#111111', border: '1px solid #222222', borderLeft: `4px solid ${tipoColors[ev.tipo] || '#ff6b00'}`, borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: tipoColors[ev.tipo], fontWeight: 'bold', textTransform: 'uppercase' }}>{ev.tipo}</span>
+                    <h4 style={{ margin: '4px 0', fontSize: '16px', color: '#ffffff' }}>{ev.titulo}</h4>
+                    <span style={{ fontSize: '12px', color: '#888888' }}>⏰ {ev.hora}hs | ✉️ Notificar a: {ev.mail || 'Todo el equipo'}</span>
+                  </div>
+                  <button style={{ backgroundColor: '#222222', color: '#ffffff', border: 'none', padding: '8px 14px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>Ver detalles</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* PANTALLA CALENDARIO (ESTILO FOTO 2 Y 3) */}
+        {activeTab === 'calendario' && (
+          <div>
+            {/* BANNER SINCRONIZACIÓN GOOGLE CALENDAR */}
+            <div style={{ backgroundColor: '#111111', border: '1px solid #222222', padding: '20px', borderRadius: '12px', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, color: '#ffffff', fontSize: '18px' }}>Calendario Integrado</h3>
+              <p style={{ color: '#888888', fontSize: '13px', margin: '6px 0 16px 0' }}>
+                Conectá la cuenta de Google para sincronizar automáticamente los eventos agendados con los correos del estudio.
+              </p>
               
-              <select value={expedienteForm.fuero} onChange={e => setExpedienteForm({...expedienteForm, fuero: e.target.value})} style={inputDarkStyle}>
-                <option value="Civil y Comercial">Fuero: Civil y Comercial</option>
-                <option value="Tributario / Rentas">Fuero: Tributario / Rentas</option>
-                <option value="Laboral">Fuero: Laboral</option>
-                <option value="Familia">Fuero: Familia</option>
-                <option value="Concursos y Quiebras">Fuero: Concursos y Quiebras</option>
-              </select>
+              {/* VINCULADOR DE MAILS */}
+              <form onSubmit={addMail} style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                <input type="email" placeholder="Agregar correo para sincronizar (ej: abogado@gmail.com)" value={nuevoMail} onChange={e => setNuevoMail(e.target.value)} style={{ ...inputDarkStyle, flex: 1 }} required />
+                <button type="submit" style={{ ...btnOrangeStyle, gridColumn: 'auto' }}>Vincular Mail</button>
+              </form>
 
-              <input type="text" placeholder="Juzgado / Repartición" value={expedienteForm.juzgado} onChange={e => setExpedienteForm({...expedienteForm, juzgado: e.target.value})} style={inputDarkStyle} />
-              <input type="text" placeholder="Mail Abogado / Asignado" value={expedienteForm.abogadoAsignado} onChange={e => setExpedienteForm({...expedienteForm, abogadoAsignado: e.target.value})} style={inputDarkStyle} />
-
-              <select value={expedienteForm.clienteId} onChange={e => setExpedienteForm({...expedienteForm, clienteId: e.target.value})} style={inputDarkStyle}>
-                <option value="">Vincular con Cliente (opcional)...</option>
-                {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-              </select>
-
-              <input type="date" value={expedienteForm.fechaAudiencia} onChange={e => setExpedienteForm({...expedienteForm, fechaAudiencia: e.target.value})} style={inputDarkStyle} />
-
-              <button type="submit" style={btnOrangeStyle}>Guardar en el Sistema</button>
-            </form>
-
-            <h3 style={{ fontSize: '16px', color: '#888888', marginBottom: '14px' }}>
-              📋 {activeTab === 'judiciales' ? 'Listado de Causas Judiciales' : 'Listado de Causas Extrajudiciales (Rentas)'}
-            </h3>
-            {(activeTab === 'judiciales' ? expedientesJudiciales : expedientesExtrajudiciales).length === 0 ? (
-              <p style={{ color: '#555555', fontStyle: 'italic' }}>No hay registros en esta categoría.</p>
-            ) : (
-              <div style={{ display: 'grid', gap: '12px' }}>
-                {(activeTab === 'judiciales' ? expedientesJudiciales : expedientesExtrajudiciales).map(e => (
-                  <div key={e.id} style={cardDarkStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
-                      <strong style={{ fontSize: '16px', color: '#ffffff' }}>{e.caratula}</strong>
-                      <span style={{ backgroundColor: '#ff6b0022', color: '#ff6b00', border: '1px solid #ff6b0044', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>N° {e.numero || 'S/N'}</span>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#aaaaaa', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                      <span>⚖️ {e.fuero}</span>
-                      <span>🏛️ {e.juzgado || 'Sin especificar'}</span>
-                      <span>👤 Cliente: {e.clienteNombre}</span>
-                      {e.abogadoAsignado && <span>✉️ {e.abogadoAsignado}</span>}
-                      {e.fechaAudiencia && <span style={{ color: '#ff6b00' }}>📅 Vencimiento/Audiencia: {e.fechaAudiencia}</span>}
-                    </div>
-                  </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: '#a0aec0' }}>Mails autorizados:</span>
+                {mailsEstudio.map((m, i) => (
+                  <span key={i} style={{ backgroundColor: '#222222', color: '#ff6b00', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>✉️ {m}</span>
                 ))}
               </div>
-            )}
+            </div>
+
+            {/* FORMULARIO AGENDAR NUEVO EVENTO */}
+            <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>➕ Agendar Cita / Audiencia / Plazo</h3>
+            <form onSubmit={addEvento} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', backgroundColor: '#111111', padding: '16px', borderRadius: '12px', border: '1px solid #222222', marginBottom: '28px' }}>
+              <input type="text" placeholder="Título (ej: Audiencia Mediación)" value={eventoForm.titulo} onChange={e => setEventoForm({...eventoForm, titulo: e.target.value})} style={inputDarkStyle} required />
+              
+              <select value={eventoForm.tipo} onChange={e => setEventoForm({...eventoForm, tipo: e.target.value})} style={inputDarkStyle}>
+                <option value="Audiencia">Tipo: Audiencia</option>
+                <option value="Plazo">Tipo: Plazo</option>
+                <option value="Tarea">Tipo: Tarea</option>
+                <option value="Cita">Tipo: Cita</option>
+                <option value="Vencimiento">Tipo: Vencimiento</option>
+                <option value="Cuota">Tipo: Cuota</option>
+              </select>
+
+              <input type="date" value={eventoForm.fecha} onChange={e => setEventoForm({...eventoForm, fecha: e.target.value})} style={inputDarkStyle} required />
+              <input type="time" value={eventoForm.hora} onChange={e => setEventoForm({...eventoForm, hora: e.target.value})} style={inputDarkStyle} required />
+
+              <select value={eventoForm.mailDestino} onChange={e => setEventoForm({...eventoForm, mailDestino: e.target.value})} style={inputDarkStyle}>
+                <option value="">Enviar a mail de la lista...</option>
+                {mailsEstudio.map((m, idx) => <option key={idx} value={m}>{m}</option>)}
+              </select>
+
+              <button type="submit" style={btnOrangeStyle}>Agendar y Sincronizar</button>
+            </form>
+
+            {/* VISTA PREVIA CALENDARIO (GRILLA ESTILO YÚDICO) */}
+            <div style={{ backgroundColor: '#111111', border: '1px solid #222222', borderRadius: '12px', padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h4 style={{ margin: 0, color: '#ffffff', fontSize: '18px' }}>Septiembre 2026</h4>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {Object.keys(tipoColors).map(t => (
+                    <span key={t} style={{ fontSize: '11px', color: tipoColors[t], backgroundColor: '#000', padding: '3px 8px', borderRadius: '4px', border: '1px solid #222' }}>● {t}</span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', textAlign: 'center' }}>
+                {['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'].map(d => (
+                  <div key={d} style={{ color: '#666666', fontSize: '12px', paddingBottom: '8px', fontWeight: 'bold' }}>{d}</div>
+                ))}
+
+                {/* Días simulados del mes */}
+                {Array.from({ length: 30 }).map((_, i) => {
+                  const dia = i + 1;
+                  const fechaStr = `2026-09-${dia < 10 ? '0' + dia : dia}`;
+                  const evsDia = eventos.filter(e => e.fecha === fechaStr);
+
+                  return (
+                    <div key={i} style={{ backgroundColor: '#000000', border: '1px solid #1a1a1a', minHeight: '70px', padding: '6px', borderRadius: '6px', textAlign: 'left' }}>
+                      <span style={{ fontSize: '11px', color: '#666666', fontWeight: 'bold' }}>{dia}</span>
+                      {evsDia.map(ev => (
+                        <div key={ev.id} style={{ backgroundColor: tipoColors[ev.tipo] || '#ff6b00', color: '#fff', fontSize: '10px', padding: '2px 4px', borderRadius: '3px', marginTop: '4px', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {ev.hora} {ev.titulo}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* SECCIÓN PLAZOS Y TAREAS */}
-        {activeTab === 'tareas' && (
+        {/* RESTO DE SECCIONES (JUDICIALES / RENTAS / CLIENTES) */}
+        {(activeTab === 'judiciales' || activeTab === 'rentas') && (
           <div>
-            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>➕ Nueva Tarea o Vencimiento de Plazo</h2>
-            <form onSubmit={addTarea} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '32px', backgroundColor: '#111111', padding: '20px', borderRadius: '12px', border: '1px solid #222222' }}>
-              <input type="text" placeholder="Descripción de la tarea / Plazo" value={tareaForm.titulo} onChange={e => setTareaForm({...tareaForm, titulo: e.target.value})} style={inputDarkStyle} required />
-              <input type="date" value={tareaForm.fechaVencimiento} onChange={e => setTareaForm({...tareaForm, fechaVencimiento: e.target.value})} style={inputDarkStyle} required />
-              <input type="email" placeholder="Mail a notificar (Google Calendar)" value={tareaForm.responsableMail} onChange={e => setTareaForm({...tareaForm, responsableMail: e.target.value})} style={inputDarkStyle} />
-              <button type="submit" style={btnOrangeStyle}>Agendar Plazo</button>
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Cargar Causa ({activeTab === 'judiciales' ? 'Judicial' : 'Extrajudicial / Rentas'})</h2>
+            <form onSubmit={addExpediente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#111111', padding: '16px', borderRadius: '12px', border: '1px solid #222222', marginBottom: '24px' }}>
+              <input type="text" placeholder="Carátula / Deudor" value={expedienteForm.caratula} onChange={e => setExpedienteForm({...expedienteForm, caratula: e.target.value})} style={inputDarkStyle} required />
+              <input type="text" placeholder="N° Expediente / CUIT" value={expedienteForm.numero} onChange={e => setExpedienteForm({...expedienteForm, numero: e.target.value})} style={inputDarkStyle} />
+              <button type="submit" style={btnOrangeStyle}>Guardar Expediente</button>
             </form>
-
-            <h3 style={{ fontSize: '16px', color: '#888888', marginBottom: '14px' }}>📌 Plazos Pendientes</h3>
-            {tareas.length === 0 ? <p style={{ color: '#555555', fontStyle: 'italic' }}>No hay tareas o plazos pendientes.</p> : (
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {tareas.map(t => (
-                  <div key={t.id} style={cardDarkStyle}>
-                    <strong style={{ color: '#ffffff' }}>{t.titulo}</strong>
-                    <div style={{ fontSize: '13px', color: '#ff6b00', marginTop: '4px' }}>
-                      📅 Vence: {t.fechaVencimiento} | ✉️ Notificar a: {t.responsableMail || 'Todos los mails'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
-        {/* SECCIÓN CLIENTES */}
         {activeTab === 'clientes' && (
           <div>
-            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>➕ Registrar Nuevo Cliente</h2>
-            <form onSubmit={addCliente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '32px', backgroundColor: '#111111', padding: '20px', borderRadius: '12px', border: '1px solid #222222' }}>
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Registrar Cliente</h2>
+            <form onSubmit={addCliente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#111111', padding: '16px', borderRadius: '12px', border: '1px solid #222222' }}>
               <input type="text" placeholder="Nombre completo" value={clienteForm.nombre} onChange={e => setClienteForm({...clienteForm, nombre: e.target.value})} style={inputDarkStyle} required />
               <input type="text" placeholder="DNI / CUIT" value={clienteForm.dni} onChange={e => setClienteForm({...clienteForm, dni: e.target.value})} style={inputDarkStyle} required />
-              <input type="text" placeholder="Teléfono / WhatsApp" value={clienteForm.telefono} onChange={e => setClienteForm({...clienteForm, telefono: e.target.value})} style={inputDarkStyle} />
-              <input type="email" placeholder="Correo electrónico" value={clienteForm.email} onChange={e => setClienteForm({...clienteForm, email: e.target.value})} style={inputDarkStyle} />
               <button type="submit" style={btnOrangeStyle}>Guardar Cliente</button>
             </form>
-
-            <h3 style={{ fontSize: '16px', color: '#888888', marginBottom: '14px' }}>👤 Padrón de Clientes</h3>
-            {clientes.length === 0 ? <p style={{ color: '#555555', fontStyle: 'italic' }}>No hay clientes registrados.</p> : (
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {clientes.map(c => (
-                  <div key={c.id} style={cardDarkStyle}>
-                    <strong style={{ fontSize: '15px', color: '#ffffff' }}>{c.nombre}</strong> <span style={{ color: '#666666' }}>(DNI/CUIT: {c.dni})</span>
-                    <div style={{ fontSize: '13px', color: '#aaaaaa', marginTop: '4px' }}>
-                      📞 {c.telefono || 'Sin teléfono'} | ✉️ {c.email || 'Sin correo'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
@@ -206,6 +242,11 @@ export default function Home() {
   );
 }
 
-const inputDarkStyle = { backgroundColor: '#000000', border: '1px solid #282828', color: '#ffffff', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', outline: 'none' };
-const btnOrangeStyle = { backgroundColor: '#ff6b00', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', gridColumn: '1 / -1' };
-const cardDarkStyle = { backgroundColor: '#111111', border: '1px solid #222222', borderRadius: '10px', padding: '16px' };
+const tabStyle = (active) => ({
+  padding: '10px 16px', borderRadius: '8px', border: 'none',
+  backgroundColor: active ? '#ff6b00' : '#121212', color: active ? '#ffffff' : '#888888',
+  fontWeight: 'bold', cursor: 'pointer', fontSize: '13px'
+});
+
+const inputDarkStyle = { backgroundColor: '#000000', border: '1px solid #282828', color: '#ffffff', padding: '10px 12px', borderRadius: '6px', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' };
+const btnOrangeStyle = { backgroundColor: '#ff6b00', color: '#ffffff', border: 'none', padding: '10px 16px', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', gridColumn: '1 / -1' };
