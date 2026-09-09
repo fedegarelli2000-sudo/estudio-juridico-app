@@ -5,7 +5,7 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('calendario');
 
-  // Formulario
+  // Estado del Formulario
   const [titulo, setTitulo] = useState('');
   const [tipo, setTipo] = useState('Audiencia');
   const [tipoPersonalizado, setTipoPersonalizado] = useState('');
@@ -39,26 +39,27 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
-      {/* SIDEBAR */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-zinc-900 border-r border-zinc-800 transition-all duration-300 flex flex-col justify-between p-4`}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#09090b', color: '#f4f4f5', fontFamily: 'sans-serif' }}>
+      
+      {/* BARRA LATERAL (SIDEBAR) */}
+      <aside style={{ width: sidebarOpen ? '250px' : '70px', backgroundColor: '#18181b', borderRight: '1px solid #27272a', transition: 'all 0.3s', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
-          <div className="flex items-center justify-between mb-8">
-            {sidebarOpen && <h1 className="text-xl font-bold text-orange-500 tracking-wider">ESTUDIO MM</h1>}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-zinc-400 hover:text-white p-1 rounded bg-zinc-800">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+            {sidebarOpen && <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#f97316', letterSpacing: '1px', margin: 0 }}>ESTUDIO MM</h1>}
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ color: '#a1a1aa', background: '#27272a', border: 'none', padding: '6px 10px', borderRadius: '4px', cursor: 'pointer' }}>
               {sidebarOpen ? '◀' : '▶'}
             </button>
           </div>
-          <nav className="space-y-2">
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button 
               onClick={() => setActiveTab('calendario')} 
-              className={`w-full text-left px-3 py-2 rounded flex items-center gap-2 font-medium ${activeTab === 'calendario' ? 'bg-zinc-800 text-orange-500' : 'text-zinc-400 hover:text-white'}`}
+              style={{ width: '100%', textAlign: 'left', padding: '10px', borderRadius: '6px', background: activeTab === 'calendario' ? '#27272a' : 'transparent', color: activeTab === 'calendario' ? '#f97316' : '#a1a1aa', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
             >
               📅 {sidebarOpen && 'Calendario'}
             </button>
             <button 
               onClick={() => setActiveTab('causas')} 
-              className={`w-full text-left px-3 py-2 rounded flex items-center gap-2 font-medium ${activeTab === 'causas' ? 'bg-zinc-800 text-orange-500' : 'text-zinc-400 hover:text-white'}`}
+              style={{ width: '100%', textAlign: 'left', padding: '10px', borderRadius: '6px', background: activeTab === 'causas' ? '#27272a' : 'transparent', color: activeTab === 'causas' ? '#f97316' : '#a1a1aa', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
             >
               📁 {sidebarOpen && 'Gestión de Causas'}
             </button>
@@ -67,36 +68,36 @@ export default function Home() {
       </aside>
 
       {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 overflow-y-auto p-8">
+      <main style={{ flex: 1, overflowY: 'auto', padding: '32px', backgroundColor: '#09090b' }}>
         {activeTab === 'calendario' && (
-          <section className="space-y-6 max-w-3xl">
-            <div className="border-b border-zinc-800 pb-4">
-              <h2 className="text-2xl font-bold text-white">Calendario</h2>
-              <p className="text-sm text-zinc-400">Agendá plazos, audiencias y notificaciones para tu estudio</p>
+          <section style={{ maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ borderBottom: '1px solid #27272a', paddingBottom: '16px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Calendario</h2>
+              <p style={{ fontSize: '14px', color: '#a1a1aa', marginTop: '4px' }}>Agendá plazos, audiencias y notificaciones para tu estudio</p>
             </div>
 
-            <form onSubmit={guardarYNotificarGoogleCalendar} className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 space-y-4">
-              <h3 className="text-lg font-semibold text-zinc-200">Agendar Nuevo Evento / Plazo</h3>
+            <form onSubmit={guardarYNotificarGoogleCalendar} style={{ backgroundColor: '#18181b', padding: '24px', borderRadius: '8px', border: '1px solid #27272a', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#e4e4e7', margin: 0 }}>Agendar Nuevo Evento / Plazo</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Título del Plazo / Asunto</label>
+                  <label style={{ display: 'block', fontSize: '14px', color: '#a1a1aa', marginBottom: '4px' }}>Título del Plazo / Asunto</label>
                   <input 
                     type="text" 
                     required 
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
                     placeholder="Ej: Vencimiento Contestación Causa Perez" 
-                    className="w-full bg-zinc-800 border border-zinc-700 text-white rounded p-2 focus:border-orange-500 focus:outline-none"
+                    style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff', borderRadius: '4px', padding: '8px', boxSizing: 'border-box' }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Tipo de Plazo</label>
+                  <label style={{ display: 'block', fontSize: '14px', color: '#a1a1aa', marginBottom: '4px' }}>Tipo de Plazo</label>
                   <select 
                     value={tipo} 
                     onChange={(e) => setTipo(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-white rounded p-2 focus:border-orange-500 focus:outline-none"
+                    style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff', borderRadius: '4px', padding: '8px', boxSizing: 'border-box' }}
                   >
                     <option value="Audiencia">Audiencia</option>
                     <option value="Plazo Procesal">Plazo Procesal</option>
@@ -108,54 +109,54 @@ export default function Home() {
 
               {tipo === 'Otros' && (
                 <div>
-                  <label className="block text-sm font-medium text-orange-500 mb-1">Especificar Tipo de Plazo:</label>
+                  <label style={{ display: 'block', fontSize: '14px', color: '#f97316', marginBottom: '4px' }}>Especificar Tipo de Plazo:</label>
                   <input 
                     type="text" 
                     value={tipoPersonalizado}
                     onChange={(e) => setTipoPersonalizado(e.target.value)}
                     placeholder="Escribí el tipo de plazo..." 
-                    className="w-full bg-zinc-800 border border-orange-500 text-white rounded p-2 focus:outline-none"
+                    style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #f97316', color: '#fff', borderRadius: '4px', padding: '8px', boxSizing: 'border-box' }}
                   />
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Fecha de Inicio / Vencimiento</label>
+                  <label style={{ display: 'block', fontSize: '14px', color: '#a1a1aa', marginBottom: '4px' }}>Fecha de Inicio / Vencimiento</label>
                   <input 
                     type="date" 
                     required 
                     value={fecha}
                     onChange={(e) => setFecha(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-white rounded p-2 focus:border-orange-500 focus:outline-none"
+                    style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff', borderRadius: '4px', padding: '8px', boxSizing: 'border-box' }}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-1">Hora</label>
+                  <label style={{ display: 'block', fontSize: '14px', color: '#a1a1aa', marginBottom: '4px' }}>Hora</label>
                   <input 
                     type="time" 
                     required 
                     value={hora}
                     onChange={(e) => setHora(e.target.value)}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-white rounded p-2 focus:border-orange-500 focus:outline-none"
+                    style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff', borderRadius: '4px', padding: '8px', boxSizing: 'border-box' }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Detalle / Notas adicionales</label>
+                <label style={{ display: 'block', fontSize: '14px', color: '#a1a1aa', marginBottom: '4px' }}>Detalle / Notas adicionales</label>
                 <textarea 
                   rows="3" 
                   value={detalle}
                   onChange={(e) => setDetalle(e.target.value)}
                   placeholder="Ingresá observaciones, N° de expediente, juzgado, etc..." 
-                  className="w-full bg-zinc-800 border border-zinc-700 text-white rounded p-2 focus:border-orange-500 focus:outline-none"
+                  style={{ width: '100%', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff', borderRadius: '4px', padding: '8px', boxSizing: 'border-box' }}
                 ></textarea>
               </div>
 
               <button 
                 type="submit" 
-                className="w-full bg-orange-500 text-black font-bold py-2.5 px-4 rounded hover:bg-orange-600 transition flex justify-center items-center gap-2"
+                style={{ width: '100%', backgroundColor: '#f97316', color: '#000', fontWeight: 'bold', padding: '10px', borderRadius: '6px', border: 'none', cursor: 'pointer', marginTop: '8px' }}
               >
                 📅 Guardar y Enviar Notificación a Google Calendar
               </button>
@@ -164,9 +165,9 @@ export default function Home() {
         )}
 
         {activeTab === 'causas' && (
-          <section className="space-y-6">
-            <h2 class="text-2xl font-bold text-white">Gestión de Causas</h2>
-            <p className="text-sm text-zinc-400">Módulo de causas vinculado con Supabase.</p>
+          <section>
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffffff' }}>Gestión de Causas</h2>
+            <p style={{ fontSize: '14px', color: '#a1a1aa' }}>Módulo de causas vinculado con Supabase.</p>
           </section>
         )}
       </main>
