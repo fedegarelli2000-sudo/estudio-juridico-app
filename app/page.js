@@ -3,10 +3,63 @@
 import React, { useState, useEffect } from 'react';
 
 export default function Home() {
+  // --- CONTROL DE ACCESO Y CONTRASEÑA ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('estudioGarelli2026');
+
+  // Cargar contraseña personalizada si fue cambiada previamente
+  useEffect(() => {
+    const savedPassword = localStorage.getItem('lex_app_password');
+    if (savedPassword) {
+      setCurrentPassword(savedPassword);
+    }
+    const savedAuth = localStorage.getItem('lex_auth');
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (passwordInput === currentPassword) {
+      setIsAuthenticated(true);
+      setLoginError('');
+      localStorage.setItem('lex_auth', 'true');
+    } else {
+      setLoginError('Contraseña incorrecta. Verifique los datos de acceso.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('lex_auth');
+    setIsAuthenticated(false);
+  };
+
+  // ESTADO PARA CAMBIAR LA CONTRASEÑA
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [passMessage, setPassMessage] = useState('');
+
+  const handleChangePassword = (e) => {
+    e.preventDefault();
+    if (!newPass) return;
+    if (newPass !== confirmPass) {
+      setPassMessage('❌ Las contraseñas no coinciden.');
+      return;
+    }
+    setCurrentPassword(newPass);
+    localStorage.setItem('lex_app_password', newPass);
+    setPassMessage('✅ ¡Contraseña actualizada con éxito!');
+    setNewPass('');
+    setConfirmPass('');
+  };
+
+  // --- NAVEGACIÓN Y ESTADOS INTERACTIVOS ---
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCaseId, setSelectedCaseId] = useState(null);
 
-  // --- ESTADOS INTERACTIVOS ---
   const [teamEmails, setTeamEmails] = useState(['', '', '', '']);
   const [cases, setCases] = useState([
     {
@@ -42,7 +95,7 @@ export default function Home() {
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: true }
   ]);
 
-  // Carga inicial desde memoria local
+  // Carga inicial de datos guardados
   useEffect(() => {
     try {
       const savedEmails = localStorage.getItem('lex_emails');
@@ -65,7 +118,7 @@ export default function Home() {
     }
   }, []);
 
-  // Guardado continuo en memoria local
+  // Guardado continuo de datos
   useEffect(() => {
     try {
       localStorage.setItem('lex_emails', JSON.stringify(teamEmails));
@@ -88,7 +141,7 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '1', title: '', date: '', location: '', assignedMail: '' });
   const [newTask, setNewTask] = useState({ caseId: '1', title: '', priority: 'MEDIA' });
 
-  // HANDLERS PARA AUDIENCIAS (TOMAR / CANCELAR / ELIMINAR)
+  // ACCIONES AUDIENCIAS
   const toggleHearingStatus = (hearingId) => {
     setHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
@@ -135,7 +188,6 @@ export default function Home() {
     const hearingObj = { ...newHearing, caseId: selectedCaseId || cases[0]?.id || '1', id: Date.now().toString(), status: 'PENDIENTE' };
     setHearings([...hearings, hearingObj]);
 
-    // INTEGRACIÓN GOOGLE CALENDAR
     const startDate = new Date(newHearing.date);
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
     const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
@@ -165,20 +217,68 @@ export default function Home() {
 
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
 
+  // --- PANTALLA DE LOGIN CON CONTRASEÑA ---
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl text-center space-y-6">
+          <div className="flex justify-center items-center text-4xl font-black tracking-tighter">
+            <span className="text-orange-500">M</span>
+            <span className="text-zinc-500">M</span>
+          </div>
+
+          <div>
+            <h1 className="text-lg font-bold text-white uppercase tracking-wider">Estudio Jurídico MM</h1>
+            <p className="text-xs text-orange-500 font-semibold mt-1">Acceso Privado al Sistema Operativo</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4 text-left">
+            <div>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Contraseña de Clave Privada</label>
+              <input 
+                type="password" 
+                placeholder="••••••••••••"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-white text-xs outline-none focus:border-orange-500 transition-colors"
+              />
+            </div>
+
+            {loginError && (
+              <p className="text-[11px] text-red-500 font-bold bg-red-500/10 p-2 rounded border border-red-500/20">{loginError}</p>
+            )}
+
+            <button 
+              type="submit" 
+              className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20"
+            >
+              Ingresar al Estudio
+            </button>
+          </form>
+
+          <p className="text-[10px] text-zinc-600">Conexión cifrada de acceso exclusivo para el personal autorizado.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- APLICACIÓN PRINCIPAL ---
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
       {/* MENÚ LATERAL */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0">
         <div>
-          <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
-            <div className="flex items-center text-2xl font-black tracking-tighter">
-              <span className="text-orange-500">M</span>
-              <span className="text-zinc-500">M</span>
-            </div>
-            <div>
-              <h1 className="font-bold text-white text-sm uppercase tracking-wider">LexStudio</h1>
-              <p className="text-[10px] text-orange-500 font-semibold">GESTIÓN LEGAL INTEGRAL</p>
+          <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center text-2xl font-black tracking-tighter">
+                <span className="text-orange-500">M</span>
+                <span className="text-zinc-500">M</span>
+              </div>
+              <div>
+                <h1 className="font-bold text-white text-sm uppercase tracking-wider">LexStudio</h1>
+                <p className="text-[10px] text-orange-500 font-semibold">GESTIÓN LEGAL INTEGRAL</p>
+              </div>
             </div>
           </div>
 
@@ -191,7 +291,7 @@ export default function Home() {
               { id: 'tareas', label: 'Tareas y Pendientes', icon: '✅' },
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
               { id: 'audiencias', label: 'Audiencias y Calendar', icon: '📅' },
-              { id: 'configuracion', label: 'Configuración / Mails', icon: '⚙️' }
+              { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -209,9 +309,18 @@ export default function Home() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500">
-          <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
-          <p className="text-[10px]">Sistema Operativo Activo</p>
+        <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center">
+          <div>
+            <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
+            <p className="text-[10px]">Sistema Operativo Activo</p>
+          </div>
+          <button 
+            onClick={handleLogout}
+            title="Cerrar Sesión"
+            className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400 rounded transition-colors text-xs"
+          >
+            🔒
+          </button>
         </div>
       </aside>
 
@@ -234,7 +343,6 @@ export default function Home() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-950">
           
-          {/* VISTA INDIVIDUAL DE CADA EXPEDIENTE AL INGRESAR */}
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
@@ -255,7 +363,6 @@ export default function Home() {
                 )}
               </div>
 
-              {/* CARGA DE MOVIMIENTOS DENTRO DE ESTE EXPEDIENTE */}
               <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento en este Expediente</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -279,7 +386,6 @@ export default function Home() {
                 </button>
               </form>
 
-              {/* MOVIMIENTOS REGISTRADOS */}
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos</h4>
                 <div className="space-y-2">
@@ -300,7 +406,6 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {/* DASHBOARD */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -324,7 +429,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* LISTA DE EXPEDIENTES / CAUSAS */}
               {activeTab === 'expedientes' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -385,7 +489,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* AUDIENCIAS CON CONTROLES (TOMADAS / CANCELADAS / ELIMINAR) */}
               {activeTab === 'audiencias' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -418,7 +521,6 @@ export default function Home() {
                     </button>
                   </form>
 
-                  {/* LISTA DE AUDIENCIAS CON BOTONES DE ACCIÓN */}
                   <div className="space-y-3">
                     {hearings.map(h => (
                       <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
@@ -455,7 +557,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* MOSTRAR OTROS MÓDULOS (TAREAS, CLIENTES, MOVIMIENTOS, CONFIGURACIÓN) */}
               {activeTab === 'tareas' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -540,26 +641,65 @@ export default function Home() {
                 </div>
               )}
 
+              {/* CONFIGURACIÓN: MAILS Y CAMBIO DE CONTRASEÑA */}
               {activeTab === 'configuracion' && (
-                <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                  <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Mails para Integración con Google Calendar</h3>
-                  <div className="space-y-3 text-xs">
-                    {[0, 1, 2, 3].map((index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <span className="text-zinc-500 font-bold w-16">Mail {index + 1}:</span>
+                <div className="space-y-6">
+                  {/* CONFIGURACIÓN DE MAILS */}
+                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Mails para Google Calendar</h3>
+                    <div className="space-y-3 text-xs">
+                      {[0, 1, 2, 3].map((index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <span className="text-zinc-500 font-bold w-16">Mail {index + 1}:</span>
+                          <input 
+                            type="email" 
+                            placeholder={`ejemplo${index + 1}@estudio.com`}
+                            value={teamEmails[index] || ''}
+                            onChange={(e) => {
+                              const updated = [...teamEmails];
+                              updated[index] = e.target.value;
+                              setTeamEmails(updated);
+                            }}
+                            className="flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CAMBIO DE CONTRASEÑA DEL SISTEMA */}
+                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">Cambiar Contraseña de Acceso al Estudio</h3>
+                    <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
+                      <div>
+                        <label className="text-zinc-400 block mb-1">Nueva Contraseña:</label>
                         <input 
-                          type="email" 
-                          placeholder={`ejemplo${index + 1}@estudio.com`}
-                          value={teamEmails[index] || ''}
-                          onChange={(e) => {
-                            const updated = [...teamEmails];
-                            updated[index] = e.target.value;
-                            setTeamEmails(updated);
-                          }}
-                          className="flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          type="password" 
+                          placeholder="••••••••••••"
+                          value={newPass}
+                          onChange={(e) => setNewPass(e.target.value)}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                         />
                       </div>
-                    ))}
+                      <div>
+                        <label className="text-zinc-400 block mb-1">Confirmar Nueva Contraseña:</label>
+                        <input 
+                          type="password" 
+                          placeholder="••••••••••••"
+                          value={confirmPass}
+                          onChange={(e) => setConfirmPass(e.target.value)}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        />
+                      </div>
+
+                      {passMessage && (
+                        <p className="text-xs font-bold p-2 rounded bg-zinc-950 border border-zinc-800 text-zinc-300">{passMessage}</p>
+                      )}
+
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs transition-colors">
+                        Guardar Nueva Contraseña
+                      </button>
+                    </form>
                   </div>
                 </div>
               )}
