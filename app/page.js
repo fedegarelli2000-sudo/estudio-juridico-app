@@ -1,16 +1,18 @@
-// Actualizacion Vercel MM v2.0 - Version Completa
+// Actualizacion Vercel MM v3.0 - Icono MM Entrelazado y Borrado de Tareas/Plazos
 'use client';
 
 import React, { useState, useEffect } from 'react';
 
 export default function Home() {
-  // ICONO DE LA PESTAÑA CON LAS DOS M (Remplaza la "E" gris)
+  // ICONO DE LA PESTAÑA CON LAS DOS M ENTRELAZADAS (Remplaza la "E" gris)
   useEffect(() => {
     const faviconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-        <rect width="100" height="100" rx="20" fill="#09090b"/>
-        <text x="12" y="72" font-family="Arial, sans-serif" font-weight="900" font-size="65" fill="#f97316">M</text>
-        <text x="52" y="72" font-family="Arial, sans-serif" font-weight="900" font-size="65" fill="#71717a">M</text>
+        <rect width="100" height="100" rx="22" fill="#09090b"/>
+        <!-- M Gris de Fondo -->
+        <text x="32" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="58" fill="#71717a" letter-spacing="-4">M</text>
+        <!-- M Naranja Entrelazada -->
+        <text x="14" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="58" fill="#f97316" letter-spacing="-4">M</text>
       </svg>
     `;
     const encodedSvg = encodeURIComponent(faviconSvg);
@@ -160,13 +162,21 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMail: '' });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // HANDLERS
+  // HANDLERS BORRADO Y ESTADOS
   const toggleHearingStatus = (hearingId) => {
     setHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
 
   const deleteHearing = (hearingId) => {
     setHearings(hearings.filter(h => h.id !== hearingId));
+  };
+
+  const deleteDeadline = (deadlineId) => {
+    setDeadlines(deadlines.filter(d => d.id !== deadlineId));
+  };
+
+  const deleteTask = (taskId) => {
+    setTasks(tasks.filter(t => t.id !== taskId));
   };
 
   const handleAddCase = (e) => {
@@ -431,7 +441,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {/* DASHBOARD CON MARCA DE AGUA MM Y PRIORIDADES */}
+              {/* DASHBOARD CON MARCA DE AGUA MM */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
@@ -657,7 +667,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* PLAZOS PROCESALES E IA */}
+              {/* PLAZOS PROCESALES CON BOTÓN DE ELIMINAR */}
               {activeTab === 'plazos' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -691,7 +701,7 @@ export default function Home() {
                   </form>
 
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Pendientes</h4>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Registrados</h4>
                     {deadlines.map(d => (
                       <div key={d.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
                         <div>
@@ -699,12 +709,20 @@ export default function Home() {
                           <h4 className="font-bold text-white">{d.title}</h4>
                           <p className="text-zinc-500">Vencimiento: {d.dueDate} ({d.days} días hábiles)</p>
                         </div>
-                        <button 
-                          onClick={() => setDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: 'CUMPLIDO'} : x))}
-                          className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500 text-black'}`}
-                        >
-                          {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: x.status === 'CUMPLIDO' ? 'PENDIENTE' : 'CUMPLIDO'} : x))}
+                            className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-400' : 'bg-orange-500 text-black'}`}
+                          >
+                            {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
+                          </button>
+                          <button 
+                            onClick={() => deleteDeadline(d.id)}
+                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -780,7 +798,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* TAREAS */}
+              {/* TAREAS CON OPCIÓN DE BORRADO */}
               {activeTab === 'tareas' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -819,9 +837,18 @@ export default function Home() {
                             {t.title}
                           </span>
                         </div>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${t.completed ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}>
-                          {t.completed ? 'CUMPLIDA' : t.priority}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${t.completed ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}>
+                            {t.completed ? 'CUMPLIDA' : t.priority}
+                          </span>
+                          <button 
+                            onClick={() => deleteTask(t.id)}
+                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white p-1 rounded font-bold text-xs transition-all border border-red-500/20"
+                            title="Eliminar tarea"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
