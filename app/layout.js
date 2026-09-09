@@ -1,6 +1,9 @@
+import './globals.css';
+
 export const metadata = {
-  title: 'Estudio MM',
-  description: 'Sistema de gestión de causas y agenda',
+  title: 'SWM - Estudio MM',
+  description: 'Sistema de Gestión y Centro de Control Jurídico',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }) {
