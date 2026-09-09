@@ -1,8 +1,6 @@
-import './globals.css';
-
 export const metadata = {
-  title: 'SWM - Estudio MM',
-  description: 'Sistema de Gestión y Centro de Control Jurídico',
+  title: 'Estudio Jurídico MM',
+  description: 'Sistema de gestión para estudio jurídico',
   manifest: '/manifest.json',
 };
 
