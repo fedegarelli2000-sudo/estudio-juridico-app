@@ -6,7 +6,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCaseId, setSelectedCaseId] = useState(null);
 
-  // --- ESTADOS INTERACTIVOS PERSISTENTES ---
+  // --- ESTADOS INTERACTIVOS ---
   const [teamEmails, setTeamEmails] = useState(['', '', '', '']);
   const [cases, setCases] = useState([
     {
@@ -42,37 +42,45 @@ export default function Home() {
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: true }
   ]);
 
-  // Carga inicial desde localStorage
+  // Carga inicial desde memoria local
   useEffect(() => {
-    const savedEmails = localStorage.getItem('lex_emails');
-    const savedCases = localStorage.getItem('lex_cases');
-    const savedClients = localStorage.getItem('lex_clients');
-    const savedMovements = localStorage.getItem('lex_movements');
-    const savedDeadlines = localStorage.getItem('lex_deadlines');
-    const savedHearings = localStorage.getItem('lex_hearings');
-    const savedTasks = localStorage.getItem('lex_tasks');
+    try {
+      const savedEmails = localStorage.getItem('lex_emails');
+      const savedCases = localStorage.getItem('lex_cases');
+      const savedClients = localStorage.getItem('lex_clients');
+      const savedMovements = localStorage.getItem('lex_movements');
+      const savedDeadlines = localStorage.getItem('lex_deadlines');
+      const savedHearings = localStorage.getItem('lex_hearings');
+      const savedTasks = localStorage.getItem('lex_tasks');
 
-    if (savedEmails) setTeamEmails(JSON.parse(savedEmails));
-    if (savedCases) setCases(JSON.parse(savedCases));
-    if (savedClients) setClients(JSON.parse(savedClients));
-    if (savedMovements) setMovements(JSON.parse(savedMovements));
-    if (savedDeadlines) setDeadlines(JSON.parse(savedDeadlines));
-    if (savedHearings) setHearings(JSON.parse(savedHearings));
-    if (savedTasks) setTasks(JSON.parse(savedTasks));
+      if (savedEmails) setTeamEmails(JSON.parse(savedEmails));
+      if (savedCases) setCases(JSON.parse(savedCases));
+      if (savedClients) setClients(JSON.parse(savedClients));
+      if (savedMovements) setMovements(JSON.parse(savedMovements));
+      if (savedDeadlines) setDeadlines(JSON.parse(savedDeadlines));
+      if (savedHearings) setHearings(JSON.parse(savedHearings));
+      if (savedTasks) setTasks(JSON.parse(savedTasks));
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
-  // Guardado en localStorage
+  // Guardado continuo en memoria local
   useEffect(() => {
-    localStorage.setItem('lex_emails', JSON.stringify(teamEmails));
-    localStorage.setItem('lex_cases', JSON.stringify(cases));
-    localStorage.setItem('lex_clients', JSON.stringify(clients));
-    localStorage.setItem('lex_movements', JSON.stringify(movements));
-    localStorage.setItem('lex_deadlines', JSON.stringify(deadlines));
-    localStorage.setItem('lex_hearings', JSON.stringify(hearings));
-    localStorage.setItem('lex_tasks', JSON.stringify(tasks));
+    try {
+      localStorage.setItem('lex_emails', JSON.stringify(teamEmails));
+      localStorage.setItem('lex_cases', JSON.stringify(cases));
+      localStorage.setItem('lex_clients', JSON.stringify(clients));
+      localStorage.setItem('lex_movements', JSON.stringify(movements));
+      localStorage.setItem('lex_deadlines', JSON.stringify(deadlines));
+      localStorage.setItem('lex_hearings', JSON.stringify(hearings));
+      localStorage.setItem('lex_tasks', JSON.stringify(tasks));
+    } catch (e) {
+      console.error(e);
+    }
   }, [teamEmails, cases, clients, movements, deadlines, hearings, tasks]);
 
-  // FORMULARIOS
+  // FORMULARIOS DE ALTA
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', notes: '' });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '' });
   const [newMovement, setNewMovement] = useState({ caseId: '1', date: '', title: '', text: '', notes: '' });
@@ -80,7 +88,7 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '1', title: '', date: '', location: '', assignedMail: '' });
   const [newTask, setNewTask] = useState({ caseId: '1', title: '', priority: 'MEDIA' });
 
-  // HANDLERS
+  // ACCIONES
   const handleAddCase = (e) => {
     e.preventDefault();
     if (!newCase.number || !newCase.caratula) return;
@@ -117,9 +125,9 @@ export default function Home() {
     const hearingObj = { ...newHearing, id: Date.now().toString() };
     setHearings([...hearings, hearingObj]);
 
-    // INTEGRACIÓN DIRECTA A GOOGLE CALENDAR
+    // SINCRONIZACIÓN AUTOMÁTICA Y CREACIÓN DE INVITACIÓN EN GOOGLE CALENDAR
     const startDate = new Date(newHearing.date);
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hora de duración
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
     const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
 
@@ -152,7 +160,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
-      {/* BARRA LATERAL */}
+      {/* MENÚ LATERAL */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0">
         <div>
           <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
@@ -199,10 +207,9 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* CONTENEDOR PRINCIPAL */}
+      {/* ÁREA DE TRABAJO */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        {/* ENCABEZADO */}
         <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
           <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase">
             {selectedCaseId ? `EXPEDIENTE: ${selectedCaseData?.number}` : activeTab.replace('_', ' ')}
@@ -212,14 +219,14 @@ export default function Home() {
               onClick={() => setSelectedCaseId(null)}
               className="bg-zinc-800 text-zinc-300 hover:text-white text-xs font-bold px-3 py-1.5 rounded border border-zinc-700"
             >
-              ← Volver a la Lista
+              ← Volver a la Lista de Expedientes
             </button>
           )}
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-950">
           
-          {/* DETALLE INDIVIDUAL DE UN EXPEDIENTE */}
+          {/* DETALLE INDIVIDUAL DEL EXPEDIENTE AL HACER CLIC */}
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
@@ -240,9 +247,9 @@ export default function Home() {
                 )}
               </div>
 
-              {/* MOVIMIENTOS DEL EXPEDIENTE SELECCIONADO */}
+              {/* MOVIMIENTOS DEL EXPEDIENTE */}
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos de este Expediente</h4>
+                <h4 className="text-xs font-bold text-orange-500 uppercase">Movimientos Registrados en este Expediente</h4>
                 <div className="space-y-2">
                   {movements.filter(m => m.caseId === selectedCaseId).map(m => (
                     <div key={m.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
@@ -251,16 +258,16 @@ export default function Home() {
                         <span className="text-zinc-500">{m.date}</span>
                       </div>
                       {m.text && <p className="text-zinc-400">{m.text}</p>}
-                      {m.notes && <p className="text-orange-400/80 italic">Note: {m.notes}</p>}
+                      {m.notes && <p className="text-orange-400/80 italic">Notas: {m.notes}</p>}
                     </div>
                   ))}
                   {movements.filter(m => m.caseId === selectedCaseId).length === 0 && (
-                    <p className="text-xs text-zinc-600">No hay movimientos registrados para este expediente.</p>
+                    <p className="text-xs text-zinc-600">No hay actuaciones registradas para este expediente.</p>
                   )}
                 </div>
               </div>
 
-              {/* TAREAS DEL EXPEDIENTE SELECCIONADO */}
+              {/* TAREAS VINCULADAS AL EXPEDIENTE */}
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Tareas Pendientes de este Expediente</h4>
                 <div className="space-y-2">
@@ -285,7 +292,7 @@ export default function Home() {
             </div>
           ) : (
             <>
-              {/* --- DASHBOARD --- */}
+              {/* DASHBOARD */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -326,7 +333,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* --- EXPEDIENTES / CAUSAS --- */}
+              {/* LISTA DE EXPEDIENTES / CAUSAS CON CLICK PARA ABRIR FICHA */}
               {activeTab === 'expedientes' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -370,6 +377,3 @@ export default function Home() {
                         onClick={() => setSelectedCaseId(c.id)}
                         className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 cursor-pointer hover:border-orange-500/50 transition-all"
                       >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <span className="bg-orange-500/10 tex
