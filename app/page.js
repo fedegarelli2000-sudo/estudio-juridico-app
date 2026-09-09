@@ -9,16 +9,11 @@ export default function Home() {
   const [loginError, setLoginError] = useState('');
   const [currentPassword, setCurrentPassword] = useState('estudioGarelli2026');
 
-  // Cargar contraseña personalizada si fue cambiada previamente
   useEffect(() => {
     const savedPassword = localStorage.getItem('lex_app_password');
-    if (savedPassword) {
-      setCurrentPassword(savedPassword);
-    }
+    if (savedPassword) setCurrentPassword(savedPassword);
     const savedAuth = localStorage.getItem('lex_auth');
-    if (savedAuth === 'true') {
-      setIsAuthenticated(true);
-    }
+    if (savedAuth === 'true') setIsAuthenticated(true);
   }, []);
 
   const handleLogin = (e) => {
@@ -37,7 +32,7 @@ export default function Home() {
     setIsAuthenticated(false);
   };
 
-  // ESTADO PARA CAMBIAR LA CONTRASEÑA
+  // CAMBIO DE CONTRASEÑA
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [passMessage, setPassMessage] = useState('');
@@ -56,11 +51,13 @@ export default function Home() {
     setConfirmPass('');
   };
 
-  // --- NAVEGACIÓN Y ESTADOS INTERACTIVOS ---
+  // --- NAVEGACIÓN Y ESTADOS ---
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCaseId, setSelectedCaseId] = useState(null);
 
-  const [teamEmails, setTeamEmails] = useState(['', '', '', '']);
+  // CONFIGURACIÓN DE HASTA 6 MAILS
+  const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
+
   const [cases, setCases] = useState([
     {
       id: '1',
@@ -68,14 +65,15 @@ export default function Home() {
       caratula: 'García, Roberto c/ Aseguradora del Sur S.A. s/ Daños',
       court: 'Juzgado Civil y Comercial Nº 12',
       client: 'Roberto García',
+      processType: 'JUDICIAL',
       status: 'EN TRAMITE',
       notes: 'Cliente prefiere contacto por correo por la tarde.'
     }
   ]);
   
   const [clients, setClients] = useState([
-    { id: '1', name: 'Roberto García', role: 'CLIENTE', taxId: '20-34881920-8', email: 'roberto@email.com' },
-    { id: '2', name: 'Aseguradora del Sur S.A.', role: 'CONTRAPARTE', taxId: '30-50112233-4', email: 'legales@aseguradora.com' }
+    { id: '1', name: 'Roberto García', role: 'CLIENTE', taxId: '20-34881920-8', email: 'roberto@email.com', phone: '3584123456', address: 'Río Cuarto' },
+    { id: '2', name: 'Aseguradora del Sur S.A.', role: 'CONTRAPARTE', taxId: '30-50112233-4', email: 'legales@aseguradora.com', phone: '0800-555-1234', address: 'Córdoba' }
   ]);
 
   const [movements, setMovements] = useState([
@@ -91,11 +89,10 @@ export default function Home() {
   ]);
 
   const [tasks, setTasks] = useState([
-    { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false },
-    { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: true }
+    { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false }
   ]);
 
-  // Carga inicial de datos guardados
+  // CARGA INICIAL
   useEffect(() => {
     try {
       const savedEmails = localStorage.getItem('lex_emails');
@@ -118,7 +115,7 @@ export default function Home() {
     }
   }, []);
 
-  // Guardado continuo de datos
+  // GUARDADO PERSISTENTE
   useEffect(() => {
     try {
       localStorage.setItem('lex_emails', JSON.stringify(teamEmails));
@@ -134,14 +131,14 @@ export default function Home() {
   }, [teamEmails, cases, clients, movements, deadlines, hearings, tasks]);
 
   // FORMULARIOS DE ALTA
-  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', notes: '' });
-  const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '' });
-  const [newMovement, setNewMovement] = useState({ caseId: '1', date: '', title: '', text: '', notes: '' });
-  const [newDeadline, setNewDeadline] = useState({ caseId: '1', title: '', dueDate: '', days: 5 });
-  const [newHearing, setNewHearing] = useState({ caseId: '1', title: '', date: '', location: '', assignedMail: '' });
-  const [newTask, setNewTask] = useState({ caseId: '1', title: '', priority: 'MEDIA' });
+  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
+  const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
+  const [newMovement, setNewMovement] = useState({ caseId: '', date: '', title: '', text: '', notes: '' });
+  const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
+  const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMail: '' });
+  const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // ACCIONES AUDIENCIAS
+  // HANDLERS
   const toggleHearingStatus = (hearingId) => {
     setHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
@@ -150,20 +147,20 @@ export default function Home() {
     setHearings(hearings.filter(h => h.id !== hearingId));
   };
 
-  // HANDLERS GENERALES
   const handleAddCase = (e) => {
     e.preventDefault();
     if (!newCase.number || !newCase.caratula) return;
-    const created = { ...newCase, id: Date.now().toString(), status: 'EN TRAMITE' };
+    const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
+    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
     setCases([...cases, created]);
-    setNewCase({ number: '', caratula: '', court: '', client: '', notes: '' });
+    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   };
 
   const handleAddClient = (e) => {
     e.preventDefault();
     if (!newClient.name) return;
     setClients([...clients, { ...newClient, id: Date.now().toString() }]);
-    setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '' });
+    setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   };
 
   const handleAddMovementForCase = (e) => {
@@ -177,15 +174,17 @@ export default function Home() {
   const handleAddDeadline = (e) => {
     e.preventDefault();
     if (!newDeadline.title) return;
-    setDeadlines([...deadlines, { ...newDeadline, caseId: selectedCaseId || cases[0]?.id || '1', id: Date.now().toString(), status: 'PENDIENTE', isAI: false }]);
-    setNewDeadline({ caseId: selectedCaseId || cases[0]?.id || '1', title: '', dueDate: '', days: 5 });
+    const caseTarget = selectedCaseId || newDeadline.caseId || cases[0]?.id || '1';
+    setDeadlines([...deadlines, { ...newDeadline, caseId: caseTarget, id: Date.now().toString(), status: 'PENDIENTE', isAI: false }]);
+    setNewDeadline({ caseId: caseTarget, title: '', dueDate: '', days: 5 });
   };
 
   const handleAddHearingAndSyncGoogle = (e) => {
     e.preventDefault();
     if (!newHearing.title || !newHearing.date) return;
 
-    const hearingObj = { ...newHearing, caseId: selectedCaseId || cases[0]?.id || '1', id: Date.now().toString(), status: 'PENDIENTE' };
+    const caseTarget = selectedCaseId || newHearing.caseId || cases[0]?.id || '1';
+    const hearingObj = { ...newHearing, caseId: caseTarget, id: Date.now().toString(), status: 'PENDIENTE' };
     setHearings([...hearings, hearingObj]);
 
     const startDate = new Date(newHearing.date);
@@ -201,14 +200,15 @@ export default function Home() {
     if (newHearing.assignedMail) googleUrl.searchParams.append('add', newHearing.assignedMail);
 
     window.open(googleUrl.toString(), '_blank');
-    setNewHearing({ caseId: selectedCaseId || cases[0]?.id || '1', title: '', date: '', location: '', assignedMail: '' });
+    setNewHearing({ caseId: caseTarget, title: '', date: '', location: '', assignedMail: '' });
   };
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (!newTask.title) return;
-    setTasks([...tasks, { ...newTask, caseId: selectedCaseId || cases[0]?.id || '1', id: Date.now().toString(), completed: false }]);
-    setNewTask({ caseId: selectedCaseId || cases[0]?.id || '1', title: '', priority: 'MEDIA' });
+    const caseTarget = selectedCaseId || newTask.caseId || cases[0]?.id || '1';
+    setTasks([...tasks, { ...newTask, caseId: caseTarget, id: Date.now().toString(), completed: false }]);
+    setNewTask({ caseId: caseTarget, title: '', priority: 'MEDIA' });
   };
 
   const toggleTask = (taskId) => {
@@ -217,12 +217,12 @@ export default function Home() {
 
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
 
-  // --- PANTALLA DE LOGIN CON CONTRASEÑA ---
+  // --- LOGIN ---
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans items-center justify-center p-4">
         <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl text-center space-y-6">
-          <div className="flex justify-center items-center text-4xl font-black tracking-tighter">
+          <div className="flex justify-center items-center text-5xl font-black tracking-tighter">
             <span className="text-orange-500">M</span>
             <span className="text-zinc-500">M</span>
           </div>
@@ -262,23 +262,21 @@ export default function Home() {
     );
   }
 
-  // --- APLICACIÓN PRINCIPAL ---
+  // --- INTERFAZ PRINCIPAL ---
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
       {/* MENÚ LATERAL */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0">
         <div>
-          <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center text-2xl font-black tracking-tighter">
-                <span className="text-orange-500">M</span>
-                <span className="text-zinc-500">M</span>
-              </div>
-              <div>
-                <h1 className="font-bold text-white text-sm uppercase tracking-wider">LexStudio</h1>
-                <p className="text-[10px] text-orange-500 font-semibold">GESTIÓN LEGAL INTEGRAL</p>
-              </div>
+          <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
+            <div className="flex items-center text-3xl font-black tracking-tighter">
+              <span className="text-orange-500">M</span>
+              <span className="text-zinc-500">M</span>
+            </div>
+            <div>
+              <h1 className="font-bold text-white text-sm uppercase tracking-wider">LexStudio</h1>
+              <p className="text-[10px] text-orange-500 font-semibold">GESTIÓN LEGAL MM</p>
             </div>
           </div>
 
@@ -324,7 +322,7 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* ÁREA PRINCIPAL */}
+      {/* ÁREA DE CONTENIDO */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
@@ -343,6 +341,7 @@ export default function Home() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-950">
           
+          {/* DETALLE INDIVIDUAL DE EXPEDIENTE */}
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
@@ -350,6 +349,9 @@ export default function Home() {
                   <div>
                     <span className="bg-orange-500/10 text-orange-400 font-mono text-xs font-bold px-2 py-0.5 rounded border border-orange-500/20">
                       {selectedCaseData.number}
+                    </span>
+                    <span className="ml-2 text-xs font-bold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded uppercase">
+                      {selectedCaseData.processType || 'JUDICIAL'}
                     </span>
                     <h3 className="text-lg font-bold text-white mt-1">{selectedCaseData.caratula}</h3>
                     <p className="text-xs text-zinc-400 mt-0.5">{selectedCaseData.court} • Cliente: {selectedCaseData.client}</p>
@@ -363,6 +365,7 @@ export default function Home() {
                 )}
               </div>
 
+              {/* MOVIMIENTOS EN ESTE EXPEDIENTE */}
               <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento en este Expediente</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -406,6 +409,7 @@ export default function Home() {
             </div>
           ) : (
             <>
+              {/* DASHBOARD */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -429,6 +433,7 @@ export default function Home() {
                 </div>
               )}
 
+              {/* EXPEDIENTES / CAUSAS */}
               {activeTab === 'expedientes' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -449,12 +454,30 @@ export default function Home() {
                         value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
-                      <input 
-                        type="text" placeholder="Cliente asociado" 
-                        value={newCase.client} onChange={e => setNewCase({...newCase, client: e.target.value})}
+                      
+                      {/* DESPLEGABLE DE CLIENTES REGISTRADOS */}
+                      <select 
+                        value={newCase.client} 
+                        onChange={e => setNewCase({...newCase, client: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
+                      >
+                        <option value="">Seleccionar Cliente Asociado...</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.name}>{c.name} ({c.role})</option>
+                        ))}
+                      </select>
+
+                      {/* SELECTOR DE PROCESO: JUDICIAL O EXTRAJUDICIAL */}
+                      <select 
+                        value={newCase.processType} 
+                        onChange={e => setNewCase({...newCase, processType: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                      >
+                        <option value="JUDICIAL">Tipo de Proceso: CAUSA JUDICIAL</option>
+                        <option value="EXTRAJUDICIAL">Tipo de Proceso: TRÁMITE EXTRAJUDICIAL / MEDIACIÓN</option>
+                      </select>
                     </div>
+
                     <textarea 
                       placeholder="Observaciones o notas manuales sobre el expediente..."
                       value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
@@ -477,6 +500,9 @@ export default function Home() {
                           <span className="bg-orange-500/10 text-orange-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
                             {c.number}
                           </span>
+                          <span className="ml-2 text-[10px] font-bold bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
+                            {c.processType || 'JUDICIAL'}
+                          </span>
                           <h4 className="font-bold text-white text-sm mt-1">{c.caratula}</h4>
                           <p className="text-xs text-zinc-400">{c.court} • Cliente: {c.client}</p>
                         </div>
@@ -489,6 +515,113 @@ export default function Home() {
                 </div>
               )}
 
+              {/* MOVIMIENTOS E HISTORIAL CON SELECTOR DE CAUSAS */}
+              {activeTab === 'movimientos' && (
+                <div className="space-y-6">
+                  <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Movimiento o Actuación</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <select 
+                        value={newMovement.caseId} onChange={e => setNewMovement({...newMovement, caseId: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="">Seleccionar Expediente / Causa...</option>
+                        {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                      </select>
+                      <input 
+                        type="date" value={newMovement.date} onChange={e => setNewMovement({...newMovement, date: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <input 
+                      type="text" placeholder="Título de la actuación (Ej. Presenta Escrito / Cédula)" 
+                      value={newMovement.title} onChange={e => setNewMovement({...newMovement, title: e.target.value})}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                    />
+                    <textarea 
+                      placeholder="Transcripción o síntesis de la actuación..."
+                      value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
+                    />
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Movimiento
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Todos los Movimientos</h4>
+                    {movements.map(m => {
+                      const caseInfo = cases.find(c => c.id === m.caseId);
+                      return (
+                        <div key={m.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-orange-400">{m.title}</span>
+                            <span className="text-zinc-500">{m.date}</span>
+                          </div>
+                          {caseInfo && <p className="text-[10px] text-zinc-500">Causa: {caseInfo.number} ({caseInfo.caratula})</p>}
+                          {m.text && <p className="text-zinc-300 bg-zinc-950 p-2.5 rounded border border-zinc-800">{m.text}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* PLAZOS PROCESALES E IA */}
+              {activeTab === 'plazos' && (
+                <div className="space-y-6">
+                  <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Plazo Procesal</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <select 
+                        value={newDeadline.caseId} onChange={e => setNewDeadline({...newDeadline, caseId: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="">Seleccionar Expediente...</option>
+                        {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                      </select>
+                      <input 
+                        type="text" placeholder="Descripción del Plazo (ej. Traslado Demanda)" 
+                        value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="date" value={newDeadline.dueDate} onChange={e => setNewDeadline({...newDeadline, dueDate: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="number" placeholder="Días hábiles (ej. 5)" 
+                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Registrar Plazo
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Pendientes</h4>
+                    {deadlines.map(d => (
+                      <div key={d.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                        <div>
+                          {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
+                          <h4 className="font-bold text-white">{d.title}</h4>
+                          <p className="text-zinc-500">Vencimiento: {d.dueDate} ({d.days} días hábiles)</p>
+                        </div>
+                        <button 
+                          onClick={() => setDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: 'CUMPLIDO'} : x))}
+                          className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500 text-black'}`}
+                        >
+                          {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AUDIENCIAS */}
               {activeTab === 'audiencias' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -557,6 +690,7 @@ export default function Home() {
                 </div>
               )}
 
+              {/* TAREAS */}
               {activeTab === 'tareas' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -604,6 +738,7 @@ export default function Home() {
                 </div>
               )}
 
+              {/* CLIENTES Y CONTACTOS CON DATOS COMPLETOS */}
               {activeTab === 'clientes' && (
                 <div className="space-y-6">
                   <form onSubmit={handleAddClient} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -618,10 +753,30 @@ export default function Home() {
                         value={newClient.role} onChange={e => setNewClient({...newClient, role: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       >
-                        <option value="CLIENTE">CLIENTE</option>
-                        <option value="CONTRAPARTE">CONTRAPARTE</option>
-                        <option value="TERCERO">TERCERO</option>
+                        <option value="CLIENTE">ROL: CLIENTE</option>
+                        <option value="CONTRAPARTE">ROL: CONTRAPARTE</option>
+                        <option value="TERCERO">ROL: TERCERO / PROFESIONAL</option>
                       </select>
+                      <input 
+                        type="text" placeholder="CUIT / DNI" 
+                        value={newClient.taxId} onChange={e => setNewClient({...newClient, taxId: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="email" placeholder="Correo Electrónico" 
+                        value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Teléfono / Celular de contacto" 
+                        value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Domicilio / Localidad" 
+                        value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
                     </div>
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
                       Guardar Contacto
@@ -630,10 +785,18 @@ export default function Home() {
 
                   <div className="space-y-2">
                     {clients.map(c => (
-                      <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                      <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
                         <div>
-                          <p className="font-bold text-white">{c.name}</p>
-                          <p className="text-zinc-500">{c.role}</p>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-white text-sm">{c.name}</h4>
+                            <span className="bg-zinc-800 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">{c.role}</span>
+                          </div>
+                          <p className="text-zinc-400 mt-1">
+                            {c.taxId && `DNI/CUIT: ${c.taxId} • `}
+                            {c.phone && `Tel: ${c.phone} • `}
+                            {c.email && `Mail: ${c.email}`}
+                          </p>
+                          {c.address && <p className="text-zinc-500 text-[10px]">📍 {c.address}</p>}
                         </div>
                       </div>
                     ))}
@@ -641,16 +804,16 @@ export default function Home() {
                 </div>
               )}
 
-              {/* CONFIGURACIÓN: MAILS Y CAMBIO DE CONTRASEÑA */}
+              {/* CONFIGURACIÓN CON 6 MAILS Y CLAVE */}
               {activeTab === 'configuracion' && (
                 <div className="space-y-6">
-                  {/* CONFIGURACIÓN DE MAILS */}
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Mails para Google Calendar</h3>
-                    <div className="space-y-3 text-xs">
-                      {[0, 1, 2, 3].map((index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <span className="text-zinc-500 font-bold w-16">Mail {index + 1}:</span>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
+                    <p className="text-xs text-zinc-400">Podés registrar hasta 6 casillas de correo para asignarles eventos y audiencias:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="text-zinc-500 font-bold w-14">Mail {index + 1}:</span>
                           <input 
                             type="email" 
                             placeholder={`ejemplo${index + 1}@estudio.com`}
@@ -667,7 +830,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* CAMBIO DE CONTRASEÑA DEL SISTEMA */}
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
                     <h3 className="text-sm font-bold text-orange-500 uppercase">Cambiar Contraseña de Acceso al Estudio</h3>
                     <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
