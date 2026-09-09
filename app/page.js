@@ -49,14 +49,12 @@ function LogoMM({ size = 'medium' }) {
   );
 }
 
-export default function AppCore() {
+export default function Home() {
   const [splash, setSplash] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-
   const [clientes, setClientes] = useState([]);
   const [causasJ, setCausasJ] = useState([]);
 
@@ -97,27 +95,41 @@ export default function AppCore() {
 
   if (splash) {
     return (
-      <div className="h-screen w-screen bg-zinc-950 flex flex-col justify-center items-center">
-        <LogoMM size="large" />
-        <div className="mt-8 text-zinc-500 text-sm tracking-widest animate-pulse">
-          Cargando Centro de Control...
+      <div style={{ height: '100vh', width: '100vw', backgroundColor: '#09090b', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#fff', fontFamily: 'sans-serif' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+          <svg width="60" height="40" viewBox="0 0 100 80" fill="none">
+            <path d="M 10 70 L 10 20 L 30 50 L 50 20 L 50 70" stroke="#9CA3AF" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M 35 70 L 35 20 L 55 50 L 75 20 L 75 70" stroke="#FF6B00" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span style={{ fontSize: '36px', fontWeight: 'bold' }}>MM</span>
         </div>
+        <p style={{ marginTop: '16px', color: '#71717a', fontSize: '14px', textAlign: 'center' }}>Cargando Centro de Control...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-zinc-900 border-r border-zinc-800 transition-all duration-300 flex flex-col justify-between p-4 z-20`}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#09090b', color: '#f4f4f5', fontFamily: 'sans-serif', overflow: 'hidden' }}>
+      
+      {/* SIDEBAR */}
+      <aside style={{ width: sidebarOpen ? '240px' : '70px', backgroundColor: '#18181b', borderRight: '1px solid #27272a', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', transition: 'all 0.2s' }}>
         <div>
-          <div className="flex items-center justify-between mb-8">
-            {sidebarOpen ? <LogoMM size="small" /> : <div className="font-bold text-orange-500 text-xl">MM</div>}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+            {sidebarOpen && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="40" height="25" viewBox="0 0 100 80" fill="none">
+                  <path d="M 10 70 L 10 20 L 30 50 L 50 20 L 50 70" stroke="#9CA3AF" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M 35 70 L 35 20 L 55 50 L 75 20 L 75 70" stroke="#FF6B00" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>MM</span>
+              </div>
+            )}
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ backgroundColor: '#27272a', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer' }}>
               {sidebarOpen ? '◀' : '▶'}
             </button>
           </div>
 
-          <nav className="space-y-1.5">
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {[
               { id: 'dashboard', label: 'Dashboard', icon: '📊' },
               { id: 'agenda', label: 'Agenda', icon: '📅' },
@@ -127,147 +139,129 @@ export default function AppCore() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${activeTab === tab.id ? 'bg-orange-600/20 text-orange-500 border border-orange-500/30' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'}`}
+                style={{
+                  textAlign: 'left',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  backgroundColor: activeTab === tab.id ? '#27272a' : 'transparent',
+                  color: activeTab === tab.id ? '#ff6b00' : '#a1a1aa'
+                }}
               >
-                <span className="text-lg">{tab.icon}</span>
-                {sidebarOpen && <span>{tab.label}</span>}
+                {tab.icon} {sidebarOpen && tab.label}
               </button>
             ))}
           </nav>
         </div>
-        
+
         {sidebarOpen && (
-          <div className="border-t border-zinc-800 pt-3 text-xs text-zinc-500">
+          <div style={{ borderTop: '1px solid #27272a', paddingTop: '12px', fontSize: '12px', color: '#71717a' }}>
             Estudio MM • Gestión Jurídica
           </div>
         )}
       </aside>
 
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-zinc-900/60 border-b border-zinc-800 px-6 flex items-center justify-between relative z-10 backdrop-blur">
-          <div className="relative w-96">
-            <input
-              type="text"
-              placeholder="Buscar cliente, causa..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-700 text-sm rounded-lg pl-9 pr-4 py-1.5 text-zinc-200 focus:outline-none focus:border-orange-500"
-            />
-            <span className="absolute left-3 top-2 text-zinc-500 text-xs">🔍</span>
-          </div>
-
-          <div className="flex items-center gap-4 text-xs">
-            <span className="bg-orange-500/10 text-orange-400 px-2.5 py-1 rounded-full border border-orange-500/20 font-medium">
-              Río Cuarto, Argentina
-            </span>
-            <div className="w-8 h-8 rounded-full bg-orange-600 text-black font-bold flex items-center justify-center">
-              MM
-            </div>
+      {/* CONTENIDO PRINCIPAL */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+        <header style={{ height: '64px', backgroundColor: '#18181b', borderBottom: '1px solid #27272a', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <input
+            type="text"
+            placeholder="Buscar cliente, causa..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '320px', backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px 12px', borderRadius: '6px', fontSize: '14px' }}
+          />
+          <div style={{ fontSize: '12px', color: '#ff6b00', fontWeight: 'bold' }}>
+            Río Cuarto, Argentina
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 bg-zinc-950">
+        <main style={{ flex: 1, padding: '24px', backgroundColor: '#09090b', overflowY: 'auto' }}>
           {activeTab === 'dashboard' && (
-            <div className="space-y-6 max-w-7xl mx-auto">
-              <div>
-                <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Bienvenido</h1>
-                <p className="text-zinc-400 text-sm mt-1">Centro de Control - Estudio MM</p>
-              </div>
+            <div style={{ maxWidth: '900px' }}>
+              <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: 0 }}>Bienvenido</h1>
+              <p style={{ color: '#a1a1aa', fontSize: '14px', marginBottom: '24px' }}>Centro de Control - Estudio MM</p>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
-                  <span className="text-xs text-zinc-400 font-medium">Causas Activas</span>
-                  <p className="text-2xl font-bold text-zinc-100 mt-1">{causasJ.length}</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '16px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Audiencias Hoy</span>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff6b00', margin: '8px 0 0 0' }}>0</p>
                 </div>
-                <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
-                  <span className="text-xs text-zinc-400 font-medium">Clientes Registrados</span>
-                  <p className="text-2xl font-bold text-zinc-100 mt-1">{clientes.length}</p>
+                <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '16px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Causas Activas</span>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff', margin: '8px 0 0 0' }}>{causasJ.length}</p>
+                </div>
+                <div style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '16px', borderRadius: '8px' }}>
+                  <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Clientes Registrados</span>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#fff', margin: '8px 0 0 0' }}>{clientes.length}</p>
                 </div>
               </div>
             </div>
           )}
 
           {activeTab === 'agenda' && (
-            <div className="space-y-6 max-w-5xl mx-auto">
-              <div className="border-b border-zinc-800 pb-4">
-                <h1 className="text-2xl font-bold">Agenda y Vencimientos</h1>
-              </div>
-
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 space-y-4">
-                <h3 className="font-bold text-sm text-zinc-200">Agendar Evento Directo</h3>
-                <form 
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const fd = new FormData(e.target);
-                    sincronizarGoogleCalendar(fd.get('titulo'), fd.get('fecha'), fd.get('hora'), fd.get('detalle'));
-                  }}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input name="titulo" required placeholder="Asunto / Audiencia" className="bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                    <input name="fecha" type="date" required className="bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                    <input name="hora" type="time" defaultValue="09:00" className="bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                    <input name="detalle" placeholder="Observaciones" className="bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                  </div>
-                  <button type="submit" className="w-full bg-orange-600 hover:bg-orange-500 text-black font-bold p-2.5 rounded text-xs transition">
-                    📅 Guardar y Sincronizar en Google Calendar
-                  </button>
-                </form>
-              </div>
+            <div style={{ maxWidth: '700px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Agenda y Vencimientos</h1>
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const fd = new FormData(e.target);
+                  sincronizarGoogleCalendar(fd.get('titulo'), fd.get('fecha'), fd.get('hora'), fd.get('detalle'));
+                }}
+                style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '20px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}
+              >
+                <h3 style={{ margin: 0, fontSize: '16px' }}>Agendar Evento Directo</h3>
+                <input name="titulo" required placeholder="Asunto / Audiencia" style={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <input name="fecha" type="date" required style={{ flex: 1, backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                  <input name="hora" type="time" defaultValue="09:00" style={{ flex: 1, backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                </div>
+                <input name="detalle" placeholder="Observaciones" style={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                <button type="submit" style={{ backgroundColor: '#ff6b00', color: '#000', fontWeight: 'bold', padding: '10px', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '8px' }}>
+                  📅 Guardar y Sincronizar en Google Calendar
+                </button>
+              </form>
             </div>
           )}
 
           {activeTab === 'clientes' && (
-            <div className="space-y-6 max-w-6xl mx-auto">
-              <div className="border-b border-zinc-800 pb-4">
-                <h1 className="text-2xl font-bold">Gestión de Clientes</h1>
-              </div>
+            <div style={{ maxWidth: '800px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Gestión de Clientes</h1>
+              <form onSubmit={handleGuardarCliente} style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                <input placeholder="Nombre / Razón Social" required value={formNuevoCliente.nombre_razon_social} onChange={e => setFormNuevoCliente({...formNuevoCliente, nombre_razon_social: e.target.value})} style={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                <input placeholder="DNI / CUIT" required value={formNuevoCliente.dni_cuit} onChange={e => setFormNuevoCliente({...formNuevoCliente, dni_cuit: e.target.value})} style={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                <button type="submit" style={{ backgroundColor: '#fff', color: '#000', fontWeight: 'bold', padding: '8px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Guardar Cliente</button>
+              </form>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <form onSubmit={handleGuardarCliente} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
-                  <h3 className="font-bold text-sm text-orange-500">Nuevo Cliente</h3>
-                  <input placeholder="Nombre / Razón Social" required value={formNuevoCliente.nombre_razon_social} onChange={e => setFormNuevoCliente({...formNuevoCliente, nombre_razon_social: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                  <input placeholder="DNI / CUIT" required value={formNuevoCliente.dni_cuit} onChange={e => setFormNuevoCliente({...formNuevoCliente, dni_cuit: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                  <input placeholder="Teléfono" value={formNuevoCliente.telefono} onChange={e => setFormNuevoCliente({...formNuevoCliente, telefono: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                  <button type="submit" className="w-full bg-zinc-100 hover:bg-white text-black font-bold p-2 rounded text-xs">Guardar Cliente</button>
-                </form>
-
-                <div className="lg:col-span-2 space-y-2">
-                  {clientes.map(c => (
-                    <div key={c.id} className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl flex justify-between items-center">
-                      <div>
-                        <p className="font-bold text-sm text-zinc-100">{c.nombre_razon_social}</p>
-                        <p className="text-xs text-zinc-500">CUIT/DNI: {c.dni_cuit}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {clientes.map(c => (
+                  <div key={c.id} style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '12px', borderRadius: '6px' }}>
+                    <p style={{ margin: 0, fontWeight: 'bold' }}>{c.nombre_razon_social}</p>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#a1a1aa' }}>CUIT/DNI: {c.dni_cuit}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           {activeTab === 'causas_j' && (
-            <div className="space-y-6 max-w-6xl mx-auto">
-              <div className="border-b border-zinc-800 pb-4">
-                <h1 className="text-2xl font-bold">Causas Judiciales</h1>
-              </div>
+            <div style={{ maxWidth: '800px' }}>
+              <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>Causas Judiciales</h1>
+              <form onSubmit={handleGuardarCausa} style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '16px', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                <input placeholder="N° Expediente" required value={formNuevaCausa.numero_expediente} onChange={e => setFormNuevaCausa({...formNuevaCausa, numero_expediente: e.target.value})} style={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                <input placeholder="Carátula" required value={formNuevaCausa.caratula} onChange={e => setFormNuevaCausa({...formNuevaCausa, caratula: e.target.value})} style={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', color: '#fff', padding: '8px', borderRadius: '4px' }} />
+                <button type="submit" style={{ backgroundColor: '#ff6b00', color: '#000', fontWeight: 'bold', padding: '8px', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cargar Causa</button>
+              </form>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <form onSubmit={handleGuardarCausa} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
-                  <h3 className="font-bold text-sm text-orange-500">Nueva Causa Judicial</h3>
-                  <input placeholder="N° Expediente" required value={formNuevaCausa.numero_expediente} onChange={e => setFormNuevaCausa({...formNuevaCausa, numero_expediente: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                  <input placeholder="Carátula" required value={formNuevaCausa.caratula} onChange={e => setFormNuevaCausa({...formNuevaCausa, caratula: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rounded text-xs text-white" />
-                  <button type="submit" className="w-full bg-orange-600 text-black font-bold p-2 rounded text-xs">Cargar Causa</button>
-                </form>
-
-                <div className="lg:col-span-2 space-y-2">
-                  {causasJ.map(cj => (
-                    <div key={cj.id} className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
-                      <p className="text-sm font-bold text-zinc-100">{cj.caratula}</p>
-                      <p className="text-xs text-zinc-500">Expte: {cj.numero_expediente}</p>
-                    </div>
-                  ))}
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {causasJ.map(cj => (
+                  <div key={cj.id} style={{ backgroundColor: '#18181b', border: '1px solid #27272a', padding: '12px', borderRadius: '6px' }}>
+                    <p style={{ margin: 0, fontWeight: 'bold' }}>{cj.caratula}</p>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#a1a1aa' }}>Expte: {cj.numero_expediente}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
