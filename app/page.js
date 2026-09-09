@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://uiaicluwzdhvobmghwhj.supabase.co';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+// Cliente oficial de Supabase para sincronización robusta
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export default function Home() {
   // CONFIGURACIÓN DEL FAVICON CON LOGO MM
@@ -84,120 +88,82 @@ export default function Home() {
   const [hearings, setHearings] = useState([]);
   const [tasks, setTasks] = useState([]);
 
-  const isSyncingFromCloud = useRef(false);
-
-  // CARGA INICIAL Y SINCRONIZACIÓN
-  useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        const c = localStorage.getItem('lex_cases'); if (c) setCases(JSON.parse(c));
-        const cl = localStorage.getItem('lex_clients'); if (cl) setClients(JSON.parse(cl));
-        const m = localStorage.getItem('lex_movements'); if (m) setMovements(JSON.parse(m));
-        const d = localStorage.getItem('lex_deadlines'); if (d) setDeadlines(JSON.parse(d));
-        const h = localStorage.getItem('lex_hearings'); if (h) setHearings(JSON.parse(h));
-        const t = localStorage.getItem('lex_tasks'); if (t) setTasks(JSON.parse(t));
-        const e = localStorage.getItem('lex_emails'); if (e) setTeamEmails(JSON.parse(e));
-      } catch (err) { console.error(err); }
-
-      if (!SUPABASE_ANON_KEY) return;
-      try {
-        isSyncingFromCloud.current = true;
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/estudio_data?select=*`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+  // CARGA Y SINCRONIZACIÓN OFICIAL CON SUPABASE
+  const loadDataFromCloud = async () => {
+    try {
+      const { data, error } = await supabase.from('estudio_data').select('*');
+      if (error) {
+        console.error('Error al leer de Supabase:', error);
+        return;
+      }
+      if (data && Array.isArray(data)) {
+        data.forEach(item => {
+          if (item.value) {
+            if (item.key === 'lex_cases') setCases(item.value);
+            if (item.key === 'lex_clients') setClients(item.value);
+            if (item.key === 'lex_movements') setMovements(item.value);
+            if (item.key === 'lex_deadlines') setDeadlines(item.value);
+            if (item.key === 'lex_hearings') setHearings(item.value);
+            if (item.key === 'lex_tasks') setTasks(item.value);
+            if (item.key === 'lex_emails') setTeamEmails(item.value);
           }
         });
-        const data = await res.json();
-        if (data && Array.isArray(data)) {
-          data.forEach(item => {
-            if (item.value) {
-              if (item.key === 'lex_cases') { setCases(item.value); localStorage.setItem('lex_cases', JSON.stringify(item.value)); }
-              if (item.key === 'lex_clients') { setClients(item.value); localStorage.setItem('lex_clients', JSON.stringify(item.value)); }
-              if (item.key === 'lex_movements') { setMovements(item.value); localStorage.setItem('lex_movements', JSON.stringify(item.value)); }
-              if (item.key === 'lex_deadlines') { setDeadlines(item.value); localStorage.setItem('lex_deadlines', JSON.stringify(item.value)); }
-              if (item.key === 'lex_hearings') { setHearings(item.value); localStorage.setItem('lex_hearings', JSON.stringify(item.value)); }
-              if (item.key === 'lex_tasks') { setTasks(item.value); localStorage.setItem('lex_tasks', JSON.stringify(item.value)); }
-              if (item.key === 'lex_emails') { setTeamEmails(item.value); localStorage.setItem('lex_emails', JSON.stringify(item.value)); }
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Error al conectar con la nube:', err);
-      } finally {
-        isSyncingFromCloud.current = false;
       }
-    };
+    } catch (err) {
+      console.error('Excepción al cargar datos:', err);
+    }
+  };
 
-    loadInitialData();
-
-    // Sondeo periódico para mantener la PC y el celular sincronizados en tiempo real
-    const interval = setInterval(async () => {
-      if (!SUPABASE_ANON_KEY) return;
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/estudio_data?select=*`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        });
-        const data = await res.json();
-        if (data && Array.isArray(data)) {
-          isSyncingFromCloud.current = true;
-          data.forEach(item => {
-            if (item.value) {
-              if (item.key === 'lex_cases') { setCases(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_cases', JSON.stringify(item.value)); return item.value; } return prev; }); }
-              if (item.key === 'lex_clients') { setClients(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_clients', JSON.stringify(item.value)); return item.value; } return prev; }); }
-              if (item.key === 'lex_movements') { setMovements(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_movements', JSON.stringify(item.value)); return item.value; } return prev; }); }
-              if (item.key === 'lex_deadlines') { setDeadlines(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_deadlines', JSON.stringify(item.value)); return item.value; } return prev; }); }
-              if (item.key === 'lex_hearings') { setHearings(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_hearings', JSON.stringify(item.value)); return item.value; } return prev; }); }
-              if (item.key === 'lex_tasks') { setTasks(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_tasks', JSON.stringify(item.value)); return item.value; } return prev; }); }
-              if (item.key === 'lex_emails') { setTeamEmails(prev => { if(JSON.stringify(prev) !== JSON.stringify(item.value)) { localStorage.setItem('lex_emails', JSON.stringify(item.value)); return item.value; } return prev; }); }
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Error en sondeo de sincronización:', err);
-      } finally {
-        isSyncingFromCloud.current = false;
-      }
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const saveToCloudAndLocal = async (key, value) => {
-    if (isSyncingFromCloud.current) return;
+  const saveDataToCloud = async (key, value) => {
+    // Respaldo local inmediato
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
       console.error(e);
     }
 
-    if (!SUPABASE_ANON_KEY) return;
+    // Guardado oficial en Supabase
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/estudio_data`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify({ key, value })
-      });
-    } catch (e) {
-      console.error('Error guardando en la nube:', e);
+      const { error } = await supabase
+        .from('estudio_data')
+        .upsert({ key, value }, { onConflict: 'key' });
+      if (error) {
+        console.error('Error al guardar en Supabase:', error);
+      }
+    } catch (err) {
+      console.error('Excepción al guardar:', err);
     }
   };
 
-  const updateCases = (val) => { setCases(val); saveToCloudAndLocal('lex_cases', val); };
-  const updateClients = (val) => { setClients(val); saveToCloudAndLocal('lex_clients', val); };
-  const updateMovements = (val) => { setMovements(val); saveToCloudAndLocal('lex_movements', val); };
-  const updateDeadlines = (val) => { setDeadlines(val); saveToCloudAndLocal('lex_deadlines', val); };
-  const updateHearings = (val) => { setHearings(val); saveToCloudAndLocal('lex_hearings', val); };
-  const updateTasks = (val) => { setTasks(val); saveToCloudAndLocal('lex_tasks', val); };
-  const updateTeamEmails = (val) => { setTeamEmails(val); saveToCloudAndLocal('lex_emails', val); };
+  // Inicialización y sondeo en tiempo real cada 3 segundos
+  useEffect(() => {
+    // Carga local inicial para velocidad
+    try {
+      const c = localStorage.getItem('lex_cases'); if (c) setCases(JSON.parse(c));
+      const cl = localStorage.getItem('lex_clients'); if (cl) setClients(JSON.parse(cl));
+      const m = localStorage.getItem('lex_movements'); if (m) setMovements(JSON.parse(m));
+      const d = localStorage.getItem('lex_deadlines'); if (d) setDeadlines(JSON.parse(d));
+      const h = localStorage.getItem('lex_hearings'); if (h) setHearings(JSON.parse(h));
+      const t = localStorage.getItem('lex_tasks'); if (t) setTasks(JSON.parse(t));
+      const e = localStorage.getItem('lex_emails'); if (e) setTeamEmails(JSON.parse(e));
+    } catch (err) { console.error(err); }
+
+    loadDataFromCloud();
+
+    const interval = setInterval(() => {
+      loadDataFromCloud();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateCases = (val) => { setCases(val); saveDataToCloud('lex_cases', val); };
+  const updateClients = (val) => { setClients(val); saveDataToCloud('lex_clients', val); };
+  const updateMovements = (val) => { setMovements(val); saveDataToCloud('lex_movements', val); };
+  const updateDeadlines = (val) => { setDeadlines(val); saveDataToCloud('lex_deadlines', val); };
+  const updateHearings = (val) => { setHearings(val); saveDataToCloud('lex_hearings', val); };
+  const updateTasks = (val) => { setTasks(val); saveDataToCloud('lex_tasks', val); };
+  const updateTeamEmails = (val) => { setTeamEmails(val); saveDataToCloud('lex_emails', val); };
 
   // FORMULARIOS DE ALTA
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
@@ -207,7 +173,7 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMail: '' });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // HANDLERS
+  // HANDLERS Y ELIMINACIONES
   const toggleHearingStatus = (hearingId) => {
     updateHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
@@ -402,7 +368,7 @@ export default function Home() {
         <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center">
           <div>
             <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
-            <p className="text-[10px] text-emerald-500 font-semibold">● Sincronizado</p>
+            <p className="text-[10px] text-emerald-500 font-semibold">● Sincronizado en Nube</p>
           </div>
           <button 
             onClick={handleLogout}
