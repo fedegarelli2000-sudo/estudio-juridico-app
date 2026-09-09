@@ -1,28 +1,24 @@
-// Actualizacion Vercel MM v3.0 - Icono MM Entrelazado y Borrado de Tareas/Plazos
+// Version MM v4.0 - Icono Integrado y Borrado
 'use client';
 
 import React, { useState, useEffect } from 'react';
 
 export default function Home() {
-  // ICONO DE LA PESTAÑA CON LAS DOS M ENTRELAZADAS (Remplaza la "E" gris)
+  // CONFIGURACIÓN DIRECTA DEL ICONO CON DOS M (Naranja y Gris)
   useEffect(() => {
     const faviconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-        <rect width="100" height="100" rx="22" fill="#09090b"/>
-        <!-- M Gris de Fondo -->
-        <text x="32" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="58" fill="#71717a" letter-spacing="-4">M</text>
-        <!-- M Naranja Entrelazada -->
-        <text x="14" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="58" fill="#f97316" letter-spacing="-4">M</text>
+        <rect width="100" height="100" rx="20" fill="#09090b"/>
+        <text x="10" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="60" fill="#f97316">M</text>
+        <text x="48" y="70" font-family="Arial, sans-serif" font-weight="900" font-size="60" fill="#71717a">M</text>
       </svg>
     `;
     const encodedSvg = encodeURIComponent(faviconSvg);
-    let link = document.querySelector("link[rel*='icon']");
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'shortcut icon';
-      document.getElementsByTagName('head')[0].appendChild(link);
-    }
+    let link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+    link.type = 'image/svg+xml';
+    link.rel = 'shortcut icon';
     link.href = `data:image/svg+xml,${encodedSvg}`;
+    document.getElementsByTagName('head')[0].appendChild(link);
     document.title = "Estudio Jurídico MM";
   }, []);
 
@@ -162,7 +158,7 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMail: '' });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // HANDLERS BORRADO Y ESTADOS
+  // HANDLERS DE BORRADO
   const toggleHearingStatus = (hearingId) => {
     setHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
@@ -667,7 +663,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* PLAZOS PROCESALES CON BOTÓN DE ELIMINAR */}
+              {/* PLAZOS PROCESALES CON BORRADO */}
               {activeTab === 'plazos' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -798,7 +794,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* TAREAS CON OPCIÓN DE BORRADO */}
+              {/* TAREAS CON BORRADO */}
               {activeTab === 'tareas' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
