@@ -1,9 +1,10 @@
+// Actualizacion Vercel MM v2.0 - Version Completa
 'use client';
 
 import React, { useState, useEffect } from 'react';
 
 export default function Home() {
-  // CONFIGURACIÓN DEL FAVICON CON LOGO MM (Remplaza la "E" gris de la pestaña)
+  // ICONO DE LA PESTAÑA CON LAS DOS M (Remplaza la "E" gris)
   useEffect(() => {
     const faviconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -71,7 +72,7 @@ export default function Home() {
     setConfirmPass('');
   };
 
-  // --- NAVEGACIÓN Y ESTADOS INTERACTIVOS ---
+  // --- NAVEGACIÓN Y ESTADOS ---
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCaseId, setSelectedCaseId] = useState(null);
 
@@ -415,4 +416,550 @@ export default function Home() {
                 <div className="space-y-2">
                   {movements.filter(m => m.caseId === selectedCaseId).map(m => (
                     <div key={m.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
-                      <div className="flex justify-between font
+                      <div className="flex justify-between font-bold text-zinc-200">
+                        <span>{m.title}</span>
+                        <span className="text-zinc-500">{m.date}</span>
+                      </div>
+                      {m.text && <p className="text-zinc-400">{m.text}</p>}
+                    </div>
+                  ))}
+                  {movements.filter(m => m.caseId === selectedCaseId).length === 0 && (
+                    <p className="text-xs text-zinc-600">No hay actuaciones registradas para este expediente.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* DASHBOARD CON MARCA DE AGUA MM Y PRIORIDADES */}
+              {activeTab === 'dashboard' && (
+                <div className="space-y-6 relative z-10">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
+                    <span className="text-[280px] font-black text-orange-500 tracking-tighter">M</span>
+                    <span className="text-[280px] font-black text-zinc-400 tracking-tighter">M</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Causas Activas</span>
+                      <h3 className="text-3xl font-black text-white mt-1">{cases.length}</h3>
+                      <p className="text-[10px] text-orange-500 font-semibold mt-1">Expedientes en trámite</p>
+                    </div>
+
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Plazos Pendientes</span>
+                      <h3 className="text-3xl font-black text-orange-500 mt-1">{deadlines.filter(d => d.status === 'PENDIENTE').length}</h3>
+                      <p className="text-[10px] text-zinc-400 mt-1">Con vencimiento procesal</p>
+                    </div>
+
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Tareas Pendientes</span>
+                      <h3 className="text-3xl font-black text-white mt-1">{tasks.filter(t => !t.completed).length}</h3>
+                      <div className="flex gap-2 mt-2 text-[10px] font-bold">
+                        <span className="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">
+                          {tasks.filter(t => !t.completed && t.priority === 'ALTA').length} Altas
+                        </span>
+                        <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30">
+                          {tasks.filter(t => !t.completed && t.priority === 'MEDIA').length} Med
+                        </span>
+                        <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
+                          {tasks.filter(t => !t.completed && t.priority === 'BAJA').length} Bajas
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Audiencias Agendadas</span>
+                      <h3 className="text-3xl font-black text-white mt-1">{hearings.filter(h => h.status === 'PENDIENTE').length}</h3>
+                      <p className="text-[10px] text-orange-400 font-semibold mt-1">Pendientes de celebración</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
+                      <div className="space-y-2">
+                        {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                          <div key={d.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
+                            <div>
+                              <p className="font-bold text-white">{d.title}</p>
+                              <p className="text-[10px] text-zinc-500">Vence: {d.dueDate} ({d.days} días hábiles)</p>
+                            </div>
+                            <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">
+                              PENDIENTE
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Tareas de Mayor Urgencia</h4>
+                      <div className="space-y-2">
+                        {tasks.filter(t => !t.completed).map(t => (
+                          <div key={t.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
+                            <span className="font-bold text-zinc-200">{t.title}</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                              t.priority === 'ALTA' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400'
+                            }`}>
+                              {t.priority}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* EXPEDIENTES / CAUSAS */}
+              {activeTab === 'expedientes' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Nº de Expediente (ej. EXP-1002/2026)" 
+                        value={newCase.number} onChange={e => setNewCase({...newCase, number: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Carátula completa" 
+                        value={newCase.caratula} onChange={e => setNewCase({...newCase, caratula: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Juzgado / Tribunal" 
+                        value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      
+                      <select 
+                        value={newCase.client} 
+                        onChange={e => setNewCase({...newCase, client: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="">Seleccionar Cliente Asociado...</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.name}>{c.name} ({c.role})</option>
+                        ))}
+                      </select>
+
+                      <select 
+                        value={newCase.processType} 
+                        onChange={e => setNewCase({...newCase, processType: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                      >
+                        <option value="JUDICIAL">Tipo de Proceso: CAUSA JUDICIAL</option>
+                        <option value="EXTRAJUDICIAL">Tipo de Proceso: TRÁMITE EXTRAJUDICIAL / MEDIACIÓN</option>
+                      </select>
+                    </div>
+
+                    <textarea 
+                      placeholder="Observaciones o notas manuales sobre el expediente..."
+                      value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                    />
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Expediente
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar y ver sus actuaciones:</p>
+                    {cases.map(c => (
+                      <div 
+                        key={c.id} 
+                        onClick={() => setSelectedCaseId(c.id)}
+                        className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 cursor-pointer hover:border-orange-500 transition-all flex justify-between items-center"
+                      >
+                        <div>
+                          <span className="bg-orange-500/10 text-orange-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                            {c.number}
+                          </span>
+                          <span className="ml-2 text-[10px] font-bold bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
+                            {c.processType || 'JUDICIAL'}
+                          </span>
+                          <h4 className="font-bold text-white text-sm mt-1">{c.caratula}</h4>
+                          <p className="text-xs text-zinc-400">{c.court} • Cliente: {c.client}</p>
+                        </div>
+                        <span className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                          Ingresar al Expediente →
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* MOVIMIENTOS E HISTORIA */}
+              {activeTab === 'movimientos' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Movimiento o Actuación</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <select 
+                        value={newMovement.caseId} onChange={e => setNewMovement({...newMovement, caseId: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="">Seleccionar Expediente Específico...</option>
+                        {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                      </select>
+                      <input 
+                        type="date" value={newMovement.date} onChange={e => setNewMovement({...newMovement, date: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <input 
+                      type="text" placeholder="Título de la actuación (Ej. Cédula / Proveído)" 
+                      value={newMovement.title} onChange={e => setNewMovement({...newMovement, title: e.target.value})}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                    />
+                    <textarea 
+                      placeholder="Transcripción o síntesis de la actuación..."
+                      value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
+                    />
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Movimiento
+                    </button>
+                  </form>
+
+                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Consultar Movimientos por Causa</h4>
+                    <select 
+                      value={selectedCaseId || ''} 
+                      onChange={e => setSelectedCaseId(e.target.value || null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                    >
+                      <option value="">Ver Todos los Movimientos</option>
+                      {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                    </select>
+
+                    <div className="space-y-2 pt-2">
+                      {movements
+                        .filter(m => !selectedCaseId || m.caseId === selectedCaseId)
+                        .map(m => {
+                          const caseInfo = cases.find(c => c.id === m.caseId);
+                          return (
+                            <div key={m.id} className="bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-xs space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-orange-400">{m.title}</span>
+                                <span className="text-zinc-500">{m.date}</span>
+                              </div>
+                              {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number}</p>}
+                              {m.text && <p className="text-zinc-300 mt-1">{m.text}</p>}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PLAZOS PROCESALES E IA */}
+              {activeTab === 'plazos' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Plazo Procesal</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <select 
+                        value={newDeadline.caseId} onChange={e => setNewDeadline({...newDeadline, caseId: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="">Seleccionar Expediente...</option>
+                        {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                      </select>
+                      <input 
+                        type="text" placeholder="Descripción del Plazo (ej. Traslado Demanda)" 
+                        value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="date" value={newDeadline.dueDate} onChange={e => setNewDeadline({...newDeadline, dueDate: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="number" placeholder="Días hábiles (ej. 5)" 
+                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Registrar Plazo
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Pendientes</h4>
+                    {deadlines.map(d => (
+                      <div key={d.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                        <div>
+                          {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
+                          <h4 className="font-bold text-white">{d.title}</h4>
+                          <p className="text-zinc-500">Vencimiento: {d.dueDate} ({d.days} días hábiles)</p>
+                        </div>
+                        <button 
+                          onClick={() => setDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: 'CUMPLIDO'} : x))}
+                          className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500 text-black'}`}
+                        >
+                          {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AUDIENCIAS */}
+              {activeTab === 'audiencias' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Notificar Audiencia</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Título de Audiencia o Reunión" 
+                        value={newHearing.title} onChange={e => setNewHearing({...newHearing, title: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="datetime-local" value={newHearing.date} onChange={e => setNewHearing({...newHearing, date: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Lugar / Juzgado / Enlace Virtual" 
+                        value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <select 
+                        value={newHearing.assignedMail} onChange={e => setNewHearing({...newHearing, assignedMail: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="">Mail a Notificar (Google Calendar)</option>
+                        {teamEmails.filter(m => m !== '').map((m, i) => <option key={i} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400 flex items-center gap-2">
+                      📅 Agendar y Abrir Invitación en Google Calendar
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    {hearings.map(h => (
+                      <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400'}`}>
+                              {h.status === 'REALIZADA' ? '✓ REALIZADA / TOMADA' : 'PENDIENTE'}
+                            </span>
+                            <h4 className={`font-bold text-sm mt-1 ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : 'text-white'}`}>
+                              {h.title}
+                            </h4>
+                          </div>
+                          <span className="text-orange-400 font-bold">{h.date}</span>
+                        </div>
+                        <p className="text-zinc-400">Lugar: {h.location}</p>
+                        
+                        <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                          <button 
+                            onClick={() => toggleHearingStatus(h.id)}
+                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 text-white'}`}
+                          >
+                            {h.status === 'REALIZADA' ? 'Deshacer (Marcar Pendiente)' : '✓ Marcar como Tomada / Realizada'}
+                          </button>
+                          <button 
+                            onClick={() => deleteHearing(h.id)}
+                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                          >
+                            🗑️ Eliminar / Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAREAS */}
+              {activeTab === 'tareas' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Crear Nueva Tarea</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Descripción de la tarea" 
+                        value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                      />
+                      <select 
+                        value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="BAJA">Prioridad BAJA</option>
+                        <option value="MEDIA">Prioridad MEDIA</option>
+                        <option value="ALTA">Prioridad ALTA</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Tarea
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {tasks.map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs">
+                        <div className="flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            checked={t.completed} 
+                            onChange={() => toggleTask(t.id)}
+                            className="w-4 h-4 accent-orange-500 cursor-pointer"
+                          />
+                          <span className={t.completed ? 'line-through text-zinc-500 font-medium' : 'text-zinc-100 font-bold'}>
+                            {t.title}
+                          </span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${t.completed ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}>
+                          {t.completed ? 'CUMPLIDA' : t.priority}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* CLIENTES */}
+              {activeTab === 'clientes' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddClient} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cliente / Contacto</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Nombre completo / Razón Social" 
+                        value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <select 
+                        value={newClient.role} onChange={e => setNewClient({...newClient, role: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="CLIENTE">ROL: CLIENTE</option>
+                        <option value="CONTRAPARTE">ROL: CONTRAPARTE</option>
+                        <option value="TERCERO">ROL: TERCERO / PROFESIONAL</option>
+                      </select>
+                      <input 
+                        type="text" placeholder="CUIT / DNI" 
+                        value={newClient.taxId} onChange={e => setNewClient({...newClient, taxId: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="email" placeholder="Correo Electrónico" 
+                        value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Teléfono / Celular de contacto" 
+                        value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                      <input 
+                        type="text" placeholder="Domicilio / Localidad" 
+                        value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Contacto
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {clients.map(c => (
+                      <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-white text-sm">{c.name}</h4>
+                            <span className="bg-zinc-800 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">{c.role}</span>
+                          </div>
+                          <p className="text-zinc-400 mt-1">
+                            {c.taxId && `DNI/CUIT: ${c.taxId} • `}
+                            {c.phone && `Tel: ${c.phone} • `}
+                            {c.email && `Mail: ${c.email}`}
+                          </p>
+                          {c.address && <p className="text-zinc-500 text-[10px]">📍 {c.address}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* CONFIGURACIÓN */}
+              {activeTab === 'configuracion' && (
+                <div className="space-y-6 relative z-10">
+                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
+                    <p className="text-xs text-zinc-400">Podés registrar hasta 6 casillas de correo para asignarles eventos y audiencias:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {[0, 1, 2, 3, 4, 5].map((index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <span className="text-zinc-500 font-bold w-14">Mail {index + 1}:</span>
+                          <input 
+                            type="email" 
+                            placeholder={`ejemplo${index + 1}@estudio.com`}
+                            value={teamEmails[index] || ''}
+                            onChange={(e) => {
+                              const updated = [...teamEmails];
+                              updated[index] = e.target.value;
+                              setTeamEmails(updated);
+                            }}
+                            className="flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">Cambiar Contraseña de Acceso al Estudio</h3>
+                    <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
+                      <div>
+                        <label className="text-zinc-400 block mb-1">Nueva Contraseña:</label>
+                        <input 
+                          type="password" 
+                          placeholder="••••••••••••"
+                          value={newPass}
+                          onChange={(e) => setNewPass(e.target.value)}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 block mb-1">Confirmar Nueva Contraseña:</label>
+                        <input 
+                          type="password" 
+                          placeholder="••••••••••••"
+                          value={confirmPass}
+                          onChange={(e) => setConfirmPass(e.target.value)}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        />
+                      </div>
+
+                      {passMessage && (
+                        <p className="text-xs font-bold p-2 rounded bg-zinc-950 border border-zinc-800 text-zinc-300">{passMessage}</p>
+                      )}
+
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs transition-colors">
+                        Guardar Nueva Contraseña
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+        </main>
+      </div>
+    </div>
+  );
+}
