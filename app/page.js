@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
-import { 
-  LayoutDashboard, FolderBriefcase, Users, AlertTriangle, Calendar, 
-  FileText, DollarSign, Search, Bell, Sparkles, Check, X, Plus, 
-  Clock, ShieldAlert, ArrowUpRight, CheckSquare, ChevronRight, FileCode
-} from 'lucide-react';
+'use client';
 
-export default function App() {
+import React, { useState } from 'react';
+
+export default function Home() {
   // Estado de navegación activa entre módulos
   const [activeModule, setActiveModule] = useState('dashboard');
   
@@ -16,7 +13,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Estado para la generación automática de documentos con variables
-  const [selectedCaseForTemplate, setSelectedCaseForTemplate] = useState('EXP-9821/2026');
   const [generatedDocument, setGeneratedDocument] = useState('');
 
   // Datos del expediente seleccionado
@@ -51,12 +47,12 @@ Río Cuarto, 9 de Septiembre de 2026.`;
   return (
     <div className="flex h-screen bg-slate-100 font-sans text-slate-800 overflow-hidden">
       
-      {/* 1. BARRA NAVEGACIÓN LATERAL (MENU PRINCIPAL) */}
+      {/* 1. BARRA NAVEGACIÓN LATERAL (MENÚ PRINCIPAL) */}
       <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0">
         <div>
           <div className="p-5 border-b border-slate-800 flex items-center gap-3">
             <div className="p-2 bg-indigo-600 rounded-lg text-white font-bold text-lg">
-              <ScaleIcon />
+              ⚖️
             </div>
             <div>
               <h1 className="font-bold text-white text-base leading-tight">LexSystem</h1>
@@ -66,15 +62,14 @@ Río Cuarto, 9 de Septiembre de 2026.`;
 
           <nav className="p-3 space-y-1">
             {[
-              { id: 'dashboard', label: 'Dashboard General', icon: LayoutDashboard },
-              { id: 'expedientes', label: 'Expedientes / Casos', icon: FolderBriefcase },
-              { id: 'clientes', label: 'Clientes y Contactos', icon: Users },
-              { id: 'plazos', label: 'Plazos e IA', icon: AlertTriangle, badge: plazoEstado === 'PENDIENTE' ? '1' : null },
-              { id: 'calendario', label: 'Calendario y Audiencias', icon: Calendar },
-              { id: 'plantillas', label: 'Plantillas y Documentos', icon: FileText },
-              { id: 'finanzas', label: 'Finanzas y Honorarios', icon: DollarSign },
+              { id: 'dashboard', label: 'Dashboard General', icon: '📊' },
+              { id: 'expedientes', label: 'Expedientes / Casos', icon: '📁' },
+              { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
+              { id: 'plazos', label: 'Plazos e IA', icon: '⚠️', badge: plazoEstado === 'PENDIENTE' ? '1' : null },
+              { id: 'calendario', label: 'Calendario y Audiencias', icon: '📅' },
+              { id: 'plantillas', label: 'Plantillas y Documentos', icon: '📄' },
+              { id: 'finanzas', label: 'Finanzas y Honorarios', icon: '💰' },
             ].map((item) => {
-              const Icon = item.icon;
               const isActive = activeModule === item.id;
               return (
                 <button
@@ -87,7 +82,7 @@ Río Cuarto, 9 de Septiembre de 2026.`;
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-4 h-4" />
+                    <span className="text-base">{item.icon}</span>
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
@@ -113,19 +108,18 @@ Río Cuarto, 9 de Septiembre de 2026.`;
         {/* BARRA SUPERIOR (BUSCADOR GLOBAL Y NOTIFICACIONES) */}
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
           <div className="relative w-96">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Búsqueda global (Expediente, Cliente, DNI, Juzgado)..." 
+              placeholder="🔍 Búsqueda global (Expediente, Cliente, DNI, Juzgado)..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 bg-slate-100 rounded-lg text-sm border-transparent focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+              className="w-full px-4 py-1.5 bg-slate-100 rounded-lg text-sm border-transparent focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
             />
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
-              <Bell className="w-5 h-5" />
+            <button className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg text-lg">
+              🔔
               {plazoEstado === 'PENDIENTE' && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full"></span>
               )}
@@ -178,14 +172,14 @@ Río Cuarto, 9 de Septiembre de 2026.`;
                 <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2 text-amber-900 font-bold">
-                      <Sparkles className="w-5 h-5 text-amber-600" />
+                      <span>✨</span>
                       <span>Alerta de IA: Nuevo Plazo Detectado</span>
                     </div>
                     <button 
                       onClick={() => setActiveModule('plazos')}
                       className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
                     >
-                      Ver en Módulo de Plazos <ChevronRight className="w-3 h-3" />
+                      Ver en Módulo de Plazos ➔
                     </button>
                   </div>
                   <p className="text-xs text-slate-700">
@@ -258,7 +252,7 @@ Río Cuarto, 9 de Septiembre de 2026.`;
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-bold text-slate-900">Base de Clientes y Contactos</h2>
                 <button className="bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1">
-                  <Plus className="w-4 h-4" /> Nuevo Cliente
+                  + Nuevo Cliente
                 </button>
               </div>
 
@@ -302,7 +296,7 @@ Río Cuarto, 9 de Septiembre de 2026.`;
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
                       <span className="bg-amber-200 text-amber-900 text-[10px] font-extrabold px-2 py-0.5 rounded">
-                        REVISION REQUERIDA POR EL ABOGADO
+                        REVISIÓN REQUERIDA POR EL ABOGADO
                       </span>
                       <h3 className="text-base font-bold text-slate-900">Traslado de Contestación de Demanda</h3>
                       <p className="text-xs text-slate-600">
@@ -320,13 +314,13 @@ Río Cuarto, 9 de Septiembre de 2026.`;
                         onClick={() => setPlazoEstado('CONFIRMADO')}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1"
                       >
-                        <Check className="w-4 h-4" /> Confirmar Plazo
+                        ✓ Confirmar Plazo
                       </button>
                       <button 
                         onClick={() => setPlazoEstado('RECHAZADO')}
                         className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1"
                       >
-                        <X className="w-4 h-4" /> Rechazar
+                        ✕ Rechazar
                       </button>
                     </div>
                   </div>
@@ -364,7 +358,7 @@ Río Cuarto, 9 de Septiembre de 2026.`;
                     onClick={handleGenerateDocument}
                     className="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2"
                   >
-                    <Sparkles className="w-4 h-4" /> Generar Escrito Automático para {caseData.caseNumber}
+                    ✨ Generar Escrito Automático para {caseData.caseNumber}
                   </button>
                 </div>
 
@@ -400,14 +394,5 @@ Río Cuarto, 9 de Septiembre de 2026.`;
         </main>
       </div>
     </div>
-  );
-}
-
-// Icono decorativo de balanza legal
-function ScaleIcon() {
-  return (
-    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-      <path d="M12 2L3 9h3v10h12V9h3L12 2zm0 3.8L16.2 9H7.8L12 5.8zM8 17v-6h8v6H8z"/>
-    </svg>
   );
 }
