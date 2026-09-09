@@ -1,8 +1,6 @@
-import './globals.css';
-
 export const metadata = {
   title: 'Estudio MM',
-  description: 'Sistema de gestión para estudio jurídico',
+  description: 'Sistema de gestión de causas y agenda',
 };
 
 export default function RootLayout({ children }) {
