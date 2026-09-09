@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import LogoSWM from '../components/LogoSWM';
+import LogoMM from '../components/LogoSWM';
 import { supabase } from '../lib/supabase';
 
 export default function AppCore() {
@@ -126,7 +126,7 @@ export default function AppCore() {
   if (splash) {
     return (
       <div className="h-screen w-screen bg-zinc-950 flex flex-col justify-center items-center">
-        <LogoSWM size="large" className="animate-pulse" />
+        <LogoMM size="large" className="animate-pulse" />
         <div className="mt-8 text-zinc-500 text-sm tracking-widest animate-bounce">
           Cargando Centro de Control...
         </div>
@@ -141,7 +141,7 @@ export default function AppCore() {
       <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-zinc-900 border-r border-zinc-800 transition-all duration-300 flex flex-col justify-between p-4 z-20`}>
         <div>
           <div className="flex items-center justify-between mb-8">
-            {sidebarOpen ? <LogoSWM size="small" /> : <div className="font-bold text-orange-500 text-xl">M</div>}
+            {sidebarOpen ? <LogoMM size="small" /> : <div className="font-bold text-orange-500 text-xl">MM</div>}
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300">
               {sidebarOpen ? '◀' : '▶'}
             </button>
@@ -171,7 +171,7 @@ export default function AppCore() {
         
         {sidebarOpen && (
           <div className="border-t border-zinc-800 pt-3 text-xs text-zinc-500">
-            SWM v2.4 • Federico Garelli
+            Estudio MM • Gestión Jurídica
           </div>
         )}
       </aside>
@@ -219,7 +219,7 @@ export default function AppCore() {
               Río Cuarto, Argentina
             </span>
             <div className="w-8 h-8 rounded-full bg-orange-600 text-black font-bold flex items-center justify-center">
-              FG
+              MM
             </div>
           </div>
         </header>
@@ -232,7 +232,7 @@ export default function AppCore() {
             <div className="space-y-6 max-w-7xl mx-auto">
               <div>
                 <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Bienvenido</h1>
-                <p className="text-zinc-400 text-sm mt-1">Centro de Control de Actividad Profesional - SWM</p>
+                <p className="text-zinc-400 text-sm mt-1">Centro de Control de Actividad Profesional - Estudio MM</p>
               </div>
 
               {/* METRICAS RÁPIDAS */}
@@ -386,4 +386,4 @@ export default function AppCore() {
                 {/* ALTA CLIENTE */}
                 <form onSubmit={handleGuardarCliente} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                   <h3 className="font-bold text-sm text-orange-500">Nuevo Cliente</h3>
-                  <input placeholder="Nombre / Razón Social" required value={formNuevoCliente.nombre_razon_social} onChange={e => setFormNuevoCliente({...formNuevoCliente, nombre_razon_social: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rounded te
+                  <input placeholder="Nombre / Razón Social" required value={formNuevoCliente.nombre_razon_social} onChange={e => setFormNuevoCliente({...formNuevoCliente, nombre_razon_social: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 p-2 rou
