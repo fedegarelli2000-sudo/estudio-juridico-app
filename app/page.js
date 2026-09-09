@@ -1,52 +1,60 @@
-// app/page.js
 'use client';
 import { useState, useEffect } from 'react';
-// Importamos la conexión que creamos en el Paso 1
 import { supabase } from '../lib/supabase';
 
 export default function Home() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('inicio');
   const [saludo, setSaludo] = useState('');
   const [fechaActual, setFechaActual] = useState('');
 
-  // Estados remotos (datos que vienen de Supabase)
+  // Estados remotos de Supabase
   const [clientes, setClientes] = useState([]);
   const [expedientes, setExpedientes] = useState([]);
   const [eventos, setEventos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados de los Formularios (lo que escribes)
+  // Equipo y Mails de notificación
+  const [equipoMails, setEquipoMails] = useState([
+    'colega1@estudiomm.com',
+    'estudiojuridicomm@gmail.com'
+  ]);
+  const [nuevoMail, setNuevoMail] = useState('');
+
+  // Calculadora de plazos
+  const [calcFechaInicio, setCalcFechaInicio] = useState('');
+  const [calcDias, setCalcDias] = useState(3);
+  const [calcResultado, setCalcResultado] = useState(null);
+
+  // Formularios
   const [clienteForm, setClienteForm] = useState({ nombre: '', dni: '', telefono: '', email: '' });
-  const [expedienteForm, setExpedienteForm] = useState({ carátula: '', numero: '', tipo_causa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', abogado_asignado: '' });
-  const [eventoForm, setEventoForm] = useState({ titulo: '', tipo: 'Audiencia', fecha: '2026-09-09', hora: '10:00', mail_destino: '' });
+  const [expedienteForm, setExpedienteForm] = useState({ caratula: '', numero: '', tipo_causa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', abogado_asignado: '' });
+  const [eventoForm, setEventoForm] = useState({ titulo: '', tipo: 'Audiencia', fecha: '', hora: '10:00', mail_destino: '' });
 
-  // 1. Carga inicial: Saludo, fecha y datos de la base de datos
+  // Saludo por hora exacta y carga de datos
   useEffect(() => {
-    // Saludo según la hora
     const hora = new Date().getHours();
-    if (hora >= 6 && hora < 12) setSaludo('Good morning! / ¡Buenos días!');
-    else if (hora >= 12 && hora < 20) setSaludo('¡Buenas tardes!');
-    else setSaludo('¡Buenas noches!');
+    if (hora >= 6 && hora < 12) {
+      setSaludo('¡Buenos días!');
+    } else if (hora >= 12 && hora < 20) {
+      setSaludo('¡Buenas tardes!');
+    } else {
+      setSaludo('¡Buenas noches!');
+    }
 
-    // Fecha actual formateada
     const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     setFechaActual(new Date().toLocaleDateString('es-AR', opciones));
 
-    // Cargar datos de Supabase
     fetchData();
   }, []);
 
-  // Función para traer datos desde Supabase
   const fetchData = async () => {
     setLoading(true);
-    // Verificamos si la conexión está lista
     if (!supabase) {
-      console.error('Supabase client not initialized.');
       setLoading(false);
       return;
     }
 
-    // Traemos datos de las 3 tablas
     const { data: dataClientes } = await supabase.from('clientes').select('*').order('created_at', { ascending: false });
     const { data: dataExpedientes } = await supabase.from('expedientes').select('*').order('created_at', { ascending: false });
     const { data: dataEventos } = await supabase.from('eventos').select('*').order('created_at', { ascending: false });
@@ -57,28 +65,27 @@ export default function Home() {
     setLoading(false);
   };
 
-  // 2. Funciones para GUARDAR en Supabase
+  // Guardar en Supabase
   const addCliente = async (e) => {
     e.preventDefault();
     if (!clienteForm.nombre || !clienteForm.dni) return;
     const { data, error } = await supabase.from('clientes').insert([clienteForm]).select();
     if (!error && data) {
-      setClientes([data[0], ...clientes]); // Actualiza la lista sin recargar
-      setClienteForm({ nombre: '', dni: '', telefono: '', email: '' }); // Limpia formulario
-    } else if (error) console.error('Error guardando cliente:', error);
+      setClientes([data[0], ...clientes]);
+      setClienteForm({ nombre: '', dni: '', telefono: '', email: '' });
+    }
   };
 
   const addExpediente = async (e) => {
     e.preventDefault();
-    if (!expedienteForm.carátula) return;
-    // Asignamos el tipo de causa según la pestaña activa (Judicial o Rentas)
+    if (!expedienteForm.caratula) return;
     const tipoFinal = activeTab === 'rentas' ? 'Extrajudicial' : 'Judicial';
     const finalForm = { ...expedienteForm, tipo_causa: tipoFinal };
     const { data, error } = await supabase.from('expedientes').insert([finalForm]).select();
     if (!error && data) {
       setExpedientes([data[0], ...expedientes]);
-      setExpedienteForm({ carátula: '', numero: '', tipo_causa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', abogado_asignado: '' });
-    } else if (error) console.error('Error guardando expediente:', error);
+      setExpedienteForm({ caratula: '', numero: '', tipo_causa: 'Judicial', fuero: 'Civil y Comercial', juzgado: '', abogado_asignado: '' });
+    }
   };
 
   const addEvento = async (e) => {
@@ -87,74 +94,132 @@ export default function Home() {
     const { data, error } = await supabase.from('eventos').insert([eventoForm]).select();
     if (!error && data) {
       setEventos([data[0], ...eventos]);
-      setEventoForm({ titulo: '', tipo: 'Audiencia', fecha: '2026-09-09', hora: '10:00', mail_destino: '' });
-    } else if (error) console.error('Error guardando evento:', error);
+      setEventoForm({ titulo: '', tipo: 'Audiencia', fecha: '', hora: '10:00', mail_destino: '' });
+    }
   };
 
-  // Colores para el calendario estilo Yúdico
+  const addMailEquipo = (e) => {
+    e.preventDefault();
+    if (!nuevoMail || equipoMails.includes(nuevoMail)) return;
+    setEquipoMails([...equipoMails, nuevoMail]);
+    setNuevoMail('');
+  };
+
+  // Lógica para calculadora de días hábiles procesales
+  const calcularPlazo = (e) => {
+    e.preventDefault();
+    if (!calcFechaInicio) return;
+    let fecha = new Date(calcFechaInicio);
+    let diasAgregados = 0;
+    while (diasAgregados < parseInt(calcDias)) {
+      fecha.setDate(fecha.getDate() + 1);
+      const diaSemana = fecha.getDay();
+      if (diaSemana !== 0 && diaSemana !== 6) { // Omite sábados (6) y domingos (0)
+        diasAgregados++;
+      }
+    }
+    setCalcResultado(fecha.toLocaleDateString('es-AR'));
+  };
+
   const tipoColors = {
-    Plazo: '#3b82f6', // Azul
-    Tarea: '#10b981', // Verde
-    Audiencia: '#ef4444', // Rojo
-    Cita: '#06b6d4', // Cian
-    Vencimiento: '#f59e0b', // Naranja
-    Cuota: '#8b5cf6' // Violeta
+    Plazo: '#3b82f6',
+    Tarea: '#10b981',
+    Audiencia: '#ef4444',
+    Cita: '#06b6d4',
+    Vencimiento: '#f59e0b',
   };
 
-  // 3. Renderizado de la Interfaz (UI)
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#000000', color: '#e2e8f0', minHeight: '100vh', padding: '20px' }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', backgroundColor: '#0a0a0a', borderRadius: '16px', padding: '28px', border: '1px solid #1a1a1a', boxShadow: '0 20px 40px rgba(0,0,0,0.9)' }}>
-        
-        {/* LOGO MM Y ENCABEZADO */}
-        <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1a1a1a', paddingBottom: '20px', marginBottom: '28px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-            {/* ISOTIPO DOBLE M SOBRE FONDO NEGRO */}
-            <div style={{ backgroundColor: '#000000', border: '2px solid #282828', width: '64px', height: '64px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', fontWeight: '900', letterSpacing: '-5px', paddingRight: '5px' }}>
-              <span style={{ color: '#ff6b00', zIndex: 1 }}>M</span>
-              <span style={{ color: '#c0c0c0', marginLeft: '-11px', zIndex: 0 }}>M</span>
-            </div>
-            <div>
-              <h1 style={{ margin: 0, fontSize: '24px', color: '#ffffff' }}>ESTUDIO JURÍDICO MM</h1>
-              <p style={{ margin: 0, fontSize: '12px', color: '#ff6b00', fontWeight: 'bold' }}>GESTIÓN JUDICIAL, EXTRAJUDICIAL Y RENTAS CÓRDOBA</p>
-            </div>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#000000', color: '#e2e8f0', fontFamily: 'system-ui, sans-serif' }}>
+      
+      {/* MENÚ LATERAL PLEGABLE (SIDEBAR) */}
+      <aside style={{
+        width: sidebarOpen ? '260px' : '70px',
+        backgroundColor: '#0a0a0a',
+        borderRight: '1px solid #1a1a1a',
+        padding: '20px 12px',
+        transition: 'all 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        justify: 'space-between'
+      }}>
+        <div>
+          {/* BOTÓN COLAPSAR Y LOGO MM */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'space-between' : 'center', marginBottom: '32px' }}>
+            {sidebarOpen && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ backgroundColor: '#000000', border: '2px solid #282828', width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: '900', letterSpacing: '-3px' }}>
+                  <span style={{ color: '#ff6b00', zIndex: 1 }}>M</span>
+                  <span style={{ color: '#c0c0c0', marginLeft: '-7px', zIndex: 0 }}>M</span>
+                </div>
+                <div>
+                  <h1 style={{ margin: 0, fontSize: '15px', color: '#ffffff', fontWeight: 'bold' }}>ESTUDIO MM</h1>
+                  <span style={{ fontSize: '10px', color: '#ff6b00', fontWeight: 'bold' }}>GESTIÓN JURÍDICA</span>
+                </div>
+              </div>
+            )}
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ backgroundColor: '#141414', border: '1px solid #282828', color: '#ff6b00', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}>
+              {sidebarOpen ? '◀' : '▶'}
+            </button>
           </div>
-          <div style={{ textAlign: 'right' }}>
+
+          {/* OPCIONES DE NAVEGACIÓN */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button onClick={() => setActiveTab('inicio')} style={navBtnStyle(activeTab === 'inicio', sidebarOpen)}>
+              <span>🏠</span> {sidebarOpen && <span>Dashboard / Mi Día</span>}
+            </button>
+            <button onClick={() => setActiveTab('calendario')} style={navBtnStyle(activeTab === 'calendario', sidebarOpen)}>
+              <span>📅</span> {sidebarOpen && <span>Calendario Yúdico</span>}
+            </button>
+            <button onClick={() => setActiveTab('judiciales')} style={navBtnStyle(activeTab === 'judiciales', sidebarOpen)}>
+              <span>⚖️</span> {sidebarOpen && <span>Judiciales ({expedientes.filter(e => e.tipo_causa === 'Judicial').length})</span>}
+            </button>
+            <button onClick={() => setActiveTab('rentas')} style={navBtnStyle(activeTab === 'rentas', sidebarOpen)}>
+              <span>🏛️</span> {sidebarOpen && <span>Rentas / Extrajudicial ({expedientes.filter(e => e.tipo_causa === 'Extrajudicial').length})</span>}
+            </button>
+            <button onClick={() => setActiveTab('clientes')} style={navBtnStyle(activeTab === 'clientes', sidebarOpen)}>
+              <span>👤</span> {sidebarOpen && <span>Clientes ({clientes.length})</span>}
+            </button>
+            <button onClick={() => setActiveTab('calculadora')} style={navBtnStyle(activeTab === 'calculadora', sidebarOpen)}>
+              <span>⏱️</span> {sidebarOpen && <span>Contador de Plazos</span>}
+            </button>
+          </div>
+        </div>
+
+        {/* AJUSTES / CONFIGURACIÓN DE MAILS */}
+        <div>
+          <button onClick={() => setActiveTab('configuracion')} style={navBtnStyle(activeTab === 'configuracion', sidebarOpen)}>
+            <span>⚙️</span> {sidebarOpen && <span>Config. Mails / Equipo</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* CONTENIDO PRINCIPAL */}
+      <main style={{ flex: 1, padding: '28px', maxWidth: '1200px', margin: '0 auto' }}>
+        
+        {/* CABECERA SUPERIOR */}
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0a0a0a', padding: '16px 24px', borderRadius: '12px', border: '1px solid #1a1a1a', marginBottom: '24px' }}>
+          <div>
             <span style={{ fontSize: '13px', color: '#ff6b00', fontWeight: 'bold' }}>{saludo}</span>
             <div style={{ fontSize: '12px', color: '#666666' }}>{fechaActual}</div>
           </div>
+          {loading && <span style={{ fontSize: '12px', color: '#ff6b00' }}>⚡ Conectado a Supabase</span>}
         </header>
 
-        {/* NAVEGACIÓN PRINCIPAL */}
-        <nav style={{ display: 'flex', gap: '8px', marginBottom: '28px', flexWrap: 'wrap' }}>
-          <button onClick={() => setActiveTab('inicio')} style={tabStyle(activeTab === 'inicio')}>🏠 Dashboard / Mi Día</button>
-          <button onClick={() => setActiveTab('calendario')} style={tabStyle(activeTab === 'calendario')}>📅 Calendario Yúdico</button>
-          <button onClick={() => setActiveTab('judiciales')} style={tabStyle(activeTab === 'judiciales')}>⚖️ Judiciales ({expedientes.filter(e => e.tipo_causa === 'Judicial').length})</button>
-          <button onClick={() => setActiveTab('rentas')} style={tabStyle(activeTab === 'rentas')}>🏛️ Rentas / Extrajud. ({expedientes.filter(e => e.tipo_causa === 'Extrajudicial').length})</button>
-          <button onClick={() => setActiveTab('clientes')} style={tabStyle(activeTab === 'clientes')}>👤 Clientes ({clientes.length})</button>
-        </nav>
-
-        {loading && <p style={{ color: '#ff6b00', fontSize: '14px', fontStyle: 'italic' }}>⚡ Conectando con la base de datos de Supabase...</p>}
-
-        {/* PANTALLA INICIO / MI DÍA */}
+        {/* DASHBOARD / MI DÍA */}
         {activeTab === 'inicio' && (
           <div>
-            <div style={{ backgroundColor: '#111111', padding: '20px', borderRadius: '12px', border: '1px solid #222222', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '20px', color: '#ffffff', margin: '0 0 4px 0' }}>{saludo}</h2>
-              <p style={{ color: '#888888', margin: 0, fontSize: '14px' }}>Resumen general cargado desde la nube para hoy {fechaActual}.</p>
-            </div>
+            <h2 style={{ fontSize: '20px', color: '#ffffff', marginBottom: '4px' }}>Mi Día</h2>
+            <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 20px 0' }}>Plazos, audiencias y compromisos del estudio</p>
 
-            <h3 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '4px' }}>Mi Día</h3>
-            <p style={{ color: '#666666', fontSize: '13px', margin: '0 0 16px 0' }}>Plazos, tareas y audiencias agendadas</p>
-
-            <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
+            <div style={{ display: 'grid', gap: '12px' }}>
               {eventos.length === 0 ? <p style={{ color: '#555555', fontStyle: 'italic' }}>No hay audiencias ni plazos agendados en la nube.</p> : (
                 eventos.map(ev => (
-                  <div key={ev.id} style={{ backgroundColor: '#111111', border: '1px solid #222222', borderLeft: `4px solid ${tipoColors[ev.tipo] || '#ff6b00'}`, borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div key={ev.id} style={{ backgroundColor: '#0a0a0a', border: '1px solid #1a1a1a', borderLeft: `4px solid ${tipoColors[ev.tipo] || '#ff6b00'}`, borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <span style={{ fontSize: '11px', color: tipoColors[ev.tipo], fontWeight: 'bold', textTransform: 'uppercase' }}>{ev.tipo}</span>
                       <h4 style={{ margin: '4px 0', fontSize: '16px', color: '#ffffff' }}>{ev.titulo}</h4>
-                      <span style={{ fontSize: '12px', color: '#aaaaaa' }}>📅 Vence: {ev.fecha} | ⏰ {ev.hora}hs | ✉️ Notificar a: {ev.mail_destino || 'Todo el equipo'}</span>
+                      <span style={{ fontSize: '12px', color: '#888888' }}>📅 Vence: {ev.fecha} | ⏰ {ev.hora}hs | ✉️ Notificación enviada a: {ev.mail_destino || 'Equipo MM'}</span>
                     </div>
                   </div>
                 ))
@@ -163,102 +228,147 @@ export default function Home() {
           </div>
         )}
 
-        {/* PANTALLA CALENDARIO */}
+        {/* CALENDARIO */}
         {activeTab === 'calendario' && (
           <div>
-            <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>➕ Agendar Cita / Audiencia / Plazo (Sincronizado con Supabase)</h3>
-            <form onSubmit={addEvento} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', backgroundColor: '#111111', padding: '16px', borderRadius: '12px', border: '1px solid #222222', marginBottom: '28px' }}>
-              <input type="text" placeholder="Título (ej: Audiencia Mediación Garelli)" value={eventoForm.titulo} onChange={e => setEventoForm({...eventoForm, titulo: e.target.value})} style={inputDarkStyle} required />
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Agendar Cita / Plazo con Notificación por Mail</h2>
+            <form onSubmit={addEvento} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#0a0a0a', padding: '20px', borderRadius: '12px', border: '1px solid #1a1a1a', marginBottom: '24px' }}>
+              <input type="text" placeholder="Título (ej: Audiencia de Mediación)" value={eventoForm.titulo} onChange={e => setEventoForm({...eventoForm, titulo: e.target.value})} style={inputStyle} required />
               
-              <select value={eventoForm.tipo} onChange={e => setEventoForm({...eventoForm, tipo: e.target.value})} style={inputDarkStyle}>
-                <option value="Audiencia">Tipo: Audiencia</option>
-                <option value="Plazo">Tipo: Plazo Procesal</option>
-                <option value="Tarea">Tipo: Tarea</option>
-                <option value="Cita">Tipo: Cita/Reunión</option>
-                <option value="Vencimiento">Tipo: Vencimiento Cuota/Tasa</option>
+              <select value={eventoForm.tipo} onChange={e => setEventoForm({...eventoForm, tipo: e.target.value})} style={inputStyle}>
+                <option value="Audiencia">Audiencia</option>
+                <option value="Plazo">Plazo Procesal</option>
+                <option value="Tarea">Tarea</option>
+                <option value="Cita">Cita / Reunión</option>
+                <option value="Vencimiento">Vencimiento Tasa / Cuota</option>
               </select>
 
-              <input type="date" value={eventoForm.fecha} onChange={e => setEventoForm({...eventoForm, fecha: e.target.value})} style={inputDarkStyle} required />
-              <input type="time" value={eventoForm.hora} onChange={e => setEventoForm({...eventoForm, hora: e.target.value})} style={inputDarkStyle} required />
-              <input type="email" placeholder="Mail colega a notificar (Google Calendar)" value={eventoForm.mail_destino} onChange={e => setEventoForm({...eventoForm, mail_destino: e.target.value})} style={inputDarkStyle} />
+              <input type="date" value={eventoForm.fecha} onChange={e => setEventoForm({...eventoForm, fecha: e.target.value})} style={inputStyle} required />
+              <input type="time" value={eventoForm.hora} onChange={e => setEventoForm({...eventoForm, hora: e.target.value})} style={inputStyle} required />
+              
+              <select value={eventoForm.mail_destino} onChange={e => setEventoForm({...eventoForm, mail_destino: e.target.value})} style={inputStyle}>
+                <option value="">Seleccionar Mail de Colega a Notificar...</option>
+                {equipoMails.map((m, idx) => <option key={idx} value={m}>{m}</option>)}
+              </select>
 
-              <button type="submit" style={btnOrangeStyle}>Guardar en la Nube y Sincronizar Calendario</button>
+              <button type="submit" style={btnStyle}>Guardar y Enviar Notificación Google Calendar</button>
             </form>
           </div>
         )}
 
-        {/* SECCIÓN CAUSAS (JUDICIALES / RENTAS) */}
+        {/* SECCIÓN CAUSAS */}
         {(activeTab === 'judiciales' || activeTab === 'rentas') && (
           <div>
-            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Cargar Causa ({activeTab === 'judiciales' ? 'Judicial' : 'Extrajudicial / Rentas Córdoba'})</h2>
-            <form onSubmit={addExpediente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '32px', backgroundColor: '#111111', padding: '20px', borderRadius: '12px', border: '1px solid #222222' }}>
-              <input type="text" placeholder="Carátula / Deudor (ej: Rentas c/ Garelli...)" value={expedienteForm.carátula} onChange={e => setExpedienteForm({...expedienteForm, carátula: e.target.value})} style={inputDarkStyle} required />
-              <input type="text" placeholder="N° Expediente / Matrícula / CUIT" value={expedienteForm.numero} onChange={e => setExpedienteForm({...expedienteForm, numero: e.target.value})} style={inputDarkStyle} />
-              
-              <select value={expedienteForm.fuero} onChange={e => setExpedienteForm({...expedienteForm, fuero: e.target.value})} style={inputDarkStyle}>
-                <option value="Civil y Comercial">Fuero: Civil y Comercial</option>
-                <option value="Tributario / Rentas">Fuero: Tributario / Rentas</option>
-                <option value="Laboral">Fuero: Laboral</option>
-                <option value="Familia">Fuero: Familia</option>
-                <option value="Penal">Fuero: Penal</option>
-              </select>
-
-              <input type="text" placeholder="Juzgado / Nominación / Repartición" value={expedienteForm.juzgado} onChange={e => setExpedienteForm({...expedienteForm, juzgado: e.target.value})} style={inputDarkStyle} />
-              <input type="text" placeholder="Abogado Asignado / Procurador" value={expedienteForm.abogado_asignado} onChange={e => setExpedienteForm({...expedienteForm, abogado_asignado: e.target.value})} style={inputDarkStyle} />
-
-              <button type="submit" style={btnOrangeStyle}>Guardar Expediente en la Nube</button>
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Cargar Causa ({activeTab === 'judiciales' ? 'Judicial' : 'Extrajudicial / Rentas'})</h2>
+            <form onSubmit={addExpediente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#0a0a0a', padding: '20px', borderRadius: '12px', border: '1px solid #1a1a1a', marginBottom: '24px' }}>
+              <input type="text" placeholder="Carátula / Deudor" value={expedienteForm.caratula} onChange={e => setExpedienteForm({...expedienteForm, caratula: e.target.value})} style={inputStyle} required />
+              <input type="text" placeholder="N° Expediente / Matrícula / CUIT" value={expedienteForm.numero} onChange={e => setExpedienteForm({...expedienteForm, numero: e.target.value})} style={inputStyle} />
+              <input type="text" placeholder="Juzgado / Repartición" value={expedienteForm.juzgado} onChange={e => setExpedienteForm({...expedienteForm, juzgado: e.target.value})} style={inputStyle} />
+              <button type="submit" style={btnStyle}>Guardar Causa en Supabase</button>
             </form>
 
-            <h3 style={{ fontSize: '16px', color: '#888888', marginBottom: '12px' }}>Listado de Causas Cargadas</h3>
             <div style={{ display: 'grid', gap: '10px' }}>
               {expedientes.filter(e => e.tipo_causa === (activeTab === 'rentas' ? 'Extrajudicial' : 'Judicial')).map(e => (
-                <div key={e.id} style={{ backgroundColor: '#111111', border: '1px solid #222222', borderRadius: '10px', padding: '16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <strong style={{ fontSize: '16px', color: '#ffffff' }}>{e.carátula}</strong>
-                    <span style={{ backgroundColor: '#ff6b0022', color: '#ff6b00', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>N° {e.numero || 'S/N'}</span>
-                  </div>
-                  <div style={{ fontSize: '13px', color: '#aaaaaa', marginTop: '6px' }}>⚖️ {e.fuero} | 🏛️ {e.juzgado || 'Sin especificar'} | 👤 Asignado: {e.abogado_asignado || 'Sin asignar'}</div>
+                <div key={e.id} style={{ backgroundColor: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '10px', padding: '16px' }}>
+                  <strong style={{ color: '#ffffff', fontSize: '16px' }}>{e.caratula}</strong>
+                  <span style={{ color: '#ff6b00', fontSize: '12px', marginLeft: '10px' }}>N° {e.numero || 'S/N'}</span>
+                  <div style={{ fontSize: '12px', color: '#888888', marginTop: '4px' }}>🏛️ {e.juzgado || 'Sin especificar'}</div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* SECCIÓN CLIENTES */}
+        {/* CLIENTES CON WHATSAPP DIRECTO */}
         {activeTab === 'clientes' && (
           <div>
-            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Registrar Nuevo Cliente</h2>
-            <form onSubmit={addCliente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#111111', padding: '16px', borderRadius: '12px', border: '1px solid #222222', marginBottom: '24px' }}>
-              <input type="text" placeholder="Nombre completo" value={clienteForm.nombre} onChange={e => setClienteForm({...clienteForm, nombre: e.target.value})} style={inputDarkStyle} required />
-              <input type="text" placeholder="DNI / CUIT" value={clienteForm.dni} onChange={e => setClienteForm({...clienteForm, dni: e.target.value})} style={inputDarkStyle} required />
-              <input type="text" placeholder="Teléfono / WhatsApp" value={clienteForm.telefono} onChange={e => setClienteForm({...clienteForm, telefono: e.target.value})} style={inputDarkStyle} />
-              <input type="email" placeholder="Correo electrónico" value={clienteForm.email} onChange={e => setClienteForm({...clienteForm, email: e.target.value})} style={inputDarkStyle} />
-              <button type="submit" style={btnOrangeStyle}>Guardar Cliente en la Nube</button>
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>Nuevo Cliente</h2>
+            <form onSubmit={addCliente} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', backgroundColor: '#0a0a0a', padding: '20px', borderRadius: '12px', border: '1px solid #1a1a1a', marginBottom: '24px' }}>
+              <input type="text" placeholder="Nombre completo" value={clienteForm.nombre} onChange={e => setClienteForm({...clienteForm, nombre: e.target.value})} style={inputStyle} required />
+              <input type="text" placeholder="DNI / CUIT" value={clienteForm.dni} onChange={e => setClienteForm({...clienteForm, dni: e.target.value})} style={inputStyle} required />
+              <input type="text" placeholder="Teléfono / WhatsApp (ej: 3584123456)" value={clienteForm.telefono} onChange={e => setClienteForm({...clienteForm, telefono: e.target.value})} style={inputStyle} />
+              <input type="email" placeholder="Email" value={clienteForm.email} onChange={e => setClienteForm({...clienteForm, email: e.target.value})} style={inputStyle} />
+              <button type="submit" style={btnStyle}>Guardar Cliente</button>
             </form>
 
-            <h3 style={{ fontSize: '16px', color: '#888888', marginBottom: '12px' }}>Padrón de Clientes</h3>
             <div style={{ display: 'grid', gap: '10px' }}>
               {clientes.map(c => (
-                <div key={c.id} style={{ backgroundColor: '#111111', border: '1px solid #222222', borderRadius: '10px', padding: '14px' }}>
-                  <strong style={{ fontSize: '15px', color: '#ffffff' }}>{c.nombre}</strong> <span style={{ color: '#666666' }}>(DNI/CUIT: {c.dni})</span>
-                  <div style={{ fontSize: '13px', color: '#aaaaaa', marginTop: '4px' }}>📞 {c.telefono || 'Sin teléfono'} | ✉️ {c.email || 'Sin correo'}</div>
+                <div key={c.id} style={{ backgroundColor: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '10px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ color: '#ffffff' }}>{c.nombre}</strong> <span style={{ color: '#666666' }}>(DNI: {c.dni})</span>
+                    <div style={{ fontSize: '12px', color: '#888888', marginTop: '4px' }}>📞 {c.telefono || 'Sin teléfono'} | ✉️ {c.email || 'Sin correo'}</div>
+                  </div>
+                  {c.telefono && (
+                    <a href={`https://wa.me/${c.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ backgroundColor: '#25D366', color: '#ffffff', padding: '8px 12px', borderRadius: '6px', textDecoration: 'none', fontWeight: 'bold', fontSize: '12px' }}>
+                      💬 WhatsApp
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
           </div>
         )}
 
-      </div>
+        {/* CONTADOR DE PLAZOS PROCESALES */}
+        {activeTab === 'calculadora' && (
+          <div>
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>⏱️ Calculadora de Plazos Procesales (Días Hábiles)</h2>
+            <form onSubmit={calcularPlazo} style={{ backgroundColor: '#0a0a0a', padding: '20px', borderRadius: '12px', border: '1px solid #1a1a1a', maxWidth: '500px' }}>
+              <label style={{ fontSize: '13px', color: '#888888', display: 'block', marginBottom: '6px' }}>Fecha de Cédula / Notificación:</label>
+              <input type="date" value={calcFechaInicio} onChange={e => setCalcFechaInicio(e.target.value)} style={{ ...inputStyle, marginBottom: '16px' }} required />
+
+              <label style={{ fontSize: '13px', color: '#888888', display: 'block', marginBottom: '6px' }}>Plazo en días hábiles:</label>
+              <input type="number" value={calcDias} onChange={e => setCalcDias(e.target.value)} style={{ ...inputStyle, marginBottom: '20px' }} required min="1" />
+
+              <button type="submit" style={btnStyle}>Calcular Fecha de Vencimiento</button>
+
+              {calcResultado && (
+                <div style={{ marginTop: '20px', backgroundColor: '#ff6b0022', border: '1px solid #ff6b00', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '12px', color: '#ff6b00', display: 'block' }}>EL PLAZO VENCE EL DÍA:</span>
+                  <strong style={{ fontSize: '22px', color: '#ffffff' }}>{calcResultado}</strong>
+                </div>
+              )}
+            </form>
+          </div>
+        )}
+
+        {/* CONFIGURACIÓN DE MAILS DE NOTIFICACIÓN */}
+        {activeTab === 'configuracion' && (
+          <div>
+            <h2 style={{ fontSize: '18px', color: '#ffffff', marginBottom: '16px' }}>⚙️ Configuración de Mails del Equipo</h2>
+            <p style={{ color: '#888888', fontSize: '13px', marginBottom: '20px' }}>Agrega las casillas de correo de tus colegas para notificarles plazos y audiencias de Google Calendar.</p>
+
+            <form onSubmit={addMailEquipo} style={{ display: 'flex', gap: '12px', marginBottom: '24px', maxWidth: '500px' }}>
+              <input type="email" placeholder="ejemplo@estudiomm.com" value={nuevoMail} onChange={e => setNuevoMail(e.target.value)} style={inputStyle} required />
+              <button type="submit" style={{ ...btnStyle, width: 'auto' }}>Agregar Mail</button>
+            </form>
+
+            <h3 style={{ fontSize: '15px', color: '#ffffff', marginBottom: '12px' }}>Correos Registrados:</h3>
+            <div style={{ display: 'grid', gap: '8px', maxWidth: '500px' }}>
+              {equipoMails.map((mail, i) => (
+                <div key={i} style={{ backgroundColor: '#0a0a0a', border: '1px solid #1a1a1a', padding: '12px 16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#e2e8f0', fontSize: '14px' }}>✉️ {mail}</span>
+                  <span style={{ color: '#10b981', fontSize: '12px', fontWeight: 'bold' }}>✓ Sincronizado</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </main>
     </div>
   );
 }
 
-// Estilos rápidos (CSS-in-JS)
-const tabStyle = (active) => ({
-  flex: '1 1 140px', padding: '12px', borderRadius: '10px', border: 'none',
-  backgroundColor: active ? '#ff6b00' : '#121212', color: active ? '#ffffff' : '#888888',
-  fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.2s', fontSize: '13px'
+// Estilos dinámicos
+const navBtnStyle = (active, open) => ({
+  display: 'flex', alignItems: 'center', gap: '12px',
+  padding: '12px 16px', borderRadius: '8px', border: 'none',
+  backgroundColor: active ? '#ff6b00' : 'transparent',
+  color: active ? '#ffffff' : '#888888',
+  fontWeight: active ? 'bold' : 'normal',
+  cursor: 'pointer', textAlign: 'left', fontSize: '13px', width: '100%', transition: 'all 0.2s'
 });
 
-const inputDarkStyle = { backgroundColor: '#000000', border: '1px solid #282828', color: '#ffffff', padding: '12px 14px', borderRadius: '8px', fontSize: '14px', outline: 'none', width: '100%', boxSizing: 'border-box' };
-const btnOrangeStyle = { backgroundColor: '#ff6b00', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', gridColumn: '1 / -1' };
+const inputStyle = { backgroundColor: '#000000', border: '1px solid #282828', color: '#ffffff', padding: '12px 14px', borderRadius: '8px', fontSize: '13px', outline: 'none', width: '100%', boxSizing: 'border-box' };
+const btnStyle = { backgroundColor: '#ff6b00', color: '#ffffff', border: 'none', padding: '12px 16px', borderRadius: '8px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', width: '100%' };
