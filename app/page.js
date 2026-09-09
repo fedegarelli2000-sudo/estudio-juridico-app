@@ -1,392 +1,508 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function Home() {
-  // Estado de navegación activa entre módulos
-  const [activeModule, setActiveModule] = useState('dashboard');
-  
-  // Estado para la IA de plazos (Simulación)
-  const [plazoEstado, setPlazoEstado] = useState('PENDIENTE'); // 'PENDIENTE', 'CONFIRMADO', 'RECHAZADO'
-  
-  // Estado para el buscador global
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Estado para la generación automática de documentos con variables
-  const [generatedDocument, setGeneratedDocument] = useState('');
+  // --- ESTADOS INTERACTIVOS PERSISTENTES (Carga inicial o localStorage) ---
+  const [teamEmails, setTeamEmails] = useState(['', '', '', '']);
+  const [cases, setCases] = useState([
+    {
+      id: '1',
+      number: 'EXP-9821/2026',
+      caratula: 'García, Roberto c/ Aseguradora del Sur S.A. s/ Daños',
+      court: 'Juzgado Civil y Comercial Nº 12',
+      client: 'Roberto García',
+      status: 'EN TRAMITE',
+      notes: 'Cliente prefiere contacto por correo por la tarde.'
+    }
+  ]);
+  
+  const [clients, setClients] = useState([
+    { id: '1', name: 'Roberto García', role: 'CLIENTE', taxId: '20-34881920-8', email: 'roberto@email.com' },
+    { id: '2', name: 'Aseguradora del Sur S.A.', role: 'CONTRAPARTE', taxId: '30-50112233-4', email: 'legales@aseguradora.com' }
+  ]);
 
-  // Datos del expediente seleccionado
-  const caseData = {
-    caseNumber: 'EXP-9821/2026',
-    caratula: 'García, Roberto Carlos c/ Aseguradora del Sur S.A. s/ Daños y Perjuicios',
-    court: 'Juzgado Civil y Comercial Nº 12 - Sec. 2',
-    jurisdiction: 'Fuero Civil y Comercial',
-    client: 'García, Roberto Carlos',
-    demandado: 'Aseguradora del Sur S.A.',
-    lawyer: 'Dr. Federico Garelli',
-    startDate: '15/03/2026',
-    status: 'EN TRAMITE'
+  const [movements, setMovements] = useState([
+    { id: '1', caseId: '1', date: '2026-09-09', title: 'Cédula de Traslado', text: 'Se concede traslado por el término de ley.', notes: 'Revisar con perito antes del vencimiento.' }
+  ]);
+
+  const [deadlines, setDeadlines] = useState([
+    { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: true }
+  ]);
+
+  const [hearings, setHearings] = useState([
+    { id: '1', caseId: '1', title: 'Audiencia Preliminar', date: '2026-09-18T10:00', location: 'Juzgado Civil Nº 12', assignedMail: '' }
+  ]);
+
+  // Carga inicial de datos guardados en el navegador
+  useEffect(() => {
+    const savedEmails = localStorage.getItem('lex_emails');
+    const savedCases = localStorage.getItem('lex_cases');
+    const savedClients = localStorage.getItem('lex_clients');
+    const savedMovements = localStorage.getItem('lex_movements');
+    const savedDeadlines = localStorage.getItem('lex_deadlines');
+    const savedHearings = localStorage.getItem('lex_hearings');
+
+    if (savedEmails) setTeamEmails(JSON.parse(savedEmails));
+    if (savedCases) setCases(JSON.parse(savedCases));
+    if (savedClients) setClients(JSON.parse(savedClients));
+    if (savedMovements) setMovements(JSON.parse(savedMovements));
+    if (savedDeadlines) setDeadlines(JSON.parse(savedDeadlines));
+    if (savedHearings) setHearings(JSON.parse(savedHearings));
+  }, []);
+
+  // Guardar en localStorage ante cada cambio
+  useEffect(() => {
+    localStorage.setItem('lex_emails', JSON.stringify(teamEmails));
+    localStorage.setItem('lex_cases', JSON.stringify(cases));
+    localStorage.setItem('lex_clients', JSON.stringify(clients));
+    localStorage.setItem('lex_movements', JSON.stringify(movements));
+    localStorage.setItem('lex_deadlines', JSON.stringify(deadlines));
+    localStorage.setItem('lex_hearings', JSON.stringify(hearings));
+  }, [teamEmails, cases, clients, movements, deadlines, hearings]);
+
+  // --- FORMULARIOS DE ALTA RAPIDA ---
+  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', notes: '' });
+  const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '' });
+  const [newMovement, setNewMovement] = useState({ caseId: '1', date: '', title: '', text: '', notes: '' });
+  const [newDeadline, setNewDeadline] = useState({ caseId: '1', title: '', dueDate: '', days: 5 });
+  const [newHearing, setNewHearing] = useState({ caseId: '1', title: '', date: '', location: '', assignedMail: '' });
+
+  // Manejadores de envío
+  const handleAddCase = (e) => {
+    e.preventDefault();
+    if (!newCase.number || !newCase.caratula) return;
+    setCases([...cases, { ...newCase, id: Date.now().toString(), status: 'EN TRAMITE' }]);
+    setNewCase({ number: '', caratula: '', court: '', client: '', notes: '' });
   };
 
-  // Función para autocompletar plantilla
-  const handleGenerateDocument = () => {
-    const templateText = `INICIA DEMANDA / PRESENTA ESCRITO
+  const handleAddClient = (e) => {
+    e.preventDefault();
+    if (!newClient.name) return;
+    setClients([...clients, { ...newClient, id: Date.now().toString() }]);
+    setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '' });
+  };
 
-Señor Juez del ${caseData.court}:
+  const handleAddMovement = (e) => {
+    e.preventDefault();
+    if (!newMovement.title) return;
+    setMovements([...movements, { ...newMovement, id: Date.now().toString() }]);
+    setNewMovement({ caseId: cases[0]?.id || '1', date: '', title: '', text: '', notes: '' });
+  };
 
-${caseData.lawyer}, en representación de ${caseData.client}, en los autos caratulados "${caseData.caratula}" (${caseData.caseNumber}), ante V.S. me presento y digo:
+  const handleAddDeadline = (e) => {
+    e.preventDefault();
+    if (!newDeadline.title) return;
+    setDeadlines([...deadlines, { ...newDeadline, id: Date.now().toString(), status: 'PENDIENTE', isAI: false }]);
+    setNewDeadline({ caseId: cases[0]?.id || '1', title: '', dueDate: '', days: 5 });
+  };
 
-I. OBJETO
-Que vengo en tiempo y forma a presentar el correspondiente escrito respecto a la contraparte ${caseData.demandado}...
-
-Río Cuarto, 9 de Septiembre de 2026.`;
-
-    setGeneratedDocument(templateText);
+  const handleAddHearing = (e) => {
+    e.preventDefault();
+    if (!newHearing.title) return;
+    setHearings([...hearings, { ...newHearing, id: Date.now().toString() }]);
+    setNewHearing({ caseId: cases[0]?.id || '1', title: '', date: '', location: '', assignedMail: '' });
   };
 
   return (
-    <div className="flex h-screen bg-slate-100 font-sans text-slate-800 overflow-hidden">
+    <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
-      {/* 1. BARRA NAVEGACIÓN LATERAL (MENÚ PRINCIPAL) */}
-      <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0">
+      {/* 1. BARRA LATERAL CON LOGO MM Y DISEÑO NEGRO/NARANJA */}
+      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0">
         <div>
-          <div className="p-5 border-b border-slate-800 flex items-center gap-3">
-            <div className="p-2 bg-indigo-600 rounded-lg text-white font-bold text-lg">
-              ⚖️
+          {/* LOGO MM */}
+          <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
+            <div className="flex items-center text-2xl font-black tracking-tighter">
+              <span className="text-orange-500">M</span>
+              <span className="text-zinc-500">M</span>
             </div>
             <div>
-              <h1 className="font-bold text-white text-base leading-tight">LexSystem</h1>
-              <p className="text-xs text-slate-400">Estudio Jurídico</p>
+              <h1 className="font-bold text-white text-sm uppercase tracking-wider">LexStudio</h1>
+              <p className="text-[10px] text-orange-500 font-semibold">GESTIÓN LEGAL INTEGRAL</p>
             </div>
           </div>
 
           <nav className="p-3 space-y-1">
             {[
               { id: 'dashboard', label: 'Dashboard General', icon: '📊' },
-              { id: 'expedientes', label: 'Expedientes / Casos', icon: '📁' },
+              { id: 'expedientes', label: 'Expedientes / Causas', icon: '📁' },
+              { id: 'movimientos', label: 'Movimientos e Historia', icon: '📜' },
+              { id: 'plazos', label: 'Plazos Procesales e IA', icon: '⚡' },
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
-              { id: 'plazos', label: 'Plazos e IA', icon: '⚠️', badge: plazoEstado === 'PENDIENTE' ? '1' : null },
-              { id: 'calendario', label: 'Calendario y Audiencias', icon: '📅' },
-              { id: 'plantillas', label: 'Plantillas y Documentos', icon: '📄' },
-              { id: 'finanzas', label: 'Finanzas y Honorarios', icon: '💰' },
-            ].map((item) => {
-              const isActive = activeModule === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveModule(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-indigo-600 text-white font-semibold' 
-                      : 'hover:bg-slate-800 text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-base">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge && (
-                    <span className="bg-amber-500 text-slate-950 font-bold text-[10px] px-2 py-0.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+              { id: 'audiencias', label: 'Audiencias y Calendar', icon: '📅' },
+              { id: 'configuracion', label: 'Configuración / Mails', icon: '⚙️' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-orange-500 text-black font-bold shadow-lg shadow-orange-500/20'
+                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-orange-400'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </nav>
         </div>
 
-        <div className="p-4 border-t border-slate-800 text-xs text-slate-500">
-          <p className="font-semibold text-slate-300">Dr. Federico Garelli</p>
-          <p>Abogado Titular</p>
+        <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500">
+          <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
+          <p className="text-[10px]">Sistema Operativo Activo</p>
         </div>
       </aside>
 
       {/* CONTENEDOR PRINCIPAL */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        {/* BARRA SUPERIOR (BUSCADOR GLOBAL Y NOTIFICACIONES) */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
-          <div className="relative w-96">
-            <input 
-              type="text" 
-              placeholder="🔍 Búsqueda global (Expediente, Cliente, DNI, Juzgado)..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-1.5 bg-slate-100 rounded-lg text-sm border-transparent focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="relative p-2 text-slate-600 hover:bg-slate-100 rounded-lg text-lg">
-              🔔
-              {plazoEstado === 'PENDIENTE' && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full"></span>
-              )}
-            </button>
+        {/* ENCABEZADO */}
+        <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
+          <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase">
+            {activeTab.replace('_', ' ')}
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+            <span className="text-xs text-zinc-400 font-medium">Modo Base de Datos Funcional</span>
           </div>
         </header>
 
-        {/* CONTENIDO DINÁMICO SEGÚN EL MÓDULO SELECCIONADO */}
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* CONTENIDO PRINCIPAL RECARGABLE */}
+        <main className="flex-1 overflow-y-auto p-6 bg-zinc-950">
           
-          {/* MÓDULO 1: DASHBOARD GENERAL */}
-          {activeModule === 'dashboard' && (
+          {/* --- DASHBOARD --- */}
+          {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Dashboard General</h2>
-                <p className="text-xs text-slate-500">Resumen operativo del estudio jurídico</p>
-              </div>
-
-              {/* KPIS / RESUMEN */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Expedientes Activos</span>
-                  <h3 className="text-2xl font-extrabold text-slate-900 mt-1">42</h3>
-                  <span className="text-xs text-emerald-600 font-medium">3 nuevos este mes</span>
+                <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Causas Activas</span>
+                  <h3 className="text-2xl font-black text-white mt-1">{cases.length}</h3>
                 </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Plazos IA por Confirmar</span>
-                  <h3 className="text-2xl font-extrabold text-amber-600 mt-1">
-                    {plazoEstado === 'PENDIENTE' ? '1' : '0'}
-                  </h3>
-                  <span className="text-xs text-slate-500">Requiere revisión humana</span>
+                <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Plazos Pendientes</span>
+                  <h3 className="text-2xl font-black text-orange-500 mt-1">{deadlines.filter(d => d.status === 'PENDIENTE').length}</h3>
                 </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Audiencias Próximas</span>
-                  <h3 className="text-2xl font-extrabold text-slate-900 mt-1">2</h3>
-                  <span className="text-xs text-slate-500">Próxima: Mañana 10:00 hs</span>
+                <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Clientes Registrados</span>
+                  <h3 className="text-2xl font-black text-white mt-1">{clients.length}</h3>
                 </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Honorarios Pendientes</span>
-                  <h3 className="text-2xl font-extrabold text-slate-900 mt-1">$1.850.000</h3>
-                  <span className="text-xs text-red-500 font-medium">2 cuotas vencidas</span>
+                <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
+                  <span className="text-[10px] font-bold text-zinc-500 uppercase">Audiencias Agendadas</span>
+                  <h3 className="text-2xl font-black text-white mt-1">{hearings.length}</h3>
                 </div>
               </div>
 
-              {/* SECCIÓN DE ATENCIÓN URGENTE */}
-              {plazoEstado === 'PENDIENTE' && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-amber-900 font-bold">
-                      <span>✨</span>
-                      <span>Alerta de IA: Nuevo Plazo Detectado</span>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+                <h3 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Plazos a Vencer</h3>
+                <div className="space-y-2">
+                  {deadlines.map(d => (
+                    <div key={d.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded-lg flex justify-between items-center text-xs">
+                      <div>
+                        <p className="font-bold text-white">{d.title}</p>
+                        <p className="text-[10px] text-zinc-500">Vence: {d.dueDate}</p>
+                      </div>
+                      <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-1 rounded text-[10px] border border-orange-500/20">
+                        {d.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* --- EXPEDIENTES / CAUSAS --- */}
+          {activeTab === 'expedientes' && (
+            <div className="space-y-6">
+              {/* Formulario de Alta */}
+              <form onSubmit={handleAddCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <input 
+                    type="text" placeholder="Nº de Expediente (ej. EXP-1002/2026)" 
+                    value={newCase.number} onChange={e => setNewCase({...newCase, number: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="text" placeholder="Carátula completa" 
+                    value={newCase.caratula} onChange={e => setNewCase({...newCase, caratula: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="text" placeholder="Juzgado / Tribunal" 
+                    value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="text" placeholder="Cliente asociado" 
+                    value={newCase.client} onChange={e => setNewCase({...newCase, client: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                </div>
+                <textarea 
+                  placeholder="Observaciones o notas manuales sobre el expediente..."
+                  value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
+                />
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400 transition-colors">
+                  Guardar Expediente
+                </button>
+              </form>
+
+              {/* Lista de Causas */}
+              <div className="space-y-3">
+                {cases.map(c => (
+                  <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="bg-orange-500/10 text-orange-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                          {c.number}
+                        </span>
+                        <h4 className="font-bold text-white text-sm mt-1">{c.caratula}</h4>
+                        <p className="text-xs text-zinc-400">{c.court} • Cliente: {c.client}</p>
+                      </div>
+                      <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2 py-0.5 rounded">{c.status}</span>
+                    </div>
+                    {c.notes && (
+                      <p className="text-xs bg-zinc-950 p-2.5 rounded border border-zinc-800/50 text-zinc-300 italic">
+                        💬 <strong>Notas:</strong> {c.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* --- MOVIMIENTOS --- */}
+          {activeTab === 'movimientos' && (
+            <div className="space-y-6">
+              <form onSubmit={handleAddMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento / Actuación</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <select 
+                    value={newMovement.caseId} onChange={e => setNewMovement({...newMovement, caseId: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  >
+                    {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                  </select>
+                  <input 
+                    type="date" value={newMovement.date} onChange={e => setNewMovement({...newMovement, date: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                </div>
+                <input 
+                  type="text" placeholder="Título de la actuación (Ej. Presenta Escrito / Cédula)" 
+                  value={newMovement.title} onChange={e => setNewMovement({...newMovement, title: e.target.value})}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                />
+                <textarea 
+                  placeholder="Transcripción del texto judicial o detalle..."
+                  value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
+                />
+                <textarea 
+                  placeholder="Observaciones manuales del abogado..."
+                  value={newMovement.notes} onChange={e => setNewMovement({...newMovement, notes: e.target.value})}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                />
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                  Guardar Movimiento
+                </button>
+              </form>
+
+              <div className="space-y-3">
+                {movements.map(m => (
+                  <div key={m.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-orange-400">{m.title}</span>
+                      <span className="text-zinc-500">{m.date}</span>
+                    </div>
+                    {m.text && <p className="text-zinc-300 bg-zinc-950 p-2.5 rounded border border-zinc-800">{m.text}</p>}
+                    {m.notes && <p className="text-zinc-400 italic">📝 Observación: {m.notes}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* --- PLAZOS E IA --- */}
+          {activeTab === 'plazos' && (
+            <div className="space-y-6">
+              <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Plazo Procesal</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <input 
+                    type="text" placeholder="Descripción del Plazo" 
+                    value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="date" value={newDeadline.dueDate} onChange={e => setNewDeadline({...newDeadline, dueDate: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="number" placeholder="Cantidad de días" 
+                    value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                </div>
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                  Registrar Plazo
+                </button>
+              </form>
+
+              <div className="space-y-3">
+                {deadlines.map(d => (
+                  <div key={d.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                      {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
+                      <h4 className="font-bold text-white">{d.title}</h4>
+                      <p className="text-zinc-500">Vencimiento: {d.dueDate} ({d.days} días hábiles)</p>
                     </div>
                     <button 
-                      onClick={() => setActiveModule('plazos')}
-                      className="text-xs font-bold text-indigo-600 hover:underline flex items-center gap-1"
+                      onClick={() => setDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: 'CUMPLIDO'} : x))}
+                      className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500 text-black'}`}
                     >
-                      Ver en Módulo de Plazos ➔
+                      {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-700">
-                    Se detectó un traslado de contestación en el expediente <strong>{caseData.caseNumber}</strong>. Cómputo estimado: 5 días hábiles (Vence 16/09/2026).
-                  </p>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           )}
 
-          {/* MÓDULO 2: EXPEDIENTES / CASOS */}
-          {activeModule === 'expedientes' && (
+          {/* --- CLIENTES --- */}
+          {activeTab === 'clientes' && (
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <div className="flex justify-between items-start border-b border-slate-100 pb-4">
-                  <div>
-                    <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded">
-                      {caseData.caseNumber}
-                    </span>
-                    <h2 className="text-lg font-bold text-slate-900 mt-2">{caseData.caratula}</h2>
-                    <p className="text-xs text-slate-500 mt-0.5">{caseData.court} • {caseData.jurisdiction}</p>
-                  </div>
-                  <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded">
-                    {caseData.status}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-4 gap-4 mt-4 text-xs">
-                  <div>
-                    <span className="text-slate-400 block font-medium">CLIENTE</span>
-                    <span className="font-bold text-slate-800">{caseData.client}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">DEMANDADO</span>
-                    <span className="font-bold text-slate-800">{caseData.demandado}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">ABOGADO</span>
-                    <span className="font-bold text-slate-800">{caseData.lawyer}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">INICIO</span>
-                    <span className="font-bold text-slate-800">{caseData.startDate}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* LÍNEA DE TIEMPO DE ACTUACIONES */}
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h3 className="font-bold text-slate-800 text-sm mb-4">Historial e Integración de Actuaciones</h3>
-                <div className="border-l-2 border-slate-200 ml-3 pl-6 space-y-6">
-                  <div className="relative">
-                    <span className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-indigo-600 ring-4 ring-white"></span>
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                      <span className="text-[11px] font-bold text-indigo-600">09 DE SEPTIEMBRE, 2026</span>
-                      <h4 className="text-sm font-bold text-slate-800 mt-0.5">Notificación Electrónica - Confiere Traslado</h4>
-                      <p className="text-xs text-slate-600 mt-1">
-                        "Confiérase traslado a la parte actora por el término de ley de la contestación de demanda."
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* MÓDULO 3: CLIENTES */}
-          {activeModule === 'clientes' && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-slate-900">Base de Clientes y Contactos</h2>
-                <button className="bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded-lg flex items-center gap-1">
-                  + Nuevo Cliente
-                </button>
-              </div>
-
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
-                  <tr>
-                    <th className="p-3">Nombre / Razón Social</th>
-                    <th className="p-3">Rol</th>
-                    <th className="p-3">CUIT / DNI</th>
-                    <th className="p-3">Expediente Asociado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  <tr>
-                    <td className="p-3 font-bold text-slate-800">{caseData.client}</td>
-                    <td className="p-3"><span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">CLIENTE</span></td>
-                    <td className="p-3 text-slate-600">20-34881920-8</td>
-                    <td className="p-3 text-indigo-600 font-bold">{caseData.caseNumber}</td>
-                  </tr>
-                  <tr>
-                    <td className="p-3 font-bold text-slate-800">{caseData.demandado}</td>
-                    <td className="p-3"><span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">CONTRAPARTE</span></td>
-                    <td className="p-3 text-slate-600">30-50112233-4</td>
-                    <td className="p-3 text-indigo-600 font-bold">{caseData.caseNumber}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* MÓDULO 4: PLAZOS E INTELIGENCIA ARTIFICIAL */}
-          {activeModule === 'plazos' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Gestión de Plazos y Asistente IA</h2>
-                <p className="text-xs text-slate-500">Módulo de detección inteligente y control de vencimientos procesales</p>
-              </div>
-
-              {plazoEstado === 'PENDIENTE' ? (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 shadow-sm">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <span className="bg-amber-200 text-amber-900 text-[10px] font-extrabold px-2 py-0.5 rounded">
-                        REVISIÓN REQUERIDA POR EL ABOGADO
-                      </span>
-                      <h3 className="text-base font-bold text-slate-900">Traslado de Contestación de Demanda</h3>
-                      <p className="text-xs text-slate-600">
-                        <strong>Expediente:</strong> {caseData.caseNumber} ({caseData.caratula})
-                      </p>
-                      <div className="flex gap-4 text-xs bg-white p-3 rounded-lg border border-amber-200 mt-2">
-                        <div><span className="text-slate-400 block">Cómputo</span><span className="font-bold">5 Días Hábiles</span></div>
-                        <div><span className="text-slate-400 block">Inicio</span><span className="font-bold">10/09/2026</span></div>
-                        <div><span className="text-slate-400 block">Vencimiento</span><span className="font-bold text-red-600">16/09/2026</span></div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <button 
-                        onClick={() => setPlazoEstado('CONFIRMADO')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1"
-                      >
-                        ✓ Confirmar Plazo
-                      </button>
-                      <button 
-                        onClick={() => setPlazoEstado('RECHAZADO')}
-                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-1"
-                      >
-                        ✕ Rechazar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-xs font-bold">
-                  Estado actualizado: El plazo fue {plazoEstado === 'CONFIRMADO' ? 'confirmado e incorporado al calendario' : 'rechazado'}.
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* MÓDULO 5: CALENDARIO Y AUDIENCIAS */}
-          {activeModule === 'calendario' && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-              <h2 className="text-lg font-bold text-slate-900">Calendario General del Estudio</h2>
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-indigo-600">MAÑANA - 10:00 HS</span>
-                  <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">AUDIENCIA</span>
-                </div>
-                <h4 className="text-sm font-bold text-slate-800">Audiencia Preliminar - {caseData.caseNumber}</h4>
-                <p className="text-xs text-slate-500">{caseData.court}</p>
-              </div>
-            </div>
-          )}
-
-          {/* MÓDULO 6: PLANTILLAS Y GENERACIÓN */}
-          {activeModule === 'plantillas' && (
-            <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-                <h2 className="text-lg font-bold text-slate-900">Generador Automático de Escritos</h2>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={handleGenerateDocument}
-                    className="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2"
-                  >
-                    ✨ Generar Escrito Automático para {caseData.caseNumber}
-                  </button>
-                </div>
-
-                {generatedDocument && (
-                  <textarea 
-                    value={generatedDocument} 
-                    readOnly
-                    rows={10} 
-                    className="w-full p-4 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono outline-none"
+              <form onSubmit={handleAddClient} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cliente / Contacto</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <input 
+                    type="text" placeholder="Nombre completo / Razón Social" 
+                    value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                   />
-                )}
+                  <select 
+                    value={newClient.role} onChange={e => setNewClient({...newClient, role: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  >
+                    <option value="CLIENTE">CLIENTE</option>
+                    <option value="CONTRAPARTE">CONTRAPARTE</option>
+                    <option value="TERCERO">TERCERO</option>
+                  </select>
+                  <input 
+                    type="text" placeholder="CUIT / DNI" 
+                    value={newClient.taxId} onChange={e => setNewClient({...newClient, taxId: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="email" placeholder="Correo Electrónico" 
+                    value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                </div>
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                  Guardar Contacto
+                </button>
+              </form>
+
+              <div className="space-y-2">
+                {clients.map(c => (
+                  <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                      <p className="font-bold text-white">{c.name}</p>
+                      <p className="text-zinc-500">{c.taxId} • {c.email}</p>
+                    </div>
+                    <span className="bg-zinc-800 text-orange-400 font-bold px-2 py-1 rounded text-[10px]">{c.role}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* MÓDULO 7: FINANZAS */}
-          {activeModule === 'finanzas' && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-              <h2 className="text-lg font-bold text-slate-900">Control Financiero de Honorarios</h2>
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="text-slate-400 block font-bold">HONORARIOS PACTADOS</span>
-                  <span className="text-lg font-extrabold text-slate-800">$2.500.000</span>
+          {/* --- AUDIENCIAS Y CALENDAR --- */}
+          {activeTab === 'audiencias' && (
+            <div className="space-y-6">
+              <form onSubmit={handleAddHearing} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar Audiencia / Reunión</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <input 
+                    type="text" placeholder="Título de Audiencia o Reunión" 
+                    value={newHearing.title} onChange={e => setNewHearing({...newHearing, title: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="datetime-local" value={newHearing.date} onChange={e => setNewHearing({...newHearing, date: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="text" placeholder="Lugar / Enlace Virtual" 
+                    value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <select 
+                    value={newHearing.assignedMail} onChange={e => setNewHearing({...newHearing, assignedMail: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  >
+                    <option value="">Notificar a Integrante de Equipo (Google Calendar)</option>
+                    {teamEmails.filter(m => m !== '').map((m, i) => <option key={i} value={m}>{m}</option>)}
+                  </select>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                  <span className="text-slate-400 block font-bold">SALDO PENDIENTE DE COBRO</span>
-                  <span className="text-lg font-extrabold text-red-600">$1.850.000</span>
-                </div>
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                  Agendar Audiencia
+                </button>
+              </form>
+
+              <div className="space-y-3">
+                {hearings.map(h => (
+                  <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-1">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-bold text-white">{h.title}</h4>
+                      <span className="text-orange-400 font-bold">{h.date}</span>
+                    </div>
+                    <p className="text-zinc-400">Lugar: {h.location}</p>
+                    {h.assignedMail && <p className="text-zinc-500 text-[10px]">📧 Agendado para sincronizar con: {h.assignedMail}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* --- CONFIGURACION Y MAILS DEL EQUIPO --- */}
+          {activeTab === 'configuracion' && (
+            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+              <div>
+                <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Integrantes y Google Calendar</h3>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Agregá hasta 4 correos electrónicos de las personas que trabajan en tu equipo para asignarles audiencias, plazos y reuniones.
+                </p>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                {[0, 1, 2, 3].map((index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <span className="text-zinc-500 font-bold w-16">Mail {index + 1}:</span>
+                    <input 
+                      type="email" 
+                      placeholder={`ejemplo${index + 1}@estudio.com`}
+                      value={teamEmails[index] || ''}
+                      onChange={(e) => {
+                        const updated = [...teamEmails];
+                        updated[index] = e.target.value;
+                        setTeamEmails(updated);
+                      }}
+                      className="flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs text-zinc-400">
+                ✅ <strong>Estado:</strong> Los correos se guardan automáticamente en la configuración del estudio para su uso en la agenda.
               </div>
             </div>
           )}
