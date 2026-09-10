@@ -75,101 +75,88 @@ export default function Home() {
 
   const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
 
-  const [cases, setCases] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lex_cases');
-      if (saved) return JSON.parse(saved);
+  const [cases, setCases] = useState([
+    {
+      id: '1',
+      number: 'EXP-9821/2026',
+      caratula: 'García, Roberto c/ Aseguradora del Sur S.A. s/ Daños',
+      court: 'Juzgado Civil y Comercial Nº 12',
+      client: 'Roberto García',
+      processType: 'JUDICIAL',
+      status: 'EN TRAMITE',
+      notes: 'Cliente prefiere contacto por correo por la tarde.'
     }
-    return [
-      {
-        id: '1',
-        number: 'EXP-9821/2026',
-        caratula: 'García, Roberto c/ Aseguradora del Sur S.A. s/ Daños',
-        court: 'Juzgado Civil y Comercial Nº 12',
-        client: 'Roberto García',
-        processType: 'JUDICIAL',
-        status: 'EN TRAMITE',
-        notes: 'Cliente prefiere contacto por correo por la tarde.'
-      }
-    ];
-  });
+  ]);
   
-  const [clients, setClients] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lex_clients');
-      if (saved) return JSON.parse(saved);
-    }
-    return [
-      { id: '1', name: 'Roberto García', role: 'CLIENTE', taxId: '20-34881920-8', email: 'roberto@email.com', phone: '3584123456', address: 'Río Cuarto' },
-      { id: '2', name: 'Aseguradora del Sur S.A.', role: 'CONTRAPARTE', taxId: '30-50112233-4', email: 'legales@aseguradora.com', phone: '0800-555-1234', address: 'Córdoba' }
-    ];
-  });
+  const [clients, setClients] = useState([
+    { id: '1', name: 'Roberto García', role: 'CLIENTE', taxId: '20-34881920-8', email: 'roberto@email.com', phone: '3584123456', address: 'Río Cuarto' },
+    { id: '2', name: 'Aseguradora del Sur S.A.', role: 'CONTRAPARTE', taxId: '30-50112233-4', email: 'legales@aseguradora.com', phone: '0800-555-1234', address: 'Córdoba' }
+  ]);
 
-  const [movements, setMovements] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lex_movements');
-      if (saved) return JSON.parse(saved);
-    }
-    return [
-      { id: '1', caseId: '1', date: '2026-09-09', title: 'Cédula de Traslado', text: 'Se concede traslado por el término de ley.', notes: 'Revisar con perito antes del vencimiento.' }
-    ];
-  });
+  const [movements, setMovements] = useState([
+    { id: '1', caseId: '1', date: '2026-09-09', title: 'Cédula de Traslado', text: 'Se concede traslado por el término de ley.', notes: 'Revisar con perito antes del vencimiento.' }
+  ]);
 
-  const [deadlines, setDeadlines] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lex_deadlines');
-      if (saved) return JSON.parse(saved);
-    }
-    return [
-      { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: true }
-    ];
-  });
+  const [deadlines, setDeadlines] = useState([
+    { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: true }
+  ]);
 
-  const [hearings, setHearings] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lex_hearings');
-      if (saved) return JSON.parse(saved);
-    }
-    return [
-      { id: '1', caseId: '1', title: 'Audiencia Preliminar', date: '2026-09-18T10:00', location: 'Juzgado Civil Nº 12', assignedMail: '', status: 'PENDIENTE' }
-    ];
-  });
+  const [hearings, setHearings] = useState([
+    { id: '1', caseId: '1', title: 'Audiencia Preliminar', date: '2026-09-18T10:00', location: 'Juzgado Civil Nº 12', assignedMail: '', status: 'PENDIENTE' }
+  ]);
 
-  const [tasks, setTasks] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('lex_tasks');
-      if (saved) return JSON.parse(saved);
-    }
-    return [
-      { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false },
-      { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false },
-      { id: '3', caseId: '1', title: 'Buscar copia de DNI en archivo', priority: 'BAJA', completed: true }
-    ];
-  });
+  const [tasks, setTasks] = useState([
+    { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false },
+    { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false },
+    { id: '3', caseId: '1', title: 'Buscar copia de DNI en archivo', priority: 'BAJA', completed: true }
+  ]);
 
-  // --- PERSISTENCIA LOCAL ---
-  useEffect(() => {
+  // --- SINCRONIZACIÓN AUTOMÁTICA CON EL SERVIDOR NUBE ---
+  const syncWithCloud = async (key, value) => {
     try {
-      localStorage.setItem('lex_cases', JSON.stringify(cases));
-      localStorage.setItem('lex_clients', JSON.stringify(clients));
-      localStorage.setItem('lex_movements', JSON.stringify(movements));
-      localStorage.setItem('lex_deadlines', JSON.stringify(deadlines));
-      localStorage.setItem('lex_hearings', JSON.stringify(hearings));
-      localStorage.setItem('lex_tasks', JSON.stringify(tasks));
-      localStorage.setItem('lex_emails', JSON.stringify(teamEmails));
+      await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      });
     } catch (e) {
-      console.error(e);
+      console.error('Error sincronizando con nube:', e);
     }
-  }, [cases, clients, movements, deadlines, hearings, tasks, teamEmails]);
+  };
 
-  // SETTERS
-  const updateCases = (val) => setCases(val);
-  const updateClients = (val) => setClients(val);
-  const updateMovements = (val) => setMovements(val);
-  const updateDeadlines = (val) => setDeadlines(val);
-  const updateHearings = (val) => setHearings(val);
-  const updateTasks = (val) => setTasks(val);
-  const updateTeamEmails = (val) => setTeamEmails(val);
+  const fetchFromCloud = async () => {
+    try {
+      const res = await fetch('/api/sync');
+      const data = await res.json();
+      if (data) {
+        if (data.lex_cases) setCases(data.lex_cases);
+        if (data.lex_clients) setClients(data.lex_clients);
+        if (data.lex_movements) setMovements(data.lex_movements);
+        if (data.lex_deadlines) setDeadlines(data.lex_deadlines);
+        if (data.lex_hearings) setHearings(data.lex_hearings);
+        if (data.lex_tasks) setTasks(data.lex_tasks);
+        if (data.lex_emails) setTeamEmails(data.lex_emails);
+      }
+    } catch (e) {
+      console.error('Error obteniendo de nube:', e);
+    }
+  };
+
+  // Sondeo periódico cada 3 segundos para refrescar datos entre celular y compu
+  useEffect(() => {
+    fetchFromCloud();
+    const interval = setInterval(fetchFromCloud, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // SETTERS CON SINCRONIZACIÓN AUTOMÁTICA
+  const updateCases = (val) => { setCases(val); syncWithCloud('lex_cases', val); };
+  const updateClients = (val) => { setClients(val); syncWithCloud('lex_clients', val); };
+  const updateMovements = (val) => { setMovements(val); syncWithCloud('lex_movements', val); };
+  const updateDeadlines = (val) => { setDeadlines(val); syncWithCloud('lex_deadlines', val); };
+  const updateHearings = (val) => { setHearings(val); syncWithCloud('lex_hearings', val); };
+  const updateTasks = (val) => { setTasks(val); syncWithCloud('lex_tasks', val); };
+  const updateTeamEmails = (val) => { setTeamEmails(val); syncWithCloud('lex_emails', val); };
 
   // FORMULARIOS DE ALTA
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
@@ -181,34 +168,34 @@ export default function Home() {
 
   // HANDLERS DE BORRADO Y ESTADOS
   const toggleHearingStatus = (hearingId) => {
-    setHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
+    updateHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
 
   const deleteHearing = (hearingId) => {
-    setHearings(hearings.filter(h => h.id !== hearingId));
+    updateHearings(hearings.filter(h => h.id !== hearingId));
   };
 
   const deleteDeadline = (deadlineId) => {
-    setDeadlines(deadlines.filter(d => d.id !== deadlineId));
+    updateDeadlines(deadlines.filter(d => d.id !== deadlineId));
   };
 
   const deleteTask = (taskId) => {
-    setTasks(tasks.filter(t => t.id !== taskId));
+    updateTasks(tasks.filter(t => t.id !== taskId));
   };
 
   const deleteCase = (caseId) => {
     if (!confirm('¿Está seguro de eliminar este expediente y sus registros vinculados?')) return;
-    setCases(cases.filter(c => c.id !== caseId));
-    setMovements(movements.filter(m => m.caseId !== caseId));
-    setDeadlines(deadlines.filter(d => d.caseId !== caseId));
-    setHearings(hearings.filter(h => h.caseId !== caseId));
-    setTasks(tasks.filter(t => t.caseId !== caseId));
+    updateCases(cases.filter(c => c.id !== caseId));
+    updateMovements(movements.filter(m => m.caseId !== caseId));
+    updateDeadlines(deadlines.filter(d => d.caseId !== caseId));
+    updateHearings(hearings.filter(h => h.caseId !== caseId));
+    updateTasks(tasks.filter(t => t.caseId !== caseId));
     if (selectedCaseId === caseId) setSelectedCaseId(null);
   };
 
   const deleteClient = (clientId) => {
     if (!confirm('¿Está seguro de eliminar este cliente/contacto?')) return;
-    setClients(clients.filter(c => c.id !== clientId));
+    updateClients(clients.filter(c => c.id !== clientId));
   };
 
   const handleAddCase = (e) => {
@@ -216,14 +203,14 @@ export default function Home() {
     if (!newCase.number || !newCase.caratula) return;
     const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
     const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
-    setCases([...cases, created]);
+    updateCases([...cases, created]);
     setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   };
 
   const handleAddClient = (e) => {
     e.preventDefault();
     if (!newClient.name) return;
-    setClients([...clients, { ...newClient, id: Date.now().toString() }]);
+    updateClients([...clients, { ...newClient, id: Date.now().toString() }]);
     setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   };
 
@@ -231,7 +218,7 @@ export default function Home() {
     e.preventDefault();
     if (!newMovement.title) return;
     const caseTarget = selectedCaseId || newMovement.caseId || cases[0]?.id || '1';
-    setMovements([...movements, { ...newMovement, caseId: caseTarget, id: Date.now().toString() }]);
+    updateMovements([...movements, { ...newMovement, caseId: caseTarget, id: Date.now().toString() }]);
     setNewMovement({ caseId: caseTarget, date: '', title: '', text: '', notes: '' });
   };
 
@@ -239,7 +226,7 @@ export default function Home() {
     e.preventDefault();
     if (!newDeadline.title) return;
     const caseTarget = selectedCaseId || newDeadline.caseId || cases[0]?.id || '1';
-    setDeadlines([...deadlines, { ...newDeadline, caseId: caseTarget, id: Date.now().toString(), status: 'PENDIENTE', isAI: false }]);
+    updateDeadlines([...deadlines, { ...newDeadline, caseId: caseTarget, id: Date.now().toString(), status: 'PENDIENTE', isAI: false }]);
     setNewDeadline({ caseId: caseTarget, title: '', dueDate: '', days: 5 });
   };
 
@@ -249,7 +236,7 @@ export default function Home() {
 
     const caseTarget = selectedCaseId || newHearing.caseId || cases[0]?.id || '1';
     const hearingObj = { ...newHearing, caseId: caseTarget, id: Date.now().toString(), status: 'PENDIENTE' };
-    setHearings([...hearings, hearingObj]);
+    updateHearings([...hearings, hearingObj]);
 
     const startDate = new Date(newHearing.date);
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
@@ -271,12 +258,12 @@ export default function Home() {
     e.preventDefault();
     if (!newTask.title) return;
     const caseTarget = selectedCaseId || newTask.caseId || cases[0]?.id || '1';
-    setTasks([...tasks, { ...newTask, caseId: caseTarget, id: Date.now().toString(), completed: false }]);
+    updateTasks([...tasks, { ...newTask, caseId: caseTarget, id: Date.now().toString(), completed: false }]);
     setNewTask({ caseId: caseTarget, title: '', priority: 'MEDIA' });
   };
 
   const toggleTask = (taskId) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
+    updateTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
   };
 
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
@@ -374,7 +361,7 @@ export default function Home() {
         <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center">
           <div>
             <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
-            <p className="text-[10px] text-emerald-500 font-semibold">● Local Activo</p>
+            <p className="text-[10px] text-emerald-500 font-semibold">● Sincronizado en Nube</p>
           </div>
           <button 
             onClick={handleLogout}
@@ -751,7 +738,7 @@ export default function Home() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => setDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: x.status === 'CUMPLIDO' ? 'PENDIENTE' : 'CUMPLIDO'} : x))}
+                            onClick={() => updateDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: x.status === 'CUMPLIDO' ? 'PENDIENTE' : 'CUMPLIDO'} : x))}
                             className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-400' : 'bg-orange-500 text-black'}`}
                           >
                             {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
