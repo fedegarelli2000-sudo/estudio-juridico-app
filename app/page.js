@@ -21,16 +21,27 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
-  // --- CONTROL DE ACCESO Y CONTRASEÑA ---
+  // --- CONTROL DE ACCESO Y CONTRASEÑA (USANDO SESSIONSTORAGE PARA EXIGIR LOGIN AL ABRIR NUEVO LINK) ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [currentPassword, setCurrentPassword] = useState('estudioGarelli2026');
+  const [recoveryEmailConfig, setRecoveryEmailConfig] = useState('federico@estudio.com');
+  
+  // Estados para recuperación de contraseña
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
+  const [recoveryInputEmail, setRecoveryInputEmail] = useState('');
+  const [recoveryMessage, setRecoveryMessage] = useState('');
 
   useEffect(() => {
     const savedPassword = localStorage.getItem('lex_app_password');
     if (savedPassword) setCurrentPassword(savedPassword);
-    const savedAuth = localStorage.getItem('lex_auth');
+
+    const savedRecoveryMail = localStorage.getItem('lex_recovery_email');
+    if (savedRecoveryMail) setRecoveryEmailConfig(savedRecoveryMail);
+
+    // Usamos sessionStorage para que el acceso expire al cerrar la pestaña o entrar desde un link externo
+    const savedAuth = sessionStorage.getItem('lex_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
   }, []);
 
@@ -39,34 +50,50 @@ export default function Home() {
     if (passwordInput === currentPassword) {
       setIsAuthenticated(true);
       setLoginError('');
-      localStorage.setItem('lex_auth', 'true');
+      sessionStorage.setItem('lex_auth', 'true');
     } else {
       setLoginError('Contraseña incorrecta. Verifique los datos de acceso.');
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('lex_auth');
+    sessionStorage.removeItem('lex_auth');
     setIsAuthenticated(false);
   };
 
-  // CAMBIO DE CONTRASEÑA
+  const handleRecoverPassword = (e) => {
+    e.preventDefault();
+    if (recoveryInputEmail.trim().toLowerCase() === recoveryEmailConfig.toLowerCase()) {
+      setRecoveryMessage(`✅ ¡Correo verificado! Su contraseña actual es: "${currentPassword}". Anótela en un lugar seguro.`);
+    } else {
+      setRecoveryMessage('❌ El correo ingresado no coincide con el mail de recuperación configurado.');
+    }
+  };
+
+  // CAMBIO DE CONTRASEÑA Y MAIL DE RECUPERACIÓN
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
+  const [newRecoveryMail, setNewRecoveryMail] = useState('');
   const [passMessage, setPassMessage] = useState('');
 
   const handleChangePassword = (e) => {
     e.preventDefault();
-    if (!newPass) return;
-    if (newPass !== confirmPass) {
-      setPassMessage('❌ Las contraseñas no coinciden.');
+    if (newPass && newPass !== confirmPass) {
+      setPassMessage('❌ Las nuevas contraseñas no coinciden.');
       return;
     }
-    setCurrentPassword(newPass);
-    localStorage.setItem('lex_app_password', newPass);
-    setPassMessage('✅ ¡Contraseña actualizada con éxito!');
+    if (newPass) {
+      setCurrentPassword(newPass);
+      localStorage.setItem('lex_app_password', newPass);
+    }
+    if (newRecoveryMail) {
+      setRecoveryEmailConfig(newRecoveryMail);
+      localStorage.setItem('lex_recovery_email', newRecoveryMail);
+    }
+    setPassMessage('✅ ¡Credenciales y ajustes de seguridad actualizados con éxito!');
     setNewPass('');
     setConfirmPass('');
+    setNewRecoveryMail('');
   };
 
   // --- NAVEGACIÓN Y ESTADOS ---
@@ -102,7 +129,7 @@ export default function Home() {
       estadoFiscal: 'TÍTULO PRESENTADO / NOTIFICADO',
       juzgado: 'Juzgado Fiscal Río Cuarto',
       cidiNotif: 'Notificado vía Cédula/CIDI',
-      alertaExcepcionCumplida: false // Opción para marcar la alerta como cumplida/descartada desde la ficha
+      alertaExcepcionCumplida: false
     }
   ]);
 
@@ -144,7 +171,6 @@ export default function Home() {
     juzgado: 'Juzgado Fiscal Río Cuarto'
   });
 
-  // MOVIMIENTO FISCAL CON OPCIÓN DE AGENDAR EN GOOGLE CALENDAR
   const [newFiscalMovement, setNewFiscalMovement] = useState({ 
     fiscalId: '', 
     date: '', 
@@ -221,7 +247,6 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
-  // REGISTRO DE MOVIMIENTOS Y ENVÍO A GOOGLE CALENDAR SI SE SELECCIONA
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
     if (!newFiscalMovement.date) return;
@@ -262,7 +287,7 @@ export default function Home() {
           plazoPerencion: perencionStr,
           estadoFiscal: estadoNuevo,
           cidiNotif: cidiStatus,
-          alertaExcepcionCumplida: false // Reinicia la alerta al agregar nuevo movimiento
+          alertaExcepcionCumplida: false
         };
       }
       return fc;
@@ -297,7 +322,6 @@ export default function Home() {
       updateDeadlines([...deadlines, newDeadlineObj]);
     }
 
-    // SI EL USUARIO MARCÓ AGENDAR EN GOOGLE CALENDAR
     if (newFiscalMovement.agendarEnGoogle) {
       const startDate = new Date(movDateObj);
       startDate.setHours(9, 0, 0, 0);
@@ -583,7 +607,7 @@ export default function Home() {
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
-  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD (EXCLUYE LAS MARCADAS COMO CUMPLIDAS) ---
+  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD ---
   const today = new Date();
   const urgentFiscalAlerts = fiscalCases.filter(fc => {
     if (fc.alertaExcepcionCumplida) return false;
@@ -594,7 +618,7 @@ export default function Home() {
     return diffDays <= 10;
   });
 
-  // --- LOGIN ---
+  // --- LOGIN / PANTALLA DE ACCESO ---
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans items-center justify-center p-4">
@@ -609,31 +633,79 @@ export default function Home() {
             <p className="text-xs text-orange-500 font-semibold mt-1">Acceso Privado al Sistema Operativo</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4 text-left">
-            <div>
-              <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Contraseña de Clave Privada</label>
-              <input 
-                type="password" 
-                placeholder="••••••••••••"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-white text-xs outline-none focus:border-orange-500 transition-colors"
-              />
-            </div>
+          {!isRecoveryMode ? (
+            <form onSubmit={handleLogin} className="space-y-4 text-left">
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Contraseña de Clave Privada</label>
+                <input 
+                  type="password" 
+                  placeholder="••••••••••••"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-white text-xs outline-none focus:border-orange-500 transition-colors"
+                />
+              </div>
 
-            {loginError && (
-              <p className="text-[11px] text-red-500 font-bold bg-red-500/10 p-2 rounded border border-red-500/20">{loginError}</p>
-            )}
+              {loginError && (
+                <p className="text-[11px] text-red-500 font-bold bg-red-500/10 p-2 rounded border border-red-500/20">{loginError}</p>
+              )}
 
-            <button 
-              type="submit" 
-              className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20"
-            >
-              Ingresar al Estudio
-            </button>
-          </form>
+              <button 
+                type="submit" 
+                className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20"
+              >
+                Ingresar al Estudio
+              </button>
 
-          <p className="text-[10px] text-zinc-600">Conexión cifrada de acceso exclusivo para el personal autorizado.</p>
+              <div className="text-center pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => { setIsRecoveryMode(true); setRecoveryMessage(''); setRecoveryInputEmail(''); }}
+                  className="text-[11px] text-orange-400 hover:underline"
+                >
+                  ¿Olvidó su contraseña? Recupérela aquí
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleRecoverPassword} className="space-y-4 text-left">
+              <div>
+                <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Correo de Recuperación Registrado</label>
+                <input 
+                  type="email" 
+                  placeholder="ejemplo@estudio.com"
+                  value={recoveryInputEmail}
+                  onChange={(e) => setRecoveryInputEmail(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-white text-xs outline-none focus:border-orange-500 transition-colors"
+                />
+              </div>
+
+              {recoveryMessage && (
+                <p className={`text-[11px] font-bold p-2 rounded border ${recoveryMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                  {recoveryMessage}
+                </p>
+              )}
+
+              <button 
+                type="submit" 
+                className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20"
+              >
+                Verificar Correo y Recuperar
+              </button>
+
+              <div className="text-center pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setIsRecoveryMode(false)}
+                  className="text-[11px] text-zinc-400 hover:text-white"
+                >
+                  ← Volver al login
+                </button>
+              </div>
+            </form>
+          )}
+
+          <p className="text-[10px] text-zinc-600">Sesión protegida por seguridad de sesión estricta.</p>
         </div>
       </div>
     );
@@ -789,7 +861,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE DE LIQUIDACIÓN FISCAL (CON OPCIÓN DE MARCAR ALERTA COMO CUMPLIDA Y AGENDAR EN GOOGLE) */
+            /* DETALLE DE LIQUIDACIÓN FISCAL */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -821,7 +893,6 @@ export default function Home() {
                   <div>🔒 <strong className="text-purple-400">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
 
-                {/* BOTÓN PARA MARCAR LA ALERTA DE EXCEPCIÓN COMO CUMPLIDA / DESCARTADA */}
                 <div className="pt-2 flex justify-between items-center bg-zinc-950 p-3 rounded border border-zinc-800 text-xs">
                   <div>
                     <span className="font-bold text-white">Estado de la Alerta Urgente:</span>
@@ -840,7 +911,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* MODAL DE EDICIÓN MANUAL DE FECHAS */}
               {isEditingFiscal && (
                 <form onSubmit={handleSaveEditFiscal} className="bg-zinc-900 border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
@@ -936,7 +1006,6 @@ export default function Home() {
                 </form>
               )}
 
-              {/* REGISTRO DE MOVIMIENTOS CON OPCIÓN DE AGENDAR EN GOOGLE CALENDAR */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento Procesal (Actualiza Perención)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -970,7 +1039,6 @@ export default function Home() {
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
 
-                {/* OPCIONES PARA GUARDAR COMO TAREA, PLAZO O AGENDAR EN GOOGLE CALENDAR */}
                 <div className="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-3 text-xs">
                   <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard y Calendario:</p>
                   
@@ -1091,7 +1159,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* ALERTAS URGENTES FILTRADAS */}
                   <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl space-y-3">
                     <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
                     {urgentFiscalAlerts.length > 0 ? (
@@ -1881,7 +1948,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* APARTADO 5: TABLA AMPLIADA DE PLAZOS PROCESALES (GUÍA RÁPIDA) */}
                   {procuracionSubTab === 'tabla_plazos' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-2">
@@ -1931,7 +1997,7 @@ export default function Home() {
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
-                              <td className="p-3 text-amber-400 font-bold">3 días</td>
+                              <td className="p-3 text-amber-400 font-bold">3 days</td>
                               <td className="p-3 text-zinc-400">Contra providencias de trámite dictadas sin sustanciación previa.</td>
                             </tr>
                           </tbody>
@@ -1968,10 +2034,20 @@ export default function Home() {
                   </div>
 
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">Cambiar Contraseña de Acceso al Estudio</h3>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Seguridad, Contraseña y Correo de Recuperación</h3>
                     <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
                       <div>
-                        <label className="text-zinc-400 block mb-1">Nueva Contraseña:</label>
+                        <label className="text-zinc-400 block mb-1">Correo Electrónico de Recuperación:</label>
+                        <input 
+                          type="email" 
+                          placeholder="tu-correo@estudio.com"
+                          defaultValue={recoveryEmailConfig}
+                          onChange={(e) => setNewRecoveryMail(e.target.value)}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 block mb-1">Nueva Contraseña (opcional):</label>
                         <input 
                           type="password" 
                           placeholder="••••••••••••"
@@ -1996,7 +2072,7 @@ export default function Home() {
                       )}
 
                       <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs transition-colors">
-                        Guardar Nueva Contraseña
+                        Guardar Cambios de Seguridad
                       </button>
                     </form>
                   </div>
