@@ -72,10 +72,11 @@ export default function Home() {
   // --- NAVEGACIÓN Y ESTADOS ---
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCaseId, setSelectedCaseId] = useState(null);
+  const [selectedFiscalId, setSelectedFiscalId] = useState(null);
 
   const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
 
-  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) MEJORADO Y DINÁMICO ---
+  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) MEJORADO CON NÚMERO DE LIQUIDACIÓN Y FICHAS ---
   const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
   const [fiscalCases, setFiscalCases] = useState([
     {
@@ -85,12 +86,17 @@ export default function Home() {
       nroLiquidacion: 'LIQ-2026-9921',
       periodo: '2025/2026',
       monto: '$1.450.000',
-      plazoPerencion: '2026-10-15',
-      diasHabilesExcepcion: 3,
+      fechaNotificacion: '2026-09-01',
+      plazoExcepcionesFecha: '2026-09-04', // 3 días hábiles ley 9024
+      plazoPerencion: '2027-03-01',
       estadoFiscal: 'EN EJECUCIÓN',
       juzgado: 'Juzgado Fiscal de 1ª Nominación - Río Cuarto',
       cidiNotif: 'Notificado vía CIDI (Ley 9024 Art. 4)'
     }
+  ]);
+
+  const [fiscalMovements, setFiscalMovements] = useState([
+    { id: 'fm1', fiscalId: 'f1', date: '2026-09-02', title: 'Despacho Automático y Citación', text: 'Se ordena despacho automático de demanda y citación a estar a derecho.', notes: 'Controlar plazo de excepciones.' }
   ]);
 
   const [newFiscalCase, setNewFiscalCase] = useState({
@@ -99,30 +105,39 @@ export default function Home() {
     nroLiquidacion: '',
     periodo: '',
     monto: '',
+    fechaNotificacion: '',
     juzgado: 'Juzgado Fiscal Río Cuarto',
     cidiNotif: 'Pendiente CIDI'
   });
 
+  const [newFiscalMovement, setNewFiscalMovement] = useState({ fiscalId: '', date: '', title: '', text: '', notes: '' });
+
   const handleAddFiscalCase = (e) => {
     e.preventDefault();
     if (!newFiscalCase.contribuyente || !newFiscalCase.monto || !newFiscalCase.nroLiquidacion) return;
-    
-    // Automatización de plazos y perención basada en normativa fiscal de Córdoba (Ley 6006 / Ley 9024)
-    const fechaActual = new Date();
-    fechaActual.setDate(fechaActual.getDate() + 3); // 3 días hábiles para oponer excepciones (Art. 6 Ley 9024)
-    const plazoExcepcionesStr = fechaActual.toISOString().split('T')[0];
 
-    const fechaPerencion = new Date();
-    fechaPerencion.setMonth(fechaPerencion.getMonth() + 3); // Simulación de plazo de perención / impulso procesal fiscal
-    const plazoPerencionStr = fechaPerencion.toISOString().split('T')[0];
+    // Cálculo automático de 3 días hábiles para excepciones (Art. 6 Ley 9024)[cite: 7]
+    let excepcionStr = 'Pendiente Notificación';
+    if (newFiscalCase.fechaNotificacion) {
+      const notifDate = new Date(newFiscalCase.fechaNotificacion);
+      notifDate.setDate(notifDate.getDate() + 3);
+      excepcionStr = notifDate.toISOString().split('T')[0];
+    }
 
-    const created = { 
-      ...newFiscalCase, 
-      id: 'f_' + Date.now(), 
-      diasHabilesExcepcion: 3,
-      plazoExcepcionesFecha: plazoExcepcionesStr,
-      plazoPerencion: plazoPerencionStr,
-      estadoFiscal: 'TÍTULO HÁBIL CARGADO' 
+    // Cálculo estimado de perención a 6 meses de inactividad procesal
+    let perencionStr = 'A calcular';
+    if (newFiscalCase.fechaNotificacion) {
+      const perDate = new Date(newFiscalCase.fechaNotificacion);
+      perDate.setMonth(perDate.getMonth() + 6);
+      perencionStr = perDate.toISOString().split('T')[0];
+    }
+
+    const created = {
+      ...newFiscalCase,
+      id: 'f_' + Date.now(),
+      plazoExcepcionesFecha: excepcionStr,
+      plazoPerencion: perencionStr,
+      estadoFiscal: 'TÍTULO HÁBIL CARGADO'
     };
 
     setFiscalCases([...fiscalCases, created]);
@@ -132,6 +147,7 @@ export default function Home() {
       nroLiquidacion: '',
       periodo: '',
       monto: '',
+      fechaNotificacion: '',
       juzgado: 'Juzgado Fiscal Río Cuarto',
       cidiNotif: 'Pendiente CIDI'
     });
@@ -140,8 +156,22 @@ export default function Home() {
   const deleteFiscalCase = (id) => {
     if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal?')) return;
     setFiscalCases(fiscalCases.filter(fc => fc.id !== id));
+    setFiscalMovements(fiscalMovements.filter(fm => fm.fiscalId !== id));
+    if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
+  const handleAddFiscalMovement = (e) => {
+    e.preventDefault();
+    if (!newFiscalMovement.title) return;
+    const targetId = selectedFiscalId || newFiscalMovement.fiscalId;
+    if (!targetId) return;
+
+    const created = { ...newFiscalMovement, fiscalId: targetId, id: 'fm_' + Date.now() };
+    setFiscalMovements([...fiscalMovements, created]);
+    setNewFiscalMovement({ fiscalId: targetId, date: '', title: '', text: '', notes: '' });
+  };
+
+  // --- EXPEDIENTES Y DEMÁS MÓDULOS ---
   const [cases, setCases] = useState([
     {
       id: '1',
@@ -204,6 +234,7 @@ export default function Home() {
         if (data.lex_tasks) setTasks(data.lex_tasks);
         if (data.lex_emails) setTeamEmails(data.lex_emails);
         if (data.lex_fiscal_cases) setFiscalCases(data.lex_fiscal_cases);
+        if (data.lex_fiscal_movements) setFiscalMovements(data.lex_fiscal_movements);
       }
     } catch (e) {
       console.error('Error obteniendo de nube:', e);
@@ -216,7 +247,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // SETTERS CON SINCRONIZACIÓN AUTOMÁTICA
   const updateCases = (val) => { setCases(val); syncWithCloud('lex_cases', val); };
   const updateClients = (val) => { setClients(val); syncWithCloud('lex_clients', val); };
   const updateMovements = (val) => { setMovements(val); syncWithCloud('lex_movements', val); };
@@ -225,8 +255,9 @@ export default function Home() {
   const updateTasks = (val) => { setTasks(val); syncWithCloud('lex_tasks', val); };
   const updateTeamEmails = (val) => { setTeamEmails(val); syncWithCloud('lex_emails', val); };
   const updateFiscalCases = (val) => { setFiscalCases(val); syncWithCloud('lex_fiscal_cases', val); };
+  const updateFiscalMovements = (val) => { setFiscalMovements(val); syncWithCloud('lex_fiscal_movements', val); };
 
-  // FORMULARIOS DE ALTA
+  // FORMULARIOS DE ALTA COMUNES
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newMovement, setNewMovement] = useState({ caseId: '', date: '', title: '', text: '', notes: '' });
@@ -335,6 +366,7 @@ export default function Home() {
   };
 
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
+  const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
   // --- LOGIN ---
   if (!isAuthenticated) {
@@ -413,9 +445,9 @@ export default function Home() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => { setActiveTab(tab.id); setSelectedCaseId(null); }}
+                onClick={() => { setActiveTab(tab.id); setSelectedCaseId(null); setSelectedFiscalId(null); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
-                  activeTab === tab.id && !selectedCaseId
+                  activeTab === tab.id && !selectedCaseId && !selectedFiscalId
                     ? 'bg-orange-500 text-black font-bold shadow-lg shadow-orange-500/20'
                     : 'text-zinc-400 hover:bg-zinc-800 hover:text-orange-400'
                 }`}
@@ -447,21 +479,23 @@ export default function Home() {
         
         <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0 z-10">
           <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase">
-            {selectedCaseId ? `FICHA DE EXPEDIENTE: ${selectedCaseData?.number}` : activeTab.replace('_', ' ')}
+            {selectedCaseId ? `FICHA DE EXPEDIENTE: ${selectedCaseData?.number}` :
+             selectedFiscalId ? `FICHA DE LIQUIDACIÓN FISCAL: ${selectedFiscalData?.nroLiquidacion}` :
+             activeTab.replace('_', ' ')}
           </h2>
-          {selectedCaseId && (
+          {(selectedCaseId || selectedFiscalId) && (
             <button 
-              onClick={() => setSelectedCaseId(null)}
+              onClick={() => { setSelectedCaseId(null); setSelectedFiscalId(null); }}
               className="bg-orange-500 text-black hover:bg-orange-400 text-xs font-bold px-3 py-1.5 rounded transition-all"
             >
-              ← Volver a Lista de Expedientes
+              ← Volver al Listado Principal
             </button>
           )}
         </header>
 
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-950 relative">
           
-          {/* DETALLE INDIVIDUAL DE EXPEDIENTE */}
+          {/* DETALLE INDIVIDUAL DE EXPEDIENTE JUDICIAL */}
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
@@ -485,7 +519,6 @@ export default function Home() {
                 )}
               </div>
 
-              {/* MOVIMIENTOS EN ESTE EXPEDIENTE */}
               <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento en este Expediente</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -527,9 +560,79 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+          ) : selectedFiscalId && selectedFiscalData ? (
+
+            /* DETALLE INDIVIDUAL DE LIQUIDACIÓN FISCAL (FICHA PROCURADOR) */
+            <div className="space-y-6 relative z-10">
+              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="bg-orange-500/10 text-orange-400 font-mono text-xs font-bold px-2.5 py-1 rounded border border-orange-500/20">
+                      Nº Liquidación: {selectedFiscalData.nroLiquidacion}
+                    </span>
+                    <span className="ml-2 text-xs font-bold bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded">
+                      {selectedFiscalData.tributo}
+                    </span>
+                    <h3 className="text-lg font-bold text-white mt-2">{selectedFiscalData.contribuyente}</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Juzgado: {selectedFiscalData.juzgado} • Período: {selectedFiscalData.periodo}</p>
+                  </div>
+                  <span className="bg-orange-500 text-black text-xs font-black px-3 py-1.5 rounded">{selectedFiscalData.monto}</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
+                  <div>📅 <strong>Notificación:</strong> {selectedFiscalData.fechaNotificacion || 'Sin registrar'}</div>
+                  <div>⚠️ <strong className="text-amber-400">Vencimiento Excepción (3 días):</strong> {selectedFiscalData.plazoExcepcionesFecha}</div>
+                  <div>⏳ <strong className="text-red-400">Alerta Perención:</strong> {selectedFiscalData.plazoPerencion}</div>
+                </div>
+              </div>
+
+              {/* CARGA DE MOVIMIENTOS EN LA LIQUIDACIÓN FISCAL */}
+              <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento en esta Liquidación Fiscal</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <input 
+                    type="text" placeholder="Título de actuación (Ej. Cédula CIDI / Oposición de Excepciones)" 
+                    value={newFiscalMovement.title} onChange={e => setNewFiscalMovement({...newFiscalMovement, title: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                  <input 
+                    type="date" value={newFiscalMovement.date} onChange={e => setNewFiscalMovement({...newFiscalMovement, date: e.target.value})}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                  />
+                </div>
+                <textarea 
+                  placeholder="Detalle o texto de la actuación procesal..."
+                  value={newFiscalMovement.text} onChange={e => setNewFiscalMovement({...newFiscalMovement, text: e.target.value})}
+                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                />
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                  Guardar Movimiento en Liquidación
+                </button>
+              </form>
+
+              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
+                <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Actuaciones de la Liquidación</h4>
+                <div className="space-y-2">
+                  {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).map(fm => (
+                    <div key={fm.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
+                      <div className="flex justify-between font-bold text-zinc-200">
+                        <span>{fm.title}</span>
+                        <span className="text-zinc-500">{fm.date}</span>
+                      </div>
+                      {fm.text && <p className="text-zinc-400">{fm.text}</p>}
+                    </div>
+                  ))}
+                  {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).length === 0 && (
+                    <p className="text-xs text-zinc-600">No hay movimientos registrados para esta liquidación fiscal.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
           ) : (
             <>
-              {/* DASHBOARD CON MARCA DE AGUA MM */}
+              {/* DASHBOARD GENERAL */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
@@ -539,9 +642,9 @@ export default function Home() {
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Causas Activas</span>
-                      <h3 className="text-3xl font-black text-white mt-1">{cases.length}</h3>
-                      <p className="text-[10px] text-orange-500 font-semibold mt-1">Expedientes en trámite</p>
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Causas / Liquidaciones</span>
+                      <h3 className="text-3xl font-black text-white mt-1">{cases.length + fiscalCases.length}</h3>
+                      <p className="text-[10px] text-orange-500 font-semibold mt-1">Expedientes y Títulos Fiscales</p>
                     </div>
 
                     <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
@@ -631,7 +734,6 @@ export default function Home() {
                         value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
-                      
                       <select 
                         value={newCase.client} 
                         onChange={e => setNewCase({...newCase, client: e.target.value})}
@@ -642,7 +744,6 @@ export default function Home() {
                           <option key={c.id} value={c.name}>{c.name} ({c.role})</option>
                         ))}
                       </select>
-
                       <select 
                         value={newCase.processType} 
                         onChange={e => setNewCase({...newCase, processType: e.target.value})}
@@ -652,7 +753,6 @@ export default function Home() {
                         <option value="EXTRAJUDICIAL">Tipo de Proceso: TRÁMITE EXTRAJUDICIAL / MEDIACIÓN</option>
                       </select>
                     </div>
-
                     <textarea 
                       placeholder="Observaciones o notas manuales sobre el expediente..."
                       value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
@@ -763,7 +863,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* PLAZOS PROCESALES CON BORRADO */}
+              {/* PLAZOS PROCESALES */}
               {activeTab === 'plazos' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -894,7 +994,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* TAREAS CON BORRADO */}
+              {/* TAREAS */}
               {activeTab === 'tareas' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1024,7 +1124,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - MEJORADA Y PROFESIONAL */}
+              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - PLENA FUNCIONALIDAD Y FICHAS */}
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
@@ -1078,38 +1178,52 @@ export default function Home() {
                             value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha de Notificación (Cálculo Art. 6 Ley 9024):</label>
+                            <input 
+                              type="date" 
+                              value={newFiscalCase.fechaNotificacion} 
+                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaNotificacion: e.target.value})}
+                              className="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white outline-none focus:border-orange-500"
+                            />
+                          </div>
                           <input 
                             type="text" placeholder="Juzgado Fiscal Asignado" 
                             value={newFiscalCase.juzgado} onChange={e => setNewFiscalCase({...newFiscalCase, juzgado: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Título y Autoderectar Plazos Fiscales
+                          Registrar Título y Autocalcular Plazos Fiscales
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados (Haga clic para ingresar)</h4>
                         {fiscalCases.map(fc => (
                           <div key={fc.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
                             <div className="flex justify-between items-center font-bold text-white">
-                              <div>
-                                <span className="bg-orange-500/10 text-orange-400 font-mono px-2 py-0.5 rounded border border-orange-500/20 mr-2">
-                                  Liquidación: {fc.nroLiquidacion}
+                              <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer flex-1">
+                                <span className="bg-orange-500/10 text-orange-400 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">
+                                  Liq: {fc.nroLiquidacion}
                                 </span>
-                                <span>{fc.tributo} - {fc.contribuyente}</span>
+                                <span className="text-white text-sm">{fc.tributo} - {fc.contribuyente}</span>
                               </div>
                               <span className="text-orange-400 font-mono text-sm">{fc.monto}</span>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
+
+                            <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
                               <div>📅 <strong>Período:</strong> {fc.periodo}</div>
                               <div>⚖️ <strong>Juzgado:</strong> {fc.juzgado}</div>
-                              <div>⚠️ <strong className="text-amber-400">Vence Excepción (3 días):</strong> {fc.plazoExcepcionesFecha || 'Automático'}</div>
+                              <div>⚠️ <strong className="text-amber-400">Vence Excepción (3 días):</strong> {fc.plazoExcepcionesFecha}</div>
                               <div>⏳ <strong className="text-red-400">Alerta Perención:</strong> {fc.plazoPerencion}</div>
                               <div className="md:col-span-2">📍 <strong>CIDI:</strong> {fc.cidiNotif}</div>
                             </div>
-                            <div className="flex justify-end pt-2 border-t border-zinc-800">
+
+                            <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
+                              <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                                Ingresar a Ficha de Liquidación →
+                              </button>
                               <button 
                                 onClick={() => deleteFiscalCase(fc.id)}
                                 className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
@@ -1126,20 +1240,19 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Automático de Plazos y Perención (Ley 9024)[cite: 5]</h3>
-                        <p>• <strong>Detección automática de Citación a estar a derecho:</strong> El sistema calcula de forma predeterminada el plazo perentorio de 3 días hábiles para oponer excepciones legítimas desde la notificación (Art. 6 Ley 9024)[cite: 5].</p>
-                        <p>• <strong>Control de Perención Fiscal:</strong> Seguimiento estricto de los plazos legales de impulso procesal para evitar la caducidad de instancia en ejecución fiscal conforme al Código Tributario Provincial (Ley 6006 T.O. 2023)[cite: 4].</p>
-                        <p>• <strong>Notificaciones electrónicas:</strong> Seguimiento de cédulas y despachos mediante la plataforma Ciudadano Digital (CIDI)[cite: 4, 5].</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Automático de Plazos y Perención (Ley 9024)[cite: 7]</h3>
+                        <p>• <strong>Citación a estar a derecho:</strong> Plazo perentorio de 3 días hábiles desde la notificación por CIDI para oponer excepciones legítimas (Art. 6 Ley 9024)[cite: 7].</p>
+                        <p>• <strong>Control de Perención:</strong> Seguimiento de los plazos legales de impulso procesal para evitar la caducidad de instancia conforme al Código Tributario Provincial[cite: 7].</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Vencimientos y Perenciones Fiscales Activas</h4>
                         <div className="space-y-2">
                           {fiscalCases.map(fc => (
-                            <div key={fc.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
+                            <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors">
                               <div>
                                 <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
-                                <p className="text-[10px] text-zinc-400">Límite Perención / Impulso: <span className="text-red-400 font-bold">{fc.plazoPerencion}</span></p>
+                                <p className="text-[10px] text-zinc-400">Vencimiento Excepción: <span className="text-amber-400 font-bold">{fc.plazoExcepcionesFecha}</span> | Límite Perención: <span className="text-red-400 font-bold">{fc.plazoPerencion}</span></p>
                               </div>
                               <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
                                 CONTROL ACTIVO
@@ -1153,17 +1266,17 @@ export default function Home() {
 
                   {procuracionSubTab === 'cautelares' && (
                     <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                      <h3 className="font-bold text-orange-500 uppercase text-sm">Traba de Medidas Precautorias</h3>
-                      <p>• <strong>Embargos Preventivos:</strong> Solicitud sobre cuentas bancarias mediante el Sistema de Oficios Judiciales (SOJ).</p>
-                      <p>• <strong>Inhibición General de Bienes:</strong> Diligenciamiento electrónico ante registros de la propiedad y DNRPA acorde al Artículo 171 del CTP[cite: 4].</p>
+                      <h3 className="font-bold text-orange-500 uppercase text-sm">Traba de Medidas Precautorias (SOJ / DNRPA / RGP)</h3>
+                      <p>• <strong>Embargos Preventivos:</strong> Solicitud sobre cuentas bancarias mediante el Sistema de Oficios Judiciales (SOJ) de alcance general a través del BCRA[cite: 7].</p>
+                      <p>• <strong>Inhibición General de Bienes:</strong> Diligenciamiento electrónico ante el Registro General de la Provincia (RGP) y la DNRPA acorde al Artículo 171 del CTP[cite: 7].</p>
                     </div>
                   )}
 
                   {procuracionSubTab === 'pagos' && (
                     <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                      <h3 className="font-bold text-orange-500 uppercase text-sm">Liquidaciones, Pagos y Regulaciones</h3>
-                      <p>• <strong>Planillas de Liquidación:</strong> Discriminación por número de liquidación de capital, intereses resarcitorios/punitorios y actualización monetaria (Art. 7 Ley 9024)[cite: 5].</p>
-                      <p>• <strong>Dación en pago:</strong> Gestión de fondos retenidos y transferencia a cuentas de la Fiscalía Tributaria Adjunta[cite: 6].</p>
+                      <h3 className="font-bold text-orange-500 uppercase text-sm">Liquidaciones, Pagos y Honorarios</h3>
+                      <p>• <strong>Planillas de Liquidación:</strong> Discriminación por número de liquidación de capital, intereses resarcitorios y actualización monetaria (Art. 7 Ley 9024)[cite: 7].</p>
+                      <p>• <strong>Escala Arancelaria:</strong> Seguimiento por etapas procesales (Gestión extrajudicial 10%, Inicio de demanda 3.5%, Notificación 1%, Ejecución 3.5%) según Resolución FTA Nº 39/2018[cite: 7].</p>
                     </div>
                   )}
                 </div>
