@@ -77,7 +77,7 @@ export default function Home() {
   const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
 
   const formatDateToArg = (dateStr) => {
-    if (!dateStr || dateStr.includes('Sin fecha') || dateStr.includes('Pendiente')) return dateStr;
+    if (!dateStr || dateStr.includes('Sin fecha') || dateStr.includes('Pendiente') || dateStr.includes('A calcular')) return dateStr;
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -94,10 +94,11 @@ export default function Home() {
       nroLiquidacion: '2468-1357',
       periodo: '2026',
       monto: '$15.000.000',
+      fechaVencimientoLiquidacion: '2026-01-10', // Fecha en que venció la liquidación / deuda original
       fechaNotificacion: '',
       plazoExcepcionesFecha: 'Pendiente Notificación', 
       plazoPerencion: 'A calcular',
-      plazoPrescripcion: '2031-09-10',
+      plazoPrescripcion: '2031-01-10', // 5 años desde el vencimiento de la liquidación
       estadoFiscal: 'TÍTULO PRESENTADO / PENDIENTE NOTIFICACIÓN',
       juzgado: 'Juzgado Fiscal Río Cuarto',
       cidiNotif: 'Pendiente'
@@ -115,7 +116,16 @@ export default function Home() {
 
   const handleSaveEditFiscal = (e) => {
     e.preventDefault();
-    const updatedList = fiscalCases.map(fc => fc.id === editFiscalForm.id ? editFiscalForm : fc);
+    // Recálculo automático de prescripción (5 años desde la fecha de vencimiento de la liquidación si se modifica)
+    let nuevaPrescripcion = editFiscalForm.plazoPrescripcion;
+    if (editFiscalForm.fechaVencimientoLiquidacion) {
+      const presDate = new Date(editFiscalForm.fechaVencimientoLiquidacion);
+      presDate.setFullYear(presDate.getFullYear() + 5);
+      nuevaPrescripcion = presDate.toISOString().split('T')[0];
+    }
+
+    const formToSave = { ...editFiscalForm, plazoPrescripcion: nuevaPrescripcion };
+    const updatedList = fiscalCases.map(fc => fc.id === formToSave.id ? formToSave : fc);
     setFiscalCases(updatedList);
     updateFiscalCases(updatedList);
     setIsEditingFiscal(false);
@@ -130,7 +140,7 @@ export default function Home() {
     nroLiquidacion: '',
     periodo: '',
     monto: '',
-    fechaDeuda: '',
+    fechaVencimientoLiquidacion: '', // Casillero exacto solicitado
     juzgado: 'Juzgado Fiscal Río Cuarto'
   });
 
@@ -149,9 +159,10 @@ export default function Home() {
     e.preventDefault();
     if (!newFiscalCase.contribuyente || !newFiscalCase.monto || !newFiscalCase.nroLiquidacion) return;
 
+    // CÁLCULO AUTOMÁTICO DE PRESCRIPCIÓN (5 años conforme ley desde el vencimiento de la liquidación)
     let prescripcionStr = 'A calcular';
-    if (newFiscalCase.fechaDeuda) {
-      const presDate = new Date(newFiscalCase.fechaDeuda);
+    if (newFiscalCase.fechaVencimientoLiquidacion) {
+      const presDate = new Date(newFiscalCase.fechaVencimientoLiquidacion);
       presDate.setFullYear(presDate.getFullYear() + 5);
       prescripcionStr = presDate.toISOString().split('T')[0];
     }
@@ -177,7 +188,7 @@ export default function Home() {
       nroLiquidacion: '',
       periodo: '',
       monto: '',
-      fechaDeuda: '',
+      fechaVencimientoLiquidacion: '',
       juzgado: 'Juzgado Fiscal Río Cuarto'
     });
   };
@@ -203,7 +214,7 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
-  // REGISTRO DE MOVIMIENTOS Y CÁLCULO INTELIGENTE DE PLAZOS FISCALES SEGÚN CÓDIGO DE PROCEDIMIENTO
+  // REGISTRO DE MOVIMIENTOS Y CÁLCULO DE PLAZOS PROCESALES
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
     if (!newFiscalMovement.date) return;
@@ -223,7 +234,6 @@ export default function Home() {
     let estadoNuevo = newFiscalMovement.estadoProcesal;
     let cidiStatus = 'Registrado';
 
-    // Si el movimiento implica notificación de demanda, calculamos los 3 días hábiles para excepciones (Ley de Concursos / Código Fiscal)
     if (newFiscalMovement.title.toLowerCase().includes('cédula') || newFiscalMovement.title.toLowerCase().includes('notificación') || newFiscalMovement.estadoProcesal.includes('3 días')) {
       const expDate = new Date(movDateObj);
       expDate.setDate(expDate.getDate() + 3);
@@ -718,7 +728,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE DE LIQUIDACIÓN FISCAL (EDICIÓN MANUAL Y REGISTRO DE CÉDULA POSTERIOR) */
+            /* DETALLE DE LIQUIDACIÓN FISCAL (CÁLCULO AUTOMÁTICO DE PRESCRIPCIÓN Y EDICIÓN COMPLETA) */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -738,27 +748,27 @@ export default function Home() {
                       onClick={() => startEditingFiscal(selectedFiscalData)}
                       className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700 transition-colors"
                     >
-                      ✏️ Edición Manual de Plazos
+                      ✏️ Editar Fechas y Plazos
                     </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
-                  <div>📅 <strong>Notificación:</strong> {formatDateToArg(selectedFiscalData.fechaNotificacion) || 'Pendiente'}</div>
+                  <div>📅 <strong>Vto. Liquidación:</strong> {formatDateToArg(selectedFiscalData.fechaVencimientoLiquidacion) || 'No especificada'}</div>
                   <div>⚠️ <strong className="text-amber-400">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
                   <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
-                  <div>🔒 <strong className="text-purple-400">Prescripción:</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
+                  <div>🔒 <strong className="text-purple-400">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
               </div>
 
-              {/* MODAL DE EDICIÓN MANUAL */}
+              {/* MODAL DE EDICIÓN MANUAL DE FECHAS */}
               {isEditingFiscal && (
                 <form onSubmit={handleSaveEditFiscal} className="bg-zinc-900 border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Manual de Fechas y Vencimientos</h4>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Completa de Datos y Plazos Fiscales</h4>
                     <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
                   </div>
-                  <p className="text-[10px] text-zinc-400">💡 Modificá cualquier fecha libremente para adaptarla a feriados locales de Río Cuarto o días inhábiles.</p>
+                  <p className="text-[10px] text-zinc-400">💡 Al modificar la <strong>Fecha de Vencimiento de la Liquidación</strong>, el sistema recalculará automáticamente la prescripción a 5 años. También podés editar cualquier otro plazo de forma manual.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
                       <label className="text-zinc-400 block mb-1">Contribuyente:</label>
@@ -788,7 +798,25 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Fecha Notificación:</label>
+                      <label className="text-zinc-400 block mb-1 font-bold text-orange-400">Fecha Vto. Liquidación (Inicia Prescripción):</label>
+                      <input 
+                        type="date" 
+                        value={editFiscalForm.fechaVencimientoLiquidacion || ''} 
+                        onChange={e => {
+                          const val = e.target.value;
+                          let newPresc = editFiscalForm.plazoPrescripcion;
+                          if (val) {
+                            const pDate = new Date(val);
+                            pDate.setFullYear(pDate.getFullYear() + 5);
+                            newPresc = pDate.toISOString().split('T')[0];
+                          }
+                          setEditFiscalForm({...editFiscalForm, fechaVencimientoLiquidacion: val, plazoPrescripcion: newPresc});
+                        }}
+                        className="w-full bg-zinc-950 border border-orange-500 p-2.5 rounded text-white outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 block mb-1">Fecha Notificación Demanda:</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.fechaNotificacion || ''} 
@@ -797,7 +825,7 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción:</label>
+                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción (3d):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoExcepcionesFecha || ''} 
@@ -806,7 +834,7 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Alerta Perención:</label>
+                      <label className="text-zinc-400 block mb-1">Alerta Perención (6m):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoPerencion || ''} 
@@ -814,9 +842,18 @@ export default function Home() {
                         className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
+                    <div>
+                      <label className="text-zinc-400 block mb-1">Plazo Prescripción (Editable):</label>
+                      <input 
+                        type="date" 
+                        value={editFiscalForm.plazoPrescripcion || ''} 
+                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoPrescripcion: e.target.value})}
+                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
                   </div>
                   <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                    Guardar Cambios Manuales
+                    Guardar Modificaciones
                   </button>
                 </form>
               )}
@@ -1407,7 +1444,7 @@ export default function Home() {
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
                     {[
-                      { id: 'titulos', label: '1. Títulos y Nro. Liquidación' },
+                      { id: 'titulos', label: '1. Títulos y Vto. de Liquidación' },
                       { id: 'gestion', label: '2. Plazos (Perención y Prescripción)' },
                       { id: 'cautelares', label: '3. Medidas Cautelares (SOJ / DNRPA)' },
                       { id: 'pagos', label: '4. Registro de Cobros y Honorarios' }
@@ -1429,7 +1466,8 @@ export default function Home() {
                   {procuracionSubTab === 'titulos' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddFiscalCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Sin fecha de notificación obligatoria)</h3>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
+                        <p className="text-[10px] text-zinc-400">💡 Ingresá la <strong>Fecha en que venció la Liquidación</strong> para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
                             type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
@@ -1457,12 +1495,12 @@ export default function Home() {
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-1">Vencimiento Deuda (Prescripción 5 años):</label>
+                            <label className="text-[10px] text-orange-400 font-bold block mb-1">Fecha Vencimiento de la Liquidación:</label>
                             <input 
                               type="date" 
-                              value={newFiscalCase.fechaDeuda} 
-                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaDeuda: e.target.value})}
-                              className="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white outline-none focus:border-orange-500"
+                              value={newFiscalCase.fechaVencimientoLiquidacion} 
+                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
+                              className="w-full bg-zinc-950 border border-orange-500 p-2 rounded text-white outline-none"
                             />
                           </div>
                           <input 
@@ -1472,7 +1510,7 @@ export default function Home() {
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Título Fiscal Inicial
+                          Registrar Título y Calcular Prescripción
                         </button>
                       </form>
 
@@ -1491,15 +1529,15 @@ export default function Home() {
                             </div>
 
                             <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
-                              <div>📅 <strong>Notificación:</strong> {formatDateToArg(fc.fechaNotificacion) || 'Pendiente'}</div>
+                              <div>📅 <strong>Vto. Liq:</strong> {formatDateToArg(fc.fechaVencimientoLiquidacion) || 'No cargado'}</div>
                               <div>⚠️ <strong className="text-amber-400">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
                               <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
-                              <div>🔒 <strong className="text-purple-400">Prescripción:</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
+                              <div>🔒 <strong className="text-purple-400">Prescripción (5a):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
                             </div>
 
                             <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
                               <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                                Ingresar a Ficha / Cargar Cédula →
+                                Ingresar a Ficha / Editar Plazos →
                               </button>
                               <button 
                                 onClick={() => deleteFiscalCase(fc.id)}
@@ -1518,8 +1556,8 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
                         <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos Fiscales (Ley 9024)</h3>
-                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde que se notifica fehacientemente al demandado para oponer excepciones legítimas.</p>
-                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años desde la exigibilidad de la deuda fiscal.</p>
+                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha en que venció la liquidación fiscal, con total libertad para su edición manual.</p>
+                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde la notificación fehaciente al demandado.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1530,9 +1568,9 @@ export default function Home() {
                               <div>
                                 <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
                                 <p className="text-[10px] text-zinc-400">
-                                  Excepción: <span className="text-amber-400 font-bold">{formatDateToArg(fc.plazoExcepcionesFecha)}</span> | 
-                                  Perención: <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span> | 
-                                  Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span>
+                                  Vto. Liq: <span className="text-zinc-200">{formatDateToArg(fc.fechaVencimientoLiquidacion)}</span> | 
+                                  Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
+                                  Perención: <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
                                 </p>
                               </div>
                               <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
