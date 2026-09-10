@@ -75,6 +75,37 @@ export default function Home() {
 
   const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
 
+  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) ---
+  const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
+  const [fiscalCases, setFiscalCases] = useState([
+    {
+      id: 'f1',
+      tributo: 'Inmobiliario / Comercio',
+      contribuyente: 'Contribuyente Fiscal Nº 4821',
+      periodo: '2025/2026',
+      monto: '$1.450.000',
+      estadoFiscal: 'EN EJECUCIÓN',
+      juzgado: 'Juzgado Fiscal de 1ª Nominación - Río Cuarto',
+      cidiNotif: 'Notificado vía CIDI (Ley 9024 Art. 4)'
+    }
+  ]);
+  const [newFiscalCase, setNewFiscalCase] = useState({
+    tributo: 'Inmobiliario',
+    contribuyente: '',
+    periodo: '',
+    monto: '',
+    juzgado: 'Juzgado Fiscal Río Cuarto',
+    cidiNotif: 'Pendiente CIDI'
+  });
+
+  const handleAddFiscalCase = (e) => {
+    e.preventDefault();
+    if (!newFiscalCase.contribuyente || !newFiscalCase.monto) return;
+    const created = { ...newFiscalCase, id: 'f_' + Date.now(), estadoFiscal: 'INICIO TÍTULO' };
+    setFiscalCases([...fiscalCases, created]);
+    setNewFiscalCase({ tributo: 'Inmobiliario', contribuyente: '', periodo: '', monto: '', juzgado: 'Juzgado Fiscal Río Cuarto', cidiNotif: 'Pendiente CIDI' });
+  };
+
   const [cases, setCases] = useState([
     {
       id: '1',
@@ -136,6 +167,7 @@ export default function Home() {
         if (data.lex_hearings) setHearings(data.lex_hearings);
         if (data.lex_tasks) setTasks(data.lex_tasks);
         if (data.lex_emails) setTeamEmails(data.lex_emails);
+        if (data.lex_fiscal_cases) setFiscalCases(data.lex_fiscal_cases);
       }
     } catch (e) {
       console.error('Error obteniendo de nube:', e);
@@ -157,6 +189,7 @@ export default function Home() {
   const updateHearings = (val) => { setHearings(val); syncWithCloud('lex_hearings', val); };
   const updateTasks = (val) => { setTasks(val); syncWithCloud('lex_tasks', val); };
   const updateTeamEmails = (val) => { setTeamEmails(val); syncWithCloud('lex_emails', val); };
+  const updateFiscalCases = (val) => { setFiscalCases(val); syncWithCloud('lex_fiscal_cases', val); };
 
   // FORMULARIOS DE ALTA
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
@@ -340,6 +373,7 @@ export default function Home() {
               { id: 'tareas', label: 'Tareas y Pendientes', icon: '✅' },
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
               { id: 'audiencias', label: 'Audiencias y Calendar', icon: '📅' },
+              { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
               <button
@@ -952,6 +986,113 @@ export default function Home() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - LEY 6006 / LEY 9024 / DECRETO 2445/2023 */}
+              {activeTab === 'procuracion' && (
+                <div className="space-y-6 relative z-10">
+                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
+                    {[
+                      { id: 'titulos', label: '1. Títulos Ejecutivos y Deuda (Ley 6006 / Ley 9024)' },
+                      { id: 'gestion', label: '2. Gestión Judicial y Plazos (Art. 5 y 6 Ley 9024)' },
+                      { id: 'cautelares', label: '3. Medidas Cautelares y SOJ / DNRPA' },
+                      { id: 'pagos', label: '4. Pagos, Liquidaciones y Honorarios (Art. 7)' }
+                    ].map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setProcuracionSubTab(sub.id)}
+                        className={`px-3 py-2 rounded text-xs font-bold whitespace-nowrap transition-all ${
+                          procuracionSubTab === sub.id 
+                            ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' 
+                            : 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800'
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {procuracionSubTab === 'titulos' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddFiscalCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Confección y Carga de Título Ejecutivo Fiscal</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <input 
+                            type="text" placeholder="Tributo (Inmobiliario / Automotor / Ingresos Brutos)" 
+                            value={newFiscalCase.tributo} onChange={e => setNewFiscalCase({...newFiscalCase, tributo: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                          <input 
+                            type="text" placeholder="Contribuyente / Razón Social" 
+                            value={newFiscalCase.contribuyente} onChange={e => setNewFiscalCase({...newFiscalCase, contribuyente: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                          <input 
+                            type="text" placeholder="Período Fiscal (ej. 2024/2025)" 
+                            value={newFiscalCase.periodo} onChange={e => setNewFiscalCase({...newFiscalCase, periodo: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                          <input 
+                            type="text" placeholder="Monto Liquidado ($)" 
+                            value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                          <input 
+                            type="text" placeholder="Juzgado Fiscal Asignado" 
+                            value={newFiscalCase.juzgado} onChange={e => setNewFiscalCase({...newFiscalCase, juzgado: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                          <input 
+                            type="text" placeholder="Estado Notificación CIDI" 
+                            value={newFiscalCase.cidiNotif} onChange={e => setNewFiscalCase({...newFiscalCase, cidiNotif: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar Título Hábil Suficiente
+                        </button>
+                      </form>
+
+                      <div className="space-y-2">
+                        {fiscalCases.map(fc => (
+                          <div key={fc.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-1">
+                            <div className="flex justify-between items-center font-bold text-white">
+                              <span>{fc.tributo} - {fc.contribuyente}</span>
+                              <span className="text-orange-400 font-mono">{fc.monto}</span>
+                            </div>
+                            <p className="text-zinc-400">Período: {fc.periodo} • Juzgado: {fc.juzgado}</p>
+                            <p className="text-[10px] text-emerald-400">📍 {fc.cidiNotif}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'gestion' && (
+                    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
+                      <h3 className="font-bold text-orange-500 uppercase text-sm">Control de Plazos Procesales Fiscales (Ley 9024)[cite: 5]</h3>
+                      <p>• <strong>Citación a estar a derecho:</strong> Plazo perentorio de 3 días para oponer excepciones legítimas (Art. 6 Ley 9024)[cite: 5].</p>
+                      <p>• <strong>Notificaciones electrónicas:</strong> Operativización mediante plataforma Ciudadano Digital (CIDI) conforme normativa complementaria Decreto 2445/2023[cite: 4, 5].</p>
+                      <p>• <strong>Prescripción:</strong> Verificación previa de plazos liberatorios del Código Tributario Provincial (Ley 6006 T.O. 2023)[cite: 4].</p>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'cautelares' && (
+                    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
+                      <h3 className="font-bold text-orange-500 uppercase text-sm">Traba de Medidas Precautorias</h3>
+                      <p>• <strong>Embargos Preventivos:</strong> Solicitud sobre cuentas bancarias mediante el Sistema de Oficios Judiciales (SOJ).</p>
+                      <p>• <strong>Inhibición General de Bienes:</strong> Diligenciamiento electrónico ante registros de la propiedad y DNRPA acorde al Artículo 171 del CTP[cite: 4].</p>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'pagos' && (
+                    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
+                      <h3 className="font-bold text-orange-500 uppercase text-sm">Liquidaciones, Pagos y Regulaciones</h3>
+                      <p>• <strong>Planillas de Liquidación:</strong> Discriminación de capital, intereses resarcitorios/punitorios y actualización monetaria (Art. 7 Ley 9024)[cite: 5].</p>
+                      <p>• <strong>Dación en pago:</strong> Gestión de fondos retenidos y transferencia a cuentas de la Fiscalía Tributaria Adjunta[cite: 6].</p>
+                    </div>
+                  )}
                 </div>
               )}
 
