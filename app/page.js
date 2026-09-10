@@ -91,14 +91,14 @@ export default function Home() {
       id: 'f1',
       tributo: 'Inmobiliario',
       contribuyente: 'ZAMARBIDE',
-      nroLiquidacion: '2468-1357',
+      nroLiquidacion: '8763587',
       periodo: '2026',
-      monto: '$15.000.000',
-      fechaVencimientoLiquidacion: '2026-01-10',
+      monto: '$99.800.000',
+      fechaVencimientoLiquidacion: '2025-01-20',
       fechaNotificacion: '',
       plazoExcepcionesFecha: 'Pendiente Notificación', 
       plazoPerencion: 'A calcular (Por movimiento)',
-      plazoPrescripcion: '2031-01-10', // 5 años desde el vencimiento de la liquidación
+      plazoPrescripcion: '2030-01-20',
       estadoFiscal: 'TÍTULO PRESENTADO / PENDIENTE NOTIFICACIÓN',
       juzgado: 'Juzgado Fiscal Río Cuarto',
       cidiNotif: 'Pendiente'
@@ -143,12 +143,17 @@ export default function Home() {
     juzgado: 'Juzgado Fiscal Río Cuarto'
   });
 
+  // NUEVOS CAMPOS EN MOVIMIENTO FISCAL PARA CONVERTIR DIRECTO A TAREA O PLAZO
   const [newFiscalMovement, setNewFiscalMovement] = useState({ 
     fiscalId: '', 
     date: '', 
     title: 'Cédula de Notificación de Demanda', 
     text: '', 
-    estadoProcesal: 'NOTIFICACIÓN DE DEMANDA (3 días excepciones)' 
+    estadoProcesal: 'NOTIFICACIÓN DE DEMANDA (3 días excepciones)',
+    convertirATarea: false,
+    tareaPrioridad: 'ALTA',
+    convertirAPlazo: false,
+    plazoDias: 3
   });
 
   const [newCautelar, setNewCautelar] = useState({ fiscalId: '', tipo: 'SOJ (Bancario)', fecha: '', montoEmbargo: '' });
@@ -212,12 +217,14 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
-  // REGISTRO DE MOVIMIENTOS Y CÁLCULO AUTOMÁTICO DE PERENCIÓN SEGÚN ÚLTIMO MOVIMIENTO (EJ. 3 MESES O 6 MESES SEGÚN CÓDIGO)
+  // REGISTRO DE MOVIMIENTOS Y CONVERSIÓN OPCIONAL A TAREA / PLAZO PROCESAL
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
     if (!newFiscalMovement.date) return;
     const targetId = selectedFiscalId || newFiscalMovement.fiscalId;
     if (!targetId) return;
+
+    const targetCase = fiscalCases.find(fc => fc.id === targetId);
 
     const created = { ...newFiscalMovement, fiscalId: targetId, id: 'fm_' + Date.now() };
     const updatedMovements = [...fiscalMovements, created];
@@ -228,11 +235,10 @@ export default function Home() {
     const movDateObj = new Date(movDateStr);
 
     let excepcionStr = undefined;
-    let perencionStr = undefined; // Perención automática desde la fecha del nuevo movimiento
+    let perencionStr = undefined;
     let estadoNuevo = newFiscalMovement.estadoProcesal;
     let cidiStatus = 'Registrado';
 
-    // Cómputo automático de perención: sumamos 6 meses (plazo estándar de perención de instancia en procesos de ejecución fiscal si corresponde o configurable)
     const perDate = new Date(movDateObj);
     perDate.setMonth(perDate.getMonth() + 6);
     perencionStr = perDate.toISOString().split('T')[0];
@@ -250,7 +256,7 @@ export default function Home() {
           ...fc,
           fechaNotificacion: movDateStr,
           plazoExcepcionesFecha: excepcionStr !== undefined ? excepcionStr : fc.plazoExcepcionesFecha,
-          plazoPerencion: perencionStr, // Se actualiza automáticamente con cada nuevo movimiento agregado
+          plazoPerencion: perencionStr,
           estadoFiscal: estadoNuevo,
           cidiNotif: cidiStatus
         };
@@ -261,12 +267,44 @@ export default function Home() {
     setFiscalCases(updatedCases);
     updateFiscalCases(updatedCases);
 
+    // SI EL USUARIO MARCÓ CONVERTIR A TAREA, LO AGREGAMOS AL MÓDULO DE TAREAS GENERALES
+    if (newFiscalMovement.convertirATarea) {
+      const newTaskObj = {
+        id: 't_' + Date.now(),
+        caseId: targetId,
+        title: `[Fiscal Liq ${targetCase?.nroLiquidacion}] ${newFiscalMovement.title}`,
+        priority: newFiscalMovement.tareaPrioridad,
+        completed: false
+      };
+      updateTasks([...tasks, newTaskObj]);
+    }
+
+    // SI EL USUARIO MARCÓ CONVERTIR A PLAZO PROCESAL, LO AGREGAMOS AL MÓDULO DE PLAZOS
+    if (newFiscalMovement.convertirAPlazo) {
+      const dueDateCalc = new Date(movDateObj);
+      dueDateCalc.setDate(dueDateCalc.getDate() + (newFiscalMovement.plazoDias || 3));
+      const newDeadlineObj = {
+        id: 'd_' + Date.now(),
+        caseId: targetId,
+        title: `[Liq ${targetCase?.nroLiquidacion}] ${newFiscalMovement.title}`,
+        dueDate: dueDateCalc.toISOString().split('T')[0],
+        days: newFiscalMovement.plazoDias || 3,
+        status: 'PENDIENTE',
+        isAI: false
+      };
+      updateDeadlines([...deadlines, newDeadlineObj]);
+    }
+
     setNewFiscalMovement({ 
       fiscalId: targetId, 
       date: '', 
       title: 'Cédula de Notificación de Demanda', 
       text: '', 
-      estadoProcesal: 'NOTIFICACIÓN DE DEMANDA (3 días excepciones)' 
+      estadoProcesal: 'NOTIFICACIÓN DE DEMANDA (3 días excepciones)',
+      convertirATarea: false,
+      tareaPrioridad: 'ALTA',
+      convertirAPlazo: false,
+      plazoDias: 3
     });
   };
 
@@ -727,7 +765,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE DE LIQUIDACIÓN FISCAL (ACTUALIZACIÓN AUTOMÁTICA DE PERENCIÓN POR MOVIMIENTO Y EDICIÓN COMPLETA) */
+            /* DETALLE DE LIQUIDACIÓN FISCAL ( CON OPCIÓN DE CONVERTIR A TAREA O PLAZO ) */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -767,7 +805,6 @@ export default function Home() {
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Completa de Datos y Plazos Fiscales</h4>
                     <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
                   </div>
-                  <p className="text-[10px] text-zinc-400">💡 Podés editar cualquier fecha de forma manual si querés sobreescribir el cálculo automático del sistema.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
                       <label className="text-zinc-400 block mb-1">Contribuyente:</label>
@@ -857,10 +894,9 @@ export default function Home() {
                 </form>
               )}
 
-              {/* REGISTRO DE MOVIMIENTOS Y CÁLCULO AUTOMÁTICO DE PERENCIÓN */}
-              <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+              {/* REGISTRO DE MOVIMIENTOS CON OPCIÓN DE CONVERTIR A TAREA O PLAZO */}
+              <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento Procesal (Actualiza Perención)</h4>
-                <p className="text-[10px] text-zinc-400">💡 Al registrar cualquier movimiento nuevo y su fecha, el sistema actualizará automáticamente el plazo de perención conforme a la ley.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                   <select 
                     value={newFiscalMovement.estadoProcesal} 
@@ -871,7 +907,7 @@ export default function Home() {
                     className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
                   >
                     <option value="NOTIFICACIÓN DE DEMANDA (3 días excepciones)">Cédula / CIDI: Notificación de Demanda (Corre plazo 3 días)</option>
-                    <option value="CONTESTACIÓN DE EXCEPCIONES">Oposición / Contestación de Excepciones</option>
+                    <option value="CONTESTACIÓN DE EXCEPCIONES">Oposición / Contestación de Excepciones (Contestar traslado)</option>
                     <option value="APERTURA A PRUEBA">Apertura a Prueba</option>
                     <option value="SENTENCIA FISCAL DICTADA">Sentencia Fiscal</option>
                     <option value="OTRO MOVIMIENTO">Otro Trámite / Proveído General (Renueva Perención)</option>
@@ -884,14 +920,67 @@ export default function Home() {
                     className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                   />
                 </div>
+
                 <textarea 
                   placeholder="Detalle o texto de la actuación procesal..."
                   value={newFiscalMovement.text} 
                   onChange={e => setNewFiscalMovement({...newFiscalMovement, text: e.target.value})}
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
-                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                  Guardar Movimiento y Renovar Perención
+
+                {/* OPCIONES PARA GUARDAR COMO TAREA O PLAZO EN EL DASHBOARD */}
+                <div className="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-3 text-xs">
+                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard:</p>
+                  
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newFiscalMovement.convertirATarea} 
+                        onChange={e => setNewFiscalMovement({...newFiscalMovement, convertirATarea: e.target.checked})}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span>Convertir en <strong>Tarea Pendiente</strong></span>
+                    </label>
+
+                    {newFiscalMovement.convertirATarea && (
+                      <select 
+                        value={newFiscalMovement.tareaPrioridad} 
+                        onChange={e => setNewFiscalMovement({...newFiscalMovement, tareaPrioridad: e.target.value})}
+                        className="bg-zinc-900 border border-zinc-800 p-1 rounded text-white"
+                      >
+                        <option value="ALTA">Prioridad ALTA</option>
+                        <option value="MEDIA">Prioridad MEDIA</option>
+                        <option value="BAJA">Prioridad BAJA</option>
+                      </select>
+                    )}
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newFiscalMovement.convertirAPlazo} 
+                        onChange={e => setNewFiscalMovement({...newFiscalMovement, convertirAPlazo: e.target.checked})}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span>Guardar como <strong>Plazo Procesal</strong> (Vencimiento)</span>
+                    </label>
+
+                    {newFiscalMovement.convertirAPlazo && (
+                      <div className="flex items-center gap-1">
+                        <span>Días hábiles:</span>
+                        <input 
+                          type="number" 
+                          value={newFiscalMovement.plazoDias} 
+                          onChange={e => setNewFiscalMovement({...newFiscalMovement, plazoDias: parseInt(e.target.value) || 3})}
+                          className="w-16 bg-zinc-900 border border-zinc-800 p-1 rounded text-white text-center"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
+                  Guardar Movimiento, Renovar Perención y Enviar a Dashboard
                 </button>
               </form>
 
@@ -1438,7 +1527,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - CON 5 APARTADOS INCLUYENDO LA TABLA DE PLAZOS PROCESALES */}
+              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - TABLA AMPLIADA DE PLAZOS PROCESALES */}
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
@@ -1735,12 +1824,12 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* NUEVO APARTADO: TABLA DE PLAZOS PROCESALES (GUÍA RÁPIDA) */}
+                  {/* APARTADO 5: TABLA AMPLIADA DE PLAZOS PROCESALES (GUÍA RÁPIDA) */}
                   {procuracionSubTab === 'tabla_plazos' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-2">
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
-                        <p className="text-xs text-zinc-400">Tabla de consulta rápida basada en la normativa aplicable para fiscalías y ejecución fiscal. Podés consultarla en cualquier momento.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía Ampliada de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
+                        <p className="text-xs text-zinc-400">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
@@ -1754,29 +1843,39 @@ export default function Home() {
                           </thead>
                           <tbody className="divide-y divide-zinc-800 text-zinc-300">
                             <tr>
-                              <td className="p-3 font-bold text-white">Citación a estar a derecho / Excepciones</td>
+                              <td className="p-3 font-bold text-white">Citación a estar a derecho / Oponer Excepciones</td>
                               <td className="p-3 text-amber-400 font-bold">3 días hábiles</td>
                               <td className="p-3 text-zinc-400">Desde la notificación fehaciente (Cédula / CIDI) al demandado.</td>
                             </tr>
                             <tr>
+                              <td className="p-3 font-bold text-white">Contestación de Excepciones (Fisco)</td>
+                              <td className="p-3 text-amber-400 font-bold">3 a 5 días hábiles</td>
+                              <td className="p-3 text-zinc-400">Plazo para responder el traslado de las excepciones opuestas por el ejecutado.</td>
+                            </tr>
+                            <tr>
                               <td className="p-3 font-bold text-white">Perención de Instancia (Ejecución Fiscal)</td>
                               <td className="p-3 text-red-400 font-bold">6 meses</td>
-                              <td className="p-3 text-zinc-400">Se renueva automáticamente al realizarse cualquier movimiento o impulso procesal.</td>
+                              <td className="p-3 text-zinc-400">Se renueva automáticamente con cada movimiento o impulso procesal válido.</td>
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Prescripción de la Acción Fiscal</td>
                               <td className="p-3 text-purple-400 font-bold">5 años</td>
-                              <td className="p-3 text-zinc-400">Computados desde el vencimiento de la obligación fiscal (ej. Código Tributario).</td>
+                              <td className="p-3 text-zinc-400">Computados desde el vencimiento de la obligación fiscal (Código Tributario).</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Contestación de Excepciones (Fisco)</td>
-                              <td className="p-3 text-amber-400 font-bold">3 a 5 días hábiles</td>
-                              <td className="p-3 text-zinc-400">Plazo para responder traslado de excepciones opuestas por el ejecutado.</td>
-                            </tr>
-                            <tr>
-                              <td className="p-3 font-bold text-white">Apelación de Sentencia / Autos</td>
+                              <td className="p-3 font-bold text-white">Apelación de Sentencia de Remate / Autos</td>
                               <td className="p-3 text-amber-400 font-bold">3 a 5 días</td>
-                              <td className="p-3 text-zinc-400">Según el tipo de resolución recaída en sede judicial.</td>
+                              <td className="p-3 text-zinc-400">Plazo para interponer recurso contra resoluciones de mérito o interlocutorias.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
+                              <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
+                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
+                              <td className="p-3 text-amber-400 font-bold">3 días</td>
+                              <td className="p-3 text-zinc-400">Contra providencias de trámite dictadas sin sustanciación previa.</td>
                             </tr>
                           </tbody>
                         </table>
