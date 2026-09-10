@@ -76,7 +76,15 @@ export default function Home() {
 
   const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
 
-  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) MEJORADO CON NÚMERO DE LIQUIDACIÓN Y FICHAS ---
+  // Función auxiliar para pasar de AAAA-MM-DD a DD/MM/AAAA
+  const formatDateToArg = (dateStr) => {
+    if (!dateStr) return 'Sin fecha';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
+  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) CON FECHAS DD/MM/AAAA ---
   const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
   const [fiscalCases, setFiscalCases] = useState([
     {
@@ -87,8 +95,8 @@ export default function Home() {
       periodo: '2025/2026',
       monto: '$1.450.000',
       fechaNotificacion: '2026-09-01',
-      plazoExcepcionesFecha: '2026-09-04', // 3 días hábiles ley 9024
-      plazoPerencion: '2027-03-01',
+      plazoExcepcionesFecha: '2026-09-04', // 3 días hábiles para el demandado
+      plazoPerencion: '2027-03-01', // Control del procurador
       estadoFiscal: 'EN EJECUCIÓN',
       juzgado: 'Juzgado Fiscal de 1ª Nominación - Río Cuarto',
       cidiNotif: 'Notificado vía CIDI (Ley 9024 Art. 4)'
@@ -96,7 +104,7 @@ export default function Home() {
   ]);
 
   const [fiscalMovements, setFiscalMovements] = useState([
-    { id: 'fm1', fiscalId: 'f1', date: '2026-09-02', title: 'Despacho Automático y Citación', text: 'Se ordena despacho automático de demanda y citación a estar a derecho.', notes: 'Controlar plazo de excepciones.' }
+    { id: 'fm1', fiscalId: 'f1', date: '2026-09-02', title: 'Despacho Automático y Citación', text: 'Se ordena despacho automático de demanda y citación a estar a derecho.', notes: 'Controlar plazo de excepciones del demandado.' }
   ]);
 
   const [newFiscalCase, setNewFiscalCase] = useState({
@@ -116,7 +124,6 @@ export default function Home() {
     e.preventDefault();
     if (!newFiscalCase.contribuyente || !newFiscalCase.monto || !newFiscalCase.nroLiquidacion) return;
 
-    // Cálculo automático de 3 días hábiles para excepciones (Art. 6 Ley 9024)[cite: 7]
     let excepcionStr = 'Pendiente Notificación';
     if (newFiscalCase.fechaNotificacion) {
       const notifDate = new Date(newFiscalCase.fechaNotificacion);
@@ -124,7 +131,6 @@ export default function Home() {
       excepcionStr = notifDate.toISOString().split('T')[0];
     }
 
-    // Cálculo estimado de perención a 6 meses de inactividad procesal
     let perencionStr = 'A calcular';
     if (newFiscalCase.fechaNotificacion) {
       const perDate = new Date(newFiscalCase.fechaNotificacion);
@@ -549,7 +555,7 @@ export default function Home() {
                     <div key={m.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
                       <div className="flex justify-between font-bold text-zinc-200">
                         <span>{m.title}</span>
-                        <span className="text-zinc-500">{m.date}</span>
+                        <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
                       </div>
                       {m.text && <p className="text-zinc-400">{m.text}</p>}
                     </div>
@@ -581,9 +587,9 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
-                  <div>📅 <strong>Notificación:</strong> {selectedFiscalData.fechaNotificacion || 'Sin registrar'}</div>
-                  <div>⚠️ <strong className="text-amber-400">Vencimiento Excepción (3 días):</strong> {selectedFiscalData.plazoExcepcionesFecha}</div>
-                  <div>⏳ <strong className="text-red-400">Alerta Perención:</strong> {selectedFiscalData.plazoPerencion}</div>
+                  <div>📅 <strong>Notificación:</strong> {formatDateToArg(selectedFiscalData.fechaNotificacion)}</div>
+                  <div>⚠️ <strong className="text-amber-400">Vence Excepción (Demandado - 3 días):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
+                  <div>⏳ <strong className="text-red-400">Alerta Perención (Procurador):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
                 </div>
               </div>
 
@@ -618,7 +624,7 @@ export default function Home() {
                     <div key={fm.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
                       <div className="flex justify-between font-bold text-zinc-200">
                         <span>{fm.title}</span>
-                        <span className="text-zinc-500">{fm.date}</span>
+                        <span className="text-zinc-500">{formatDateToArg(fm.date)}</span>
                       </div>
                       {fm.text && <p className="text-zinc-400">{fm.text}</p>}
                     </div>
@@ -684,7 +690,7 @@ export default function Home() {
                           <div key={d.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
                             <div>
                               <p className="font-bold text-white">{d.title}</p>
-                              <p className="text-[10px] text-zinc-500">Vence: {d.dueDate} ({d.days} días hábiles)</p>
+                              <p className="text-[10px] text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
                             </div>
                             <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">
                               PENDIENTE
@@ -851,7 +857,7 @@ export default function Home() {
                             <div key={m.id} className="bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-xs space-y-1">
                               <div className="flex justify-between items-center">
                                 <span className="font-bold text-orange-400">{m.title}</span>
-                                <span className="text-zinc-500">{m.date}</span>
+                                <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
                               </div>
                               {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number}</p>}
                               {m.text && <p className="text-zinc-300 mt-1">{m.text}</p>}
@@ -903,7 +909,7 @@ export default function Home() {
                         <div>
                           {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
                           <h4 className="font-bold text-white">{d.title}</h4>
-                          <p className="text-zinc-500">Vencimiento: {d.dueDate} ({d.days} días hábiles)</p>
+                          <p className="text-zinc-500">Vencimiento: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
@@ -1179,7 +1185,7 @@ export default function Home() {
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha de Notificación (Cálculo Art. 6 Ley 9024):</label>
+                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha de Notificación (Plazo Demandado):</label>
                             <input 
                               type="date" 
                               value={newFiscalCase.fechaNotificacion} 
@@ -1215,8 +1221,8 @@ export default function Home() {
                             <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
                               <div>📅 <strong>Período:</strong> {fc.periodo}</div>
                               <div>⚖️ <strong>Juzgado:</strong> {fc.juzgado}</div>
-                              <div>⚠️ <strong className="text-amber-400">Vence Excepción (3 días):</strong> {fc.plazoExcepcionesFecha}</div>
-                              <div>⏳ <strong className="text-red-400">Alerta Perención:</strong> {fc.plazoPerencion}</div>
+                              <div>⚠️ <strong className="text-amber-400">Vence Excepción (Demandado - 3 días):</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
+                              <div>⏳ <strong className="text-red-400">Alerta Perención (Procurador):</strong> {formatDateToArg(fc.plazoPerencion)}</div>
                               <div className="md:col-span-2">📍 <strong>CIDI:</strong> {fc.cidiNotif}</div>
                             </div>
 
@@ -1240,9 +1246,9 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Automático de Plazos y Perención (Ley 9024)[cite: 7]</h3>
-                        <p>• <strong>Citación a estar a derecho:</strong> Plazo perentorio de 3 días hábiles desde la notificación por CIDI para oponer excepciones legítimas (Art. 6 Ley 9024)[cite: 7].</p>
-                        <p>• <strong>Control de Perención:</strong> Seguimiento de los plazos legales de impulso procesal para evitar la caducidad de instancia conforme al Código Tributario Provincial[cite: 7].</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Automático de Plazos y Perención</h3>
+                        <p>• <strong>Citación a estar a derecho (Plazo para el Demandado):</strong> Plazo perentorio de 3 días hábiles desde la notificación por CIDI para oponer excepciones legítimas. Si vencen sin oposición, pedís el certificado de no oposición y avanzás.</p>
+                        <p>• <strong>Control de Perención (Responsabilidad del Procurador):</strong> Seguimiento estricto de los plazos legales de impulso procesal para evitar la caducidad de instancia.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1252,7 +1258,7 @@ export default function Home() {
                             <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors">
                               <div>
                                 <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
-                                <p className="text-[10px] text-zinc-400">Vencimiento Excepción: <span className="text-amber-400 font-bold">{fc.plazoExcepcionesFecha}</span> | Límite Perención: <span className="text-red-400 font-bold">{fc.plazoPerencion}</span></p>
+                                <p className="text-[10px] text-zinc-400">Vencimiento Excepción (Demandado): <span className="text-amber-400 font-bold">{formatDateToArg(fc.plazoExcepcionesFecha)}</span> | Límite Perención (Procurador): <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span></p>
                               </div>
                               <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
                                 CONTROL ACTIVO
@@ -1267,16 +1273,16 @@ export default function Home() {
                   {procuracionSubTab === 'cautelares' && (
                     <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
                       <h3 className="font-bold text-orange-500 uppercase text-sm">Traba de Medidas Precautorias (SOJ / DNRPA / RGP)</h3>
-                      <p>• <strong>Embargos Preventivos:</strong> Solicitud sobre cuentas bancarias mediante el Sistema de Oficios Judiciales (SOJ) de alcance general a través del BCRA[cite: 7].</p>
-                      <p>• <strong>Inhibición General de Bienes:</strong> Diligenciamiento electrónico ante el Registro General de la Provincia (RGP) y la DNRPA acorde al Artículo 171 del CTP[cite: 7].</p>
+                      <p>• <strong>Embargos Preventivos:</strong> Solicitud sobre cuentas bancarias mediante el Sistema de Oficios Judiciales (SOJ) de alcance general a través del BCRA.</p>
+                      <p>• <strong>Inhibición General de Bienes:</strong> Diligenciamiento electrónico ante el Registro General de la Provincia (RGP) y la DNRPA acorde al Artículo 171 del CTP.</p>
                     </div>
                   )}
 
                   {procuracionSubTab === 'pagos' && (
                     <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
                       <h3 className="font-bold text-orange-500 uppercase text-sm">Liquidaciones, Pagos y Honorarios</h3>
-                      <p>• <strong>Planillas de Liquidación:</strong> Discriminación por número de liquidación de capital, intereses resarcitorios y actualización monetaria (Art. 7 Ley 9024)[cite: 7].</p>
-                      <p>• <strong>Escala Arancelaria:</strong> Seguimiento por etapas procesales (Gestión extrajudicial 10%, Inicio de demanda 3.5%, Notificación 1%, Ejecución 3.5%) según Resolución FTA Nº 39/2018[cite: 7].</p>
+                      <p>• <strong>Planillas de Liquidación:</strong> Discriminación por número de liquidación de capital, intereses resarcitorios y actualización monetaria.</p>
+                      <p>• <strong>Escala Arancelaria:</strong> Seguimiento por etapas procesales (Gestión extrajudicial 10%, Inicio de demanda 3.5%, Notificación 1%, Ejecución 3.5%) según Resolución FTA.</p>
                     </div>
                   )}
                 </div>
