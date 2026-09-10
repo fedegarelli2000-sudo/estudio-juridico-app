@@ -83,7 +83,7 @@ export default function Home() {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
 
-  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) MEJORADO CON EDICIÓN Y DETECCIÓN AUTOMÁTICA ---
+  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) ---
   const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
   
   const [fiscalCases, setFiscalCases] = useState([
@@ -94,19 +94,17 @@ export default function Home() {
       nroLiquidacion: '2468-1357',
       periodo: '2026',
       monto: '$15.000.000',
-      fechaNotificacion: '',
-      plazoExcepcionesFecha: 'Pendiente Notificación', 
-      plazoPerencion: 'A calcular',
-      plazoPrescripcion: '2031-09-10',
+      fechaNotificacion: '2026-09-10',
+      plazoExcepcionesFecha: '2026-09-13', // Editable libremente
+      plazoPerencion: '2027-03-10',        // Editable libremente
+      plazoPrescripcion: '2031-09-10',     // Editable libremente
       estadoFiscal: 'EN EJECUCIÓN',
       juzgado: 'Juzgado Fiscal Río Cuarto',
-      cidiNotif: 'Pendiente CIDI'
+      cidiNotif: 'Notificado vía Cédula'
     }
   ]);
 
   const [fiscalMovements, setFiscalMovements] = useState([]);
-
-  // Estados de Edición de Liquidación Fiscal seleccionada
   const [isEditingFiscal, setIsEditingFiscal] = useState(false);
   const [editFiscalForm, setEditFiscalForm] = useState({});
 
@@ -117,35 +115,13 @@ export default function Home() {
 
   const handleSaveEditFiscal = (e) => {
     e.preventDefault();
-    // Recalcular plazos si se modificó la fecha de notificación
-    let excepcionStr = editFiscalForm.plazoExcepcionesFecha;
-    let perencionStr = editFiscalForm.plazoPerencion;
-
-    if (editFiscalForm.fechaNotificacion) {
-      const notifDate = new Date(editFiscalForm.fechaNotificacion);
-      notifDate.setDate(notifDate.getDate() + 3);
-      excepcionStr = notifDate.toISOString().split('T')[0];
-
-      const perDate = new Date(editFiscalForm.fechaNotificacion);
-      perDate.setMonth(perDate.getMonth() + 6);
-      perencionStr = perDate.toISOString().split('T')[0];
-    }
-
-    const updatedList = fiscalCases.map(fc => fc.id === editFiscalForm.id ? {
-      ...editFiscalForm,
-      plazoExcepcionesFecha: excepcionStr,
-      plazoPerencion: perencionStr
-    } : fc);
-
+    const updatedList = fiscalCases.map(fc => fc.id === editFiscalForm.id ? editFiscalForm : fc);
     setFiscalCases(updatedList);
     updateFiscalCases(updatedList);
     setIsEditingFiscal(false);
   };
 
-  // Cautelares interactivas vinculadas
   const [cautelares, setCautelares] = useState([]);
-
-  // Honorarios y Cobros del Procurador
   const [honorariosProcuracion, setHonorariosProcuracion] = useState([]);
 
   const [newFiscalCase, setNewFiscalCase] = useState({
@@ -216,7 +192,7 @@ export default function Home() {
   };
 
   const deleteFiscalCase = (id) => {
-    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal y sus registros asociados?')) return;
+    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal?')) return;
     const upFC = fiscalCases.filter(fc => fc.id !== id);
     setFiscalCases(upFC);
     updateFiscalCases(upFC);
@@ -236,7 +212,6 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
-  // DETECCIÓN INTELIGENTE DE MOVIMIENTOS Y CÁLCULO DE 3 DÍAS HÁBILES
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
     if (!newFiscalMovement.title || !newFiscalMovement.date) return;
@@ -248,17 +223,13 @@ export default function Home() {
     setFiscalMovements(updatedMovements);
     updateFiscalMovements(updatedMovements);
 
-    // Si el título del movimiento indica notificación de demanda, actualizamos automáticamente la fecha de notificación y los plazos en el caso fiscal
     const titleLower = newFiscalMovement.title.toLowerCase();
     if (titleLower.includes('notificacion') || titleLower.includes('cédula') || titleLower.includes('demanda')) {
       const notifDateStr = newFiscalMovement.date;
       const notifDate = new Date(notifDateStr);
-      
-      // 3 días hábiles para excepciones (Ley 9024)[cite: 7]
       notifDate.setDate(notifDate.getDate() + 3);
       const excepcionStr = notifDate.toISOString().split('T')[0];
 
-      // Perención a 6 meses
       const perDate = new Date(notifDateStr);
       perDate.setMonth(perDate.getMonth() + 6);
       const perencionStr = perDate.toISOString().split('T')[0];
@@ -375,7 +346,7 @@ export default function Home() {
     { id: '3', caseId: '1', title: 'Buscar copia de DNI en archivo', priority: 'BAJA', completed: true }
   ]);
 
-  // --- SINCRONIZACIÓN AUTOMÁTICA NUBE ---
+  // --- SINCRONIZACIÓN NUBE ---
   const syncWithCloud = async (key, value) => {
     try {
       await fetch('/api/sync', {
@@ -453,17 +424,13 @@ export default function Home() {
   };
 
   const deleteCase = (caseId) => {
-    if (!confirm('¿Está seguro de eliminar este expediente y sus registros vinculados?')) return;
+    if (!confirm('¿Está seguro de eliminar este expediente?')) return;
     updateCases(cases.filter(c => c.id !== caseId));
-    updateMovements(movements.filter(m => m.caseId !== caseId));
-    updateDeadlines(deadlines.filter(d => d.caseId !== caseId));
-    updateHearings(hearings.filter(h => h.caseId !== caseId));
-    updateTasks(tasks.filter(t => t.caseId !== caseId));
     if (selectedCaseId === caseId) setSelectedCaseId(null);
   };
 
   const deleteClient = (clientId) => {
-    if (!confirm('¿Está seguro de eliminar este cliente/contacto?')) return;
+    if (!confirm('¿Está seguro de eliminar este contacto?')) return;
     updateClients(clients.filter(c => c.id !== clientId));
   };
 
@@ -533,6 +500,17 @@ export default function Home() {
 
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
+
+  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD (Solo muestra si faltan 10 días o menos, o si ya venció) ---
+  const today = new Date();
+  const urgentFiscalAlerts = fiscalCases.filter(fc => {
+    if (!fc.plazoExcepcionesFecha || fc.plazoExcepcionesFecha.includes('Pendiente') || fc.plazoExcepcionesFecha.includes('A calcular')) return false;
+    const expDate = new Date(fc.plazoExcepcionesFecha);
+    const diffTime = expDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Mostrar si faltan 10 días o menos para el vencimiento de excepciones
+    return diffDays <= 10;
+  });
 
   // --- LOGIN ---
   if (!isAuthenticated) {
@@ -729,7 +707,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE INDIVIDUAL DE LIQUIDACIÓN FISCAL (CON OPCIÓN DE EDICIÓN) */
+            /* DETALLE INDIVIDUAL DE LIQUIDACIÓN FISCAL (CON OPCIÓN DE EDICIÓN DE FECHAS) */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -749,7 +727,7 @@ export default function Home() {
                       onClick={() => startEditingFiscal(selectedFiscalData)}
                       className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700 transition-colors"
                     >
-                      ✏️ Editar Título
+                      ✏️ Editar Plazos y Título
                     </button>
                   </div>
                 </div>
@@ -762,16 +740,17 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* MODAL / FORMULARIO DE EDICIÓN DE LIQUIDACIÓN FISCAL */}
+              {/* MODAL / FORMULARIO DE EDICIÓN DE PLAZOS Y DATOS FISCALES */}
               {isEditingFiscal && (
                 <form onSubmit={handleSaveEditFiscal} className="bg-zinc-900 border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Editar Datos del Título Ejecutivo Fiscal</h4>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Editar Datos, Plazos y Vencimientos Manualmente</h4>
                     <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
                   </div>
+                  <p className="text-[10px] text-zinc-400">💡 Modificá cualquier fecha libremente para adaptarla a feriados locales de Río Cuarto o días inhábiles específicos.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
-                      <label className="text-zinc-400 block mb-1">Contribuyente / Razón Social:</label>
+                      <label className="text-zinc-400 block mb-1">Contribuyente:</label>
                       <input 
                         type="text" 
                         value={editFiscalForm.contribuyente || ''} 
@@ -789,7 +768,7 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Monto Total ($):</label>
+                      <label className="text-zinc-400 block mb-1">Monto ($):</label>
                       <input 
                         type="text" 
                         value={editFiscalForm.monto || ''} 
@@ -798,46 +777,45 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Fecha de Notificación de Demanda:</label>
+                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción (Demandado):</label>
                       <input 
                         type="date" 
-                        value={editFiscalForm.fechaNotificacion || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, fechaNotificacion: e.target.value})}
+                        value={editFiscalForm.plazoExcepcionesFecha || ''} 
+                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoExcepcionesFecha: e.target.value})}
                         className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Juzgado:</label>
+                      <label className="text-zinc-400 block mb-1">Alerta Perención (Procurador):</label>
                       <input 
-                        type="text" 
-                        value={editFiscalForm.juzgado || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, juzgado: e.target.value})}
+                        type="date" 
+                        value={editFiscalForm.plazoPerencion || ''} 
+                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoPerencion: e.target.value})}
                         className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Período:</label>
+                      <label className="text-zinc-400 block mb-1">Prescripción:</label>
                       <input 
-                        type="text" 
-                        value={editFiscalForm.periodo || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, periodo: e.target.value})}
+                        type="date" 
+                        value={editFiscalForm.plazoPrescripcion || ''} 
+                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoPrescripcion: e.target.value})}
                         className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
                   </div>
                   <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                    Guardar Cambios en la Liquidación
+                    Guardar Fechas y Plazos Editados
                   </button>
                 </form>
               )}
 
-              {/* CARGA DE MOVIMIENTOS CON DETECCIÓN INTELIGENTE DE CÉDULA */}
+              {/* CARGA DE MOVIMIENTOS */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento o Cédula en esta Liquidación</h4>
-                <p className="text-[10px] text-zinc-400">💡 Si registrás una actuación de "Cédula de Notificación de Demanda", el sistema calculará automáticamente el plazo de 3 días para excepciones del demandado.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <input 
-                    type="text" placeholder="Título (Ej. Cédula Notificación de Demanda / Proveído)" 
+                    type="text" placeholder="Título (Ej. Cédula Notificación de Demanda)" 
                     value={newFiscalMovement.title} onChange={e => setNewFiscalMovement({...newFiscalMovement, title: e.target.value})}
                     className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                   />
@@ -852,7 +830,7 @@ export default function Home() {
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                  Guardar Movimiento y Actualizar Plazos Automáticamente
+                  Guardar Movimiento y Autocalcular Plazos
                 </button>
               </form>
 
@@ -877,7 +855,7 @@ export default function Home() {
 
           ) : (
             <>
-              {/* DASHBOARD GENERAL CON ALERTAS AUTOMÁTICAS DE PROCURACIÓN */}
+              {/* DASHBOARD GENERAL CON ALERTAS URGENTES FILTRADAS */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
@@ -921,32 +899,37 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* SECCIÓN AUTOMÁTICA DE ALERTAS FISCALES EN EL DASHBOARD */}
+                  {/* SECCIÓN DE ALERTAS URGENTES FILTRADAS (Solo muestra si vence pronto) */}
                   <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl space-y-3">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Excepciones y Vencimientos)</h4>
-                    <div className="space-y-2">
-                      {fiscalCases.map(fc => (
-                        <div 
-                          key={fc.id} 
-                          onClick={() => setSelectedFiscalId(fc.id)}
-                          className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs cursor-pointer hover:border-orange-500 transition-colors"
-                        >
-                          <div>
-                            <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-                              Liq: {fc.nroLiquidacion}
-                            </span>
-                            <span className="font-bold text-white text-sm">{fc.contribuyente}</span>
-                            <p className="text-[11px] text-zinc-400 mt-1">
-                              Vencimiento Excepción (Demandado): <strong className="text-amber-400">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong> | 
-                              Límite Perención (Procurador): <strong className="text-red-400">{formatDateToArg(fc.plazoPerencion)}</strong>
-                            </p>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
+                    {urgentFiscalAlerts.length > 0 ? (
+                      <div className="space-y-2">
+                        {urgentFiscalAlerts.map(fc => (
+                          <div 
+                            key={fc.id} 
+                            onClick={() => setSelectedFiscalId(fc.id)}
+                            className="p-3 bg-zinc-950 border border-amber-500/40 rounded flex justify-between items-center text-xs cursor-pointer hover:border-orange-500 transition-colors"
+                          >
+                            <div>
+                              <span className="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+                                VENCE PRONTO
+                              </span>
+                              <span className="font-bold text-white text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+                              <p className="text-[11px] text-zinc-400 mt-1">
+                                Vencimiento Excepción (Demandado): <strong className="text-amber-400">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong>
+                              </p>
+                            </div>
+                            <button className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                              Revisar Causa →
+                            </button>
                           </div>
-                          <button className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                            Ver Causa →
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-500 italic bg-zinc-950 p-3 rounded border border-zinc-800">
+                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días. Todo al día.
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1481,7 +1464,7 @@ export default function Home() {
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados (Haga clic para ingresar y editar)</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados (Haga clic para ingresar y editar plazos)</h4>
                         {fiscalCases.map(fc => (
                           <div key={fc.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
                             <div className="flex justify-between items-center font-bold text-white">
@@ -1503,7 +1486,7 @@ export default function Home() {
 
                             <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
                               <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                                Ingresar a Ficha / Editar →
+                                Ingresar a Ficha / Editar Plazos →
                               </button>
                               <button 
                                 onClick={() => deleteFiscalCase(fc.id)}
@@ -1521,8 +1504,8 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos (Perención y Prescripción)</h3>
-                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde la notificación por CIDI/Cédula para oponer excepciones legítimas[cite: 7].</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos</h3>
+                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde la notificación por CIDI/Cédula para oponer excepciones[cite: 7].</p>
                         <p>• <strong>Perención de Instancia:</strong> Plazo procesal de inactividad que debe vigilarse para evitar caducidad[cite: 7].</p>
                       </div>
 
