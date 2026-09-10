@@ -21,14 +21,13 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
-  // --- CONTROL DE ACCESO Y CONTRASEÑA (USANDO SESSIONSTORAGE PARA EXIGIR LOGIN AL ABRIR NUEVO LINK) ---
+  // --- CONTROL DE ACCESO Y CONTRASEÑA ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [currentPassword, setCurrentPassword] = useState('estudioGarelli2026');
   const [recoveryEmailConfig, setRecoveryEmailConfig] = useState('federico@estudio.com');
   
-  // Estados para recuperación de contraseña
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [recoveryInputEmail, setRecoveryInputEmail] = useState('');
   const [recoveryMessage, setRecoveryMessage] = useState('');
@@ -40,7 +39,6 @@ export default function Home() {
     const savedRecoveryMail = localStorage.getItem('lex_recovery_email');
     if (savedRecoveryMail) setRecoveryEmailConfig(savedRecoveryMail);
 
-    // Usamos sessionStorage para que el acceso expire al cerrar la pestaña o entrar desde un link externo
     const savedAuth = sessionStorage.getItem('lex_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
   }, []);
@@ -70,7 +68,6 @@ export default function Home() {
     }
   };
 
-  // CAMBIO DE CONTRASEÑA Y MAIL DE RECUPERACIÓN
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [newRecoveryMail, setNewRecoveryMail] = useState('');
@@ -715,8 +712,8 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
-      {/* MENÚ LATERAL */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0 z-20">
+      {/* MENÚ LATERAL CON SCROLL VERTICAL (SOLUCIÓN CELULAR) */}
+      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0 z-20 overflow-y-auto">
         <div>
           <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
             <div className="flex items-center text-3xl font-black tracking-tighter">
@@ -757,7 +754,7 @@ export default function Home() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center">
+        <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center bg-zinc-900 shrink-0">
           <div>
             <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
             <p className="text-[10px] text-emerald-500 font-semibold">● Sincronizado en Nube</p>
@@ -1993,11 +1990,11 @@ export default function Home() {
                             <tr>
                               <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
                               <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className="p-3 text-zinc-400">In case of haber hechos controvertidos debatibles en las excepciones.</td>
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
-                              <td className="p-3 text-amber-400 font-bold">3 days</td>
+                              <td className="p-3 text-amber-400 font-bold">3 días</td>
                               <td className="p-3 text-zinc-400">Contra providencias de trámite dictadas sin sustanciación previa.</td>
                             </tr>
                           </tbody>
