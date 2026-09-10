@@ -94,10 +94,10 @@ export default function Home() {
       nroLiquidacion: '2468-1357',
       periodo: '2026',
       monto: '$15.000.000',
-      fechaVencimientoLiquidacion: '2026-01-10', // Fecha en que venció la liquidación / deuda original
+      fechaVencimientoLiquidacion: '2026-01-10',
       fechaNotificacion: '',
       plazoExcepcionesFecha: 'Pendiente Notificación', 
-      plazoPerencion: 'A calcular',
+      plazoPerencion: 'A calcular (Por movimiento)',
       plazoPrescripcion: '2031-01-10', // 5 años desde el vencimiento de la liquidación
       estadoFiscal: 'TÍTULO PRESENTADO / PENDIENTE NOTIFICACIÓN',
       juzgado: 'Juzgado Fiscal Río Cuarto',
@@ -116,7 +116,6 @@ export default function Home() {
 
   const handleSaveEditFiscal = (e) => {
     e.preventDefault();
-    // Recálculo automático de prescripción (5 años desde la fecha de vencimiento de la liquidación si se modifica)
     let nuevaPrescripcion = editFiscalForm.plazoPrescripcion;
     if (editFiscalForm.fechaVencimientoLiquidacion) {
       const presDate = new Date(editFiscalForm.fechaVencimientoLiquidacion);
@@ -140,7 +139,7 @@ export default function Home() {
     nroLiquidacion: '',
     periodo: '',
     monto: '',
-    fechaVencimientoLiquidacion: '', // Casillero exacto solicitado
+    fechaVencimientoLiquidacion: '',
     juzgado: 'Juzgado Fiscal Río Cuarto'
   });
 
@@ -159,7 +158,6 @@ export default function Home() {
     e.preventDefault();
     if (!newFiscalCase.contribuyente || !newFiscalCase.monto || !newFiscalCase.nroLiquidacion) return;
 
-    // CÁLCULO AUTOMÁTICO DE PRESCRIPCIÓN (5 años conforme ley desde el vencimiento de la liquidación)
     let prescripcionStr = 'A calcular';
     if (newFiscalCase.fechaVencimientoLiquidacion) {
       const presDate = new Date(newFiscalCase.fechaVencimientoLiquidacion);
@@ -172,7 +170,7 @@ export default function Home() {
       id: 'f_' + Date.now(),
       fechaNotificacion: '',
       plazoExcepcionesFecha: 'Pendiente Notificación',
-      plazoPerencion: 'A calcular',
+      plazoPerencion: 'A calcular (Por movimiento)',
       plazoPrescripcion: prescripcionStr,
       estadoFiscal: 'INICIO / TÍTULO CARGADO',
       cidiNotif: 'Pendiente'
@@ -214,7 +212,7 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
-  // REGISTRO DE MOVIMIENTOS Y CÁLCULO DE PLAZOS PROCESALES
+  // REGISTRO DE MOVIMIENTOS Y CÁLCULO AUTOMÁTICO DE PERENCIÓN SEGÚN ÚLTIMO MOVIMIENTO (EJ. 3 MESES O 6 MESES SEGÚN CÓDIGO)
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
     if (!newFiscalMovement.date) return;
@@ -230,18 +228,19 @@ export default function Home() {
     const movDateObj = new Date(movDateStr);
 
     let excepcionStr = undefined;
-    let perencionStr = undefined;
+    let perencionStr = undefined; // Perención automática desde la fecha del nuevo movimiento
     let estadoNuevo = newFiscalMovement.estadoProcesal;
     let cidiStatus = 'Registrado';
+
+    // Cómputo automático de perención: sumamos 6 meses (plazo estándar de perención de instancia en procesos de ejecución fiscal si corresponde o configurable)
+    const perDate = new Date(movDateObj);
+    perDate.setMonth(perDate.getMonth() + 6);
+    perencionStr = perDate.toISOString().split('T')[0];
 
     if (newFiscalMovement.title.toLowerCase().includes('cédula') || newFiscalMovement.title.toLowerCase().includes('notificación') || newFiscalMovement.estadoProcesal.includes('3 días')) {
       const expDate = new Date(movDateObj);
       expDate.setDate(expDate.getDate() + 3);
       excepcionStr = expDate.toISOString().split('T')[0];
-
-      const perDate = new Date(movDateObj);
-      perDate.setMonth(perDate.getMonth() + 6);
-      perencionStr = perDate.toISOString().split('T')[0];
       cidiStatus = 'Notificado vía Cédula/CIDI';
     }
 
@@ -251,7 +250,7 @@ export default function Home() {
           ...fc,
           fechaNotificacion: movDateStr,
           plazoExcepcionesFecha: excepcionStr !== undefined ? excepcionStr : fc.plazoExcepcionesFecha,
-          plazoPerencion: perencionStr !== undefined ? perencionStr : fc.plazoPerencion,
+          plazoPerencion: perencionStr, // Se actualiza automáticamente con cada nuevo movimiento agregado
           estadoFiscal: estadoNuevo,
           cidiNotif: cidiStatus
         };
@@ -728,7 +727,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE DE LIQUIDACIÓN FISCAL (CÁLCULO AUTOMÁTICO DE PRESCRIPCIÓN Y EDICIÓN COMPLETA) */
+            /* DETALLE DE LIQUIDACIÓN FISCAL (ACTUALIZACIÓN AUTOMÁTICA DE PERENCIÓN POR MOVIMIENTO Y EDICIÓN COMPLETA) */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -756,7 +755,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
                   <div>📅 <strong>Vto. Liquidación:</strong> {formatDateToArg(selectedFiscalData.fechaVencimientoLiquidacion) || 'No especificada'}</div>
                   <div>⚠️ <strong className="text-amber-400">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
-                  <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
+                  <div>⏳ <strong className="text-red-400">Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
                   <div>🔒 <strong className="text-purple-400">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
               </div>
@@ -768,7 +767,7 @@ export default function Home() {
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Completa de Datos y Plazos Fiscales</h4>
                     <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
                   </div>
-                  <p className="text-[10px] text-zinc-400">💡 Al modificar la <strong>Fecha de Vencimiento de la Liquidación</strong>, el sistema recalculará automáticamente la prescripción a 5 años. También podés editar cualquier otro plazo de forma manual.</p>
+                  <p className="text-[10px] text-zinc-400">💡 Podés editar cualquier fecha de forma manual si querés sobreescribir el cálculo automático del sistema.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
                       <label className="text-zinc-400 block mb-1">Contribuyente:</label>
@@ -834,7 +833,7 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Alerta Perención (6m):</label>
+                      <label className="text-zinc-400 block mb-1">Plazo Perención (Editable):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoPerencion || ''} 
@@ -858,10 +857,10 @@ export default function Home() {
                 </form>
               )}
 
-              {/* REGISTRO DE MOVIMIENTOS Y ESTADOS PROCESALES */}
+              {/* REGISTRO DE MOVIMIENTOS Y CÁLCULO AUTOMÁTICO DE PERENCIÓN */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento Procesal (Ley 9024)</h4>
-                <p className="text-[10px] text-zinc-400">Seleccioná el estado de la causa. Si elegís notificación de demanda, se computarán automáticamente los 3 días para excepciones.</p>
+                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento Procesal (Actualiza Perención)</h4>
+                <p className="text-[10px] text-zinc-400">💡 Al registrar cualquier movimiento nuevo y su fecha, el sistema actualizará automáticamente el plazo de perención conforme a la ley.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                   <select 
                     value={newFiscalMovement.estadoProcesal} 
@@ -875,7 +874,7 @@ export default function Home() {
                     <option value="CONTESTACIÓN DE EXCEPCIONES">Oposición / Contestación de Excepciones</option>
                     <option value="APERTURA A PRUEBA">Apertura a Prueba</option>
                     <option value="SENTENCIA FISCAL DICTADA">Sentencia Fiscal</option>
-                    <option value="OTRO MOVIMIENTO">Otro Trámite / Proveído General</option>
+                    <option value="OTRO MOVIMIENTO">Otro Trámite / Proveído General (Renueva Perención)</option>
                   </select>
 
                   <input 
@@ -892,7 +891,7 @@ export default function Home() {
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                  Guardar Movimiento y Actualizar Plazos
+                  Guardar Movimiento y Renovar Perención
                 </button>
               </form>
 
@@ -1439,15 +1438,16 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) */}
+              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - CON 5 APARTADOS INCLUYENDO LA TABLA DE PLAZOS PROCESALES */}
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
                     {[
                       { id: 'titulos', label: '1. Títulos y Vto. de Liquidación' },
-                      { id: 'gestion', label: '2. Plazos (Perención y Prescripción)' },
-                      { id: 'cautelares', label: '3. Medidas Cautelares (SOJ / DNRPA)' },
-                      { id: 'pagos', label: '4. Registro de Cobros y Honorarios' }
+                      { id: 'gestion', label: '2. Plazos y Perención' },
+                      { id: 'cautelares', label: '3. Medidas Cautelares' },
+                      { id: 'pagos', label: '4. Cobros y Honorarios' },
+                      { id: 'tabla_plazos', label: '5. 📋 Tabla de Plazos Procesales (Guía Rápida)' }
                     ].map((sub) => (
                       <button
                         key={sub.id}
@@ -1555,9 +1555,9 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos Fiscales (Ley 9024)</h3>
-                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha en que venció la liquidación fiscal, con total libertad para su edición manual.</p>
-                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde la notificación fehaciente al demandado.</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción Fiscal</h3>
+                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registrás un movimiento nuevo en la ficha del título fiscal, el sistema toma esa fecha como base y renueva automáticamente el plazo de perención.</p>
+                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha de vencimiento de la liquidación fiscal.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1570,7 +1570,7 @@ export default function Home() {
                                 <p className="text-[10px] text-zinc-400">
                                   Vto. Liq: <span className="text-zinc-200">{formatDateToArg(fc.fechaVencimientoLiquidacion)}</span> | 
                                   Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
-                                  Perención: <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
+                                  Perención (Últ. Mov.): <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
                                 </p>
                               </div>
                               <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
@@ -1731,6 +1731,55 @@ export default function Home() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* NUEVO APARTADO: TABLA DE PLAZOS PROCESALES (GUÍA RÁPIDA) */}
+                  {procuracionSubTab === 'tabla_plazos' && (
+                    <div className="space-y-4">
+                      <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-2">
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
+                        <p className="text-xs text-zinc-400">Tabla de consulta rápida basada en la normativa aplicable para fiscalías y ejecución fiscal. Podés consultarla en cualquier momento.</p>
+                      </div>
+
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-zinc-950 text-orange-400 uppercase border-b border-zinc-800">
+                            <tr>
+                              <th className="p-3">Actuación / Trámite</th>
+                              <th className="p-3">Plazo Legal</th>
+                              <th className="p-3">Normativa / Observaciones</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-800 text-zinc-300">
+                            <tr>
+                              <td className="p-3 font-bold text-white">Citación a estar a derecho / Excepciones</td>
+                              <td className="p-3 text-amber-400 font-bold">3 días hábiles</td>
+                              <td className="p-3 text-zinc-400">Desde la notificación fehaciente (Cédula / CIDI) al demandado.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-white">Perención de Instancia (Ejecución Fiscal)</td>
+                              <td className="p-3 text-red-400 font-bold">6 meses</td>
+                              <td className="p-3 text-zinc-400">Se renueva automáticamente al realizarse cualquier movimiento o impulso procesal.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-white">Prescripción de la Acción Fiscal</td>
+                              <td className="p-3 text-purple-400 font-bold">5 años</td>
+                              <td className="p-3 text-zinc-400">Computados desde el vencimiento de la obligación fiscal (ej. Código Tributario).</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-white">Contestación de Excepciones (Fisco)</td>
+                              <td className="p-3 text-amber-400 font-bold">3 a 5 días hábiles</td>
+                              <td className="p-3 text-zinc-400">Plazo para responder traslado de excepciones opuestas por el ejecutado.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-bold text-white">Apelación de Sentencia / Autos</td>
+                              <td className="p-3 text-amber-400 font-bold">3 a 5 días</td>
+                              <td className="p-3 text-zinc-400">Según el tipo de resolución recaída en sede judicial.</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}
