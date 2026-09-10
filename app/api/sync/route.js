@@ -14,8 +14,10 @@ export async function GET() {
     let globalStore = {};
     if (data && Array.isArray(data)) {
       data.forEach(item => {
-        if (item.key && item.value) {
-          globalStore[item.key] = item.value;
+        const k = item.id || item.key;
+        const v = item.value || item.data;
+        if (k && v) {
+          globalStore[k] = v;
         }
       });
     }
@@ -32,7 +34,7 @@ export async function POST(request) {
     if (key) {
       const { error } = await supabase
         .from('estudio_data')
-        .upsert({ key, value }, { onConflict: 'key' });
+        .upsert({ id: key, value }, { onConflict: 'id' });
 
       if (error) throw error;
     }
