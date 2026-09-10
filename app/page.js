@@ -76,7 +76,6 @@ export default function Home() {
 
   const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
 
-  // Función auxiliar para pasar de AAAA-MM-DD a DD/MM/AAAA
   const formatDateToArg = (dateStr) => {
     if (!dateStr) return 'Sin fecha';
     const parts = dateStr.split('-');
@@ -84,8 +83,9 @@ export default function Home() {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
 
-  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) CON FECHAS DD/MM/AAAA ---
+  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) MEJORADO ---
   const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
+  
   const [fiscalCases, setFiscalCases] = useState([
     {
       id: 'f1',
@@ -95,16 +95,27 @@ export default function Home() {
       periodo: '2025/2026',
       monto: '$1.450.000',
       fechaNotificacion: '2026-09-01',
-      plazoExcepcionesFecha: '2026-09-04', // 3 días hábiles para el demandado
-      plazoPerencion: '2027-03-01', // Control del procurador
+      plazoExcepcionesFecha: '2026-09-04', 
+      plazoPerencion: '2027-03-01',
+      plazoPrescripcion: '2031-01-01',
       estadoFiscal: 'EN EJECUCIÓN',
       juzgado: 'Juzgado Fiscal de 1ª Nominación - Río Cuarto',
-      cidiNotif: 'Notificado vía CIDI (Ley 9024 Art. 4)'
+      cidiNotif: 'Notificado vía CIDI'
     }
   ]);
 
   const [fiscalMovements, setFiscalMovements] = useState([
-    { id: 'fm1', fiscalId: 'f1', date: '2026-09-02', title: 'Despacho Automático y Citación', text: 'Se ordena despacho automático de demanda y citación a estar a derecho.', notes: 'Controlar plazo de excepciones del demandado.' }
+    { id: 'fm1', fiscalId: 'f1', date: '2026-09-02', title: 'Despacho Automático', text: 'Se ordena despacho automático de demanda y citación a estar a derecho.', notes: 'Controlar plazo de excepciones del demandado.' }
+  ]);
+
+  // Cautelares interactivas vinculadas a liquidaciones
+  const [cautelares, setCautelares] = useState([
+    { id: 'c1', fiscalId: 'f1', tipo: 'SOJ (Bancario)', nroLiquidacion: 'LIQ-2026-9921', titular: 'Contribuyente Fiscal Nº 4821', fecha: '2026-09-05', montoEmbargo: '$1.450.000', estado: 'TRABADA Y VIGENTE' }
+  ]);
+
+  // Honorarios y Cobros del Procurador
+  const [honorariosProcuracion, setHonorariosProcuracion] = useState([
+    { id: 'h1', fiscalId: 'f1', nroLiquidacion: 'LIQ-2026-9921', fecha: '2026-09-08', concepto: 'Honorarios Etapa Inicio de Demanda (3.5%)', monto: '$50.750', tipoIngreso: 'HONORARIOS' }
   ]);
 
   const [newFiscalCase, setNewFiscalCase] = useState({
@@ -114,11 +125,14 @@ export default function Home() {
     periodo: '',
     monto: '',
     fechaNotificacion: '',
+    fechaDeuda: '',
     juzgado: 'Juzgado Fiscal Río Cuarto',
     cidiNotif: 'Pendiente CIDI'
   });
 
   const [newFiscalMovement, setNewFiscalMovement] = useState({ fiscalId: '', date: '', title: '', text: '', notes: '' });
+  const [newCautelar, setNewCautelar] = useState({ fiscalId: '', tipo: 'SOJ (Bancario)', fecha: '', montoEmbargo: '' });
+  const [newHonorario, setNewHonorario] = useState({ fiscalId: '', fecha: '', concepto: '', monto: '', tipoIngreso: 'HONORARIOS' });
 
   const handleAddFiscalCase = (e) => {
     e.preventDefault();
@@ -138,11 +152,20 @@ export default function Home() {
       perencionStr = perDate.toISOString().split('T')[0];
     }
 
+    // Prescripción general tributaria (ej. 5 años desde el 1 de enero del año siguiente al vencimiento - Art. 134 CTP)
+    let prescripcionStr = 'A calcular';
+    if (newFiscalCase.fechaDeuda) {
+      const presDate = new Date(newFiscalCase.fechaDeuda);
+      presDate.setFullYear(presDate.getFullYear() + 5);
+      prescripcionStr = presDate.toISOString().split('T')[0];
+    }
+
     const created = {
       ...newFiscalCase,
       id: 'f_' + Date.now(),
       plazoExcepcionesFecha: excepcionStr,
       plazoPerencion: perencionStr,
+      plazoPrescripcion: prescripcionStr,
       estadoFiscal: 'TÍTULO HÁBIL CARGADO'
     };
 
@@ -154,15 +177,18 @@ export default function Home() {
       periodo: '',
       monto: '',
       fechaNotificacion: '',
+      fechaDeuda: '',
       juzgado: 'Juzgado Fiscal Río Cuarto',
       cidiNotif: 'Pendiente CIDI'
     });
   };
 
   const deleteFiscalCase = (id) => {
-    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal?')) return;
+    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal y sus registros asociados?')) return;
     setFiscalCases(fiscalCases.filter(fc => fc.id !== id));
     setFiscalMovements(fiscalMovements.filter(fm => fm.fiscalId !== id));
+    setCautelares(cautelares.filter(c => c.fiscalId !== id));
+    setHonorariosProcuracion(honorariosProcuracion.filter(h => h.fiscalId !== id));
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
@@ -175,6 +201,54 @@ export default function Home() {
     const created = { ...newFiscalMovement, fiscalId: targetId, id: 'fm_' + Date.now() };
     setFiscalMovements([...fiscalMovements, created]);
     setNewFiscalMovement({ fiscalId: targetId, date: '', title: '', text: '', notes: '' });
+  };
+
+  const handleAddCautelar = (e) => {
+    e.preventDefault();
+    if (!newCautelar.fecha) return;
+    const targetId = selectedFiscalId || newCautelar.fiscalId || fiscalCases[0]?.id;
+    const targetCase = fiscalCases.find(fc => fc.id === targetId);
+    if (!targetCase) return;
+
+    const created = {
+      ...newCautelar,
+      fiscalId: targetId,
+      nroLiquidacion: targetCase.nroLiquidacion,
+      titular: targetCase.contribuyente,
+      id: 'c_' + Date.now(),
+      estado: 'TRABADA Y VIGENTE'
+    };
+
+    setCautelares([...cautelares, created]);
+    setNewCautelar({ fiscalId: '', tipo: 'SOJ (Bancario)', fecha: '', montoEmbargo: '' });
+  };
+
+  const deleteCautelar = (id) => {
+    if (!confirm('¿Está seguro de eliminar o levantar esta medida cautelar?')) return;
+    setCautelares(cautelares.filter(c => c.id !== id));
+  };
+
+  const handleAddHonorario = (e) => {
+    e.preventDefault();
+    if (!newHonorario.monto || !newHonorario.concepto) return;
+    const targetId = selectedFiscalId || newHonorario.fiscalId || fiscalCases[0]?.id;
+    const targetCase = fiscalCases.find(fc => fc.id === targetId);
+    if (!targetCase) return;
+
+    const created = {
+      ...newHonorario,
+      fiscalId: targetId,
+      nroLiquidacion: targetCase.nroLiquidacion,
+      id: 'h_' + Date.now()
+    };
+
+    setHonorariosProcuracion([...honorariosProcuracion, created]);
+    setNewHonorario({ fiscalId: '', fecha: '', concepto: '', monto: '', tipoIngreso: 'HONORARIOS' });
+  };
+
+  const deleteHonorario = (id) => {
+    if (!confirm('¿Eliminar registro de cobro/honorario?')) return;
+    setHonorariosProcuracion(honorariosProcuracion.filter(h => h.id !== id));
   };
 
   // --- EXPEDIENTES Y DEMÁS MÓDULOS ---
@@ -214,7 +288,7 @@ export default function Home() {
     { id: '3', caseId: '1', title: 'Buscar copia de DNI en archivo', priority: 'BAJA', completed: true }
   ]);
 
-  // --- SINCRONIZACIÓN AUTOMÁTICA CON EL SERVIDOR NUBE ---
+  // --- SINCRONIZACIÓN AUTOMÁTICA NUBE ---
   const syncWithCloud = async (key, value) => {
     try {
       await fetch('/api/sync', {
@@ -241,6 +315,8 @@ export default function Home() {
         if (data.lex_emails) setTeamEmails(data.lex_emails);
         if (data.lex_fiscal_cases) setFiscalCases(data.lex_fiscal_cases);
         if (data.lex_fiscal_movements) setFiscalMovements(data.lex_fiscal_movements);
+        if (data.lex_cautelares) setCautelares(data.lex_cautelares);
+        if (data.lex_honorarios) setHonorariosProcuracion(data.lex_honorarios);
       }
     } catch (e) {
       console.error('Error obteniendo de nube:', e);
@@ -262,8 +338,10 @@ export default function Home() {
   const updateTeamEmails = (val) => { setTeamEmails(val); syncWithCloud('lex_emails', val); };
   const updateFiscalCases = (val) => { setFiscalCases(val); syncWithCloud('lex_fiscal_cases', val); };
   const updateFiscalMovements = (val) => { setFiscalMovements(val); syncWithCloud('lex_fiscal_movements', val); };
+  const updateCautelares = (val) => { setCautelares(val); syncWithCloud('lex_cautelares', val); };
+  const updateHonorarios = (val) => { setHonorariosProcuracion(val); syncWithCloud('lex_honorarios', val); };
 
-  // FORMULARIOS DE ALTA COMUNES
+  // FORMULARIOS GENERALES
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newMovement, setNewMovement] = useState({ caseId: '', date: '', title: '', text: '', notes: '' });
@@ -271,7 +349,6 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMail: '' });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // HANDLERS DE BORRADO Y ESTADOS
   const toggleHearingStatus = (hearingId) => {
     updateHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
@@ -365,10 +442,6 @@ export default function Home() {
     const caseTarget = selectedCaseId || newTask.caseId || cases[0]?.id || '1';
     updateTasks([...tasks, { ...newTask, caseId: caseTarget, id: Date.now().toString(), completed: false }]);
     setNewTask({ caseId: caseTarget, title: '', priority: 'MEDIA' });
-  };
-
-  const toggleTask = (taskId) => {
-    updateTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
   };
 
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
@@ -586,14 +659,15 @@ export default function Home() {
                   <span className="bg-orange-500 text-black text-xs font-black px-3 py-1.5 rounded">{selectedFiscalData.monto}</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
                   <div>📅 <strong>Notificación:</strong> {formatDateToArg(selectedFiscalData.fechaNotificacion)}</div>
-                  <div>⚠️ <strong className="text-amber-400">Vence Excepción (Demandado - 3 días):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
+                  <div>⚠️ <strong className="text-amber-400">Vence Excepción (Demandado - 3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
                   <div>⏳ <strong className="text-red-400">Alerta Perención (Procurador):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
+                  <div>🔒 <strong className="text-purple-400">Prescripción (5 años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
               </div>
 
-              {/* CARGA DE MOVIMIENTOS EN LA LIQUIDACIÓN FISCAL */}
+              {/* CARGA DE MOVIMIENTOS EN LA LIQUIDACIÓN */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento en esta Liquidación Fiscal</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -1130,15 +1204,15 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - PLENA FUNCIONALIDAD Y FICHAS */}
+              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - 100% INTERACTIVA CON CAUTELARES Y HONORARIOS */}
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
                     {[
-                      { id: 'titulos', label: '1. Títulos Ejecutivos y Nro. Liquidación' },
-                      { id: 'gestion', label: '2. Gestión Judicial, Plazos y Perención' },
-                      { id: 'cautelares', label: '3. Medidas Cautelares y SOJ / DNRPA' },
-                      { id: 'pagos', label: '4. Pagos, Liquidaciones y Honorarios' }
+                      { id: 'titulos', label: '1. Títulos y Nro. Liquidación' },
+                      { id: 'gestion', label: '2. Plazos (Perención y Prescripción)' },
+                      { id: 'cautelares', label: '3. Medidas Cautelares (SOJ / DNRPA)' },
+                      { id: 'pagos', label: '4. Registro de Cobros y Honorarios' }
                     ].map((sub) => (
                       <button
                         key={sub.id}
@@ -1160,7 +1234,7 @@ export default function Home() {
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga de Título Ejecutivo Fiscal y Nro. de Liquidación</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
-                            type="text" placeholder="Tributo (Inmobiliario / Automotor / Ingresos Brutos)" 
+                            type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
                             value={newFiscalCase.tributo} onChange={e => setNewFiscalCase({...newFiscalCase, tributo: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
@@ -1185,11 +1259,20 @@ export default function Home() {
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha de Notificación (Plazo Demandado):</label>
+                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha Notificación (Excepción 3d):</label>
                             <input 
                               type="date" 
                               value={newFiscalCase.fechaNotificacion} 
                               onChange={e => setNewFiscalCase({...newFiscalCase, fechaNotificacion: e.target.value})}
+                              className="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white outline-none focus:border-orange-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha Vencimiento Deuda (Prescripción):</label>
+                            <input 
+                              type="date" 
+                              value={newFiscalCase.fechaDeuda} 
+                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaDeuda: e.target.value})}
                               className="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white outline-none focus:border-orange-500"
                             />
                           </div>
@@ -1200,7 +1283,7 @@ export default function Home() {
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Título y Autocalcular Plazos Fiscales
+                          Registrar Título y Autocalcular Plazos
                         </button>
                       </form>
 
@@ -1218,12 +1301,11 @@ export default function Home() {
                               <span className="text-orange-400 font-mono text-sm">{fc.monto}</span>
                             </div>
 
-                            <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
+                            <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
                               <div>📅 <strong>Período:</strong> {fc.periodo}</div>
-                              <div>⚖️ <strong>Juzgado:</strong> {fc.juzgado}</div>
-                              <div>⚠️ <strong className="text-amber-400">Vence Excepción (Demandado - 3 días):</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
-                              <div>⏳ <strong className="text-red-400">Alerta Perención (Procurador):</strong> {formatDateToArg(fc.plazoPerencion)}</div>
-                              <div className="md:col-span-2">📍 <strong>CIDI:</strong> {fc.cidiNotif}</div>
+                              <div>⚠️ <strong className="text-amber-400">Excepción (Demandado):</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
+                              <div>⏳ <strong className="text-red-400">Perención (Procurador):</strong> {formatDateToArg(fc.plazoPerencion)}</div>
+                              <div>🔒 <strong className="text-purple-400">Prescripción (5 años):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
                             </div>
 
                             <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
@@ -1246,19 +1328,24 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Automático de Plazos y Perención</h3>
-                        <p>• <strong>Citación a estar a derecho (Plazo para el Demandado):</strong> Plazo perentorio de 3 días hábiles desde la notificación por CIDI para oponer excepciones legítimas. Si vencen sin oposición, pedís el certificado de no oposición y avanzás.</p>
-                        <p>• <strong>Control de Perención (Responsabilidad del Procurador):</strong> Seguimiento estricto de los plazos legales de impulso procesal para evitar la caducidad de instancia.</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos (Perención y Prescripción)</h3>
+                        <p>• <strong>Citación a estar a derecho (Plazo para el Demandado):</strong> 3 días hábiles desde la notificación por CIDI para oponer excepciones legítimas (Art. 6 Ley 9024).</p>
+                        <p>• <strong>Perención de Instancia (Responsabilidad del Procurador):</strong> Plazo de inactividad procesal que debe vigilarse estrictamente para evitar caducidad y sanciones administrativas.</p>
+                        <p>• <strong>Prescripción Liberatoria (Código Tributario Provincial):</strong> Control quinquenal de la exigibilidad de la deuda tributaria.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Vencimientos y Perenciones Fiscales Activas</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Alertas de Plazos Activos</h4>
                         <div className="space-y-2">
                           {fiscalCases.map(fc => (
                             <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors">
                               <div>
                                 <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
-                                <p className="text-[10px] text-zinc-400">Vencimiento Excepción (Demandado): <span className="text-amber-400 font-bold">{formatDateToArg(fc.plazoExcepcionesFecha)}</span> | Límite Perención (Procurador): <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span></p>
+                                <p className="text-[10px] text-zinc-400">
+                                  Excepción (Demandado): <span className="text-amber-400 font-bold">{formatDateToArg(fc.plazoExcepcionesFecha)}</span> | 
+                                  Perención: <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span> | 
+                                  Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span>
+                                </p>
                               </div>
                               <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
                                 CONTROL ACTIVO
@@ -1271,18 +1358,168 @@ export default function Home() {
                   )}
 
                   {procuracionSubTab === 'cautelares' && (
-                    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                      <h3 className="font-bold text-orange-500 uppercase text-sm">Traba de Medidas Precautorias (SOJ / DNRPA / RGP)</h3>
-                      <p>• <strong>Embargos Preventivos:</strong> Solicitud sobre cuentas bancarias mediante el Sistema de Oficios Judiciales (SOJ) de alcance general a través del BCRA.</p>
-                      <p>• <strong>Inhibición General de Bienes:</strong> Diligenciamiento electrónico ante el Registro General de la Provincia (RGP) y la DNRPA acorde al Artículo 171 del CTP.</p>
+                    <div className="space-y-4">
+                      {/* FORMULARIO PARA TRABAR MEDIDA CAUTELAR */}
+                      <form onSubmit={handleAddCautelar} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Traba de Medida Cautelar (SOJ / DNRPA / RGP)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                          <select 
+                            value={newCautelar.fiscalId} 
+                            onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          >
+                            <option value="">Seleccionar Liquidación / Título...</option>
+                            {fiscalCases.map(fc => (
+                              <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
+                            ))}
+                          </select>
+
+                          <select 
+                            value={newCautelar.tipo} 
+                            onChange={e => setNewCautelar({...newCautelar, tipo: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          >
+                            <option value="SOJ (Bancario)">SOJ (Sistema Oficios Judiciales)</option>
+                            <option value="DNRPA (Automotor)">DNRPA (Registro Automotor)</option>
+                            <option value="RGP (Inmobiliario)">RGP (Registro General Inmueble)</option>
+                            <option value="Embargo de Sueldo">Embargo de Sueldo</option>
+                          </select>
+
+                          <input 
+                            type="date" 
+                            value={newCautelar.fecha} 
+                            onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+
+                          <input 
+                            type="text" 
+                            placeholder="Monto / Límite de Embargo ($)" 
+                            value={newCautelar.montoEmbargo} 
+                            onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar y Trabar Medida Cautelar
+                        </button>
+                      </form>
+
+                      {/* LISTADO DE CAUTELARES TRABADAS */}
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Registradas y Vigentes</h4>
+                        {cautelares.map(c => (
+                          <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                                  {c.tipo}
+                                </span>
+                                <span className="text-white font-bold">Liq: {c.nroLiquidacion}</span>
+                              </div>
+                              <p className="text-zinc-400 mt-1">Titular/Deudor: {c.titular} • Fecha Traba: {formatDateToArg(c.fecha)} • Monto: {c.montoEmbargo || 'Total'}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-1 rounded border border-emerald-500/20 text-[10px]">
+                                {c.estado}
+                              </span>
+                              <button 
+                                onClick={() => deleteCautelar(c.id)}
+                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                                title="Levantar / Eliminar Cautelar"
+                              >
+                                🗑️ Levantar / Borrar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   {procuracionSubTab === 'pagos' && (
-                    <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                      <h3 className="font-bold text-orange-500 uppercase text-sm">Liquidaciones, Pagos y Honorarios</h3>
-                      <p>• <strong>Planillas de Liquidación:</strong> Discriminación por número de liquidación de capital, intereses resarcitorios y actualización monetaria.</p>
-                      <p>• <strong>Escala Arancelaria:</strong> Seguimiento por etapas procesales (Gestión extrajudicial 10%, Inicio de demanda 3.5%, Notificación 1%, Ejecución 3.5%) según Resolución FTA.</p>
+                    <div className="space-y-4">
+                      {/* FORMULARIO PARA REGISTRAR COBROS Y HONORARIOS */}
+                      <form onSubmit={handleAddHonorario} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos (Resolución FTA)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                          <select 
+                            value={newHonorario.fiscalId} 
+                            onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          >
+                            <option value="">Seleccionar Liquidación...</option>
+                            {fiscalCases.map(fc => (
+                              <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
+                            ))}
+                          </select>
+
+                          <select 
+                            value={newHonorario.tipoIngreso} 
+                            onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          >
+                            <option value="HONORARIOS">Honorarios Procurador</option>
+                            <option value="CEDULA_GASTOS">Gastos de Cédula / Notificación</option>
+                            <option value="TASA_JUSTICIA">Tasa de Justicia</option>
+                            <option value="OTRO">Otro Concepto</option>
+                          </select>
+
+                          <input 
+                            type="date" 
+                            value={newHonorario.fecha} 
+                            onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+
+                          <input 
+                            type="text" 
+                            placeholder="Monto Recibido ($)" 
+                            value={newHonorario.monto} 
+                            onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          />
+                        </div>
+                        <input 
+                          type="text" 
+                          placeholder="Concepto detallado (ej. Honorarios etapa inicio demanda 3.5% / Viáticos)" 
+                          value={newHonorario.concepto} 
+                          onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                        />
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Guardar Registro de Cobro
+                        </button>
+                      </form>
+
+                      {/* LISTADO DE INGRESOS Y HONORARIOS REGISTRADOS */}
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Honorarios y Cobros Registrados</h4>
+                        {honorariosProcuracion.map(h => (
+                          <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                                  {h.tipoIngreso}
+                                </span>
+                                <span className="text-white font-bold">Liq: {h.nroLiquidacion}</span>
+                              </div>
+                              <p className="text-zinc-300 mt-1"><strong>{h.concepto}</strong></p>
+                              <p className="text-zinc-500 text-[10px]">Fecha: {formatDateToArg(h.fecha)}</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-emerald-400 font-black font-mono text-sm">{h.monto}</span>
+                              <button 
+                                onClick={() => deleteHonorario(h.id)}
+                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                                title="Eliminar registro"
+                              >
+                                🗑️ Borrar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
