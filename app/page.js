@@ -431,6 +431,10 @@ export default function Home() {
     updateTasks(tasks.filter(t => t.id !== taskId));
   };
 
+  const toggleTask = (taskId) => {
+    updateTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
+  };
+
   const deleteCase = (caseId) => {
     if (!confirm('¿Está seguro de eliminar este expediente?')) return;
     updateCases(cases.filter(c => c.id !== caseId));
@@ -820,7 +824,7 @@ export default function Home() {
               {/* REGISTRO DE MOVIMIENTOS Y ESTADOS PROCESALES */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento Procesal (Ley 9024)</h4>
-                <p className="text-[10px] text-zinc-400">Seleccioná el estado de la causa. Si elegís notificación de demanda, se computarán automáticamente los 3 días para excepciones[cite: 7].</p>
+                <p className="text-[10px] text-zinc-400">Seleccioná el estado de la causa. Si elegís notificación de demanda, se computarán automáticamente los 3 días para excepciones.</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                   <select 
                     value={newFiscalMovement.estadoProcesal} 
@@ -1514,7 +1518,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
                         <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos Fiscales (Ley 9024)</h3>
-                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde que se notifica fehacientemente al demandado para oponer excepciones legítimas[cite: 7].</p>
+                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde que se notifica fehacientemente al demandado para oponer excepciones legítimas.</p>
                         <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años desde la exigibilidad de la deuda fiscal.</p>
                       </div>
 
