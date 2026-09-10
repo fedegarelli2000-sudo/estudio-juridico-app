@@ -94,13 +94,13 @@ export default function Home() {
       nroLiquidacion: '2468-1357',
       periodo: '2026',
       monto: '$15.000.000',
-      fechaNotificacion: '2026-09-10',
-      plazoExcepcionesFecha: '2026-09-13', // Editable libremente
-      plazoPerencion: '2027-03-10',        // Editable libremente
-      plazoPrescripcion: '2031-09-10',     // Editable libremente
-      estadoFiscal: 'EN EJECUCIÓN',
+      fechaNotificacion: '',
+      plazoExcepcionesFecha: 'Pendiente Notificación', 
+      plazoPerencion: 'A calcular',
+      plazoPrescripcion: '2031-09-10',
+      estadoFiscal: 'TÍTULO PRESENTADO / PENDIENTE NOTIFICACIÓN',
       juzgado: 'Juzgado Fiscal Río Cuarto',
-      cidiNotif: 'Notificado vía Cédula'
+      cidiNotif: 'Pendiente'
     }
   ]);
 
@@ -130,33 +130,24 @@ export default function Home() {
     nroLiquidacion: '',
     periodo: '',
     monto: '',
-    fechaNotificacion: '',
     fechaDeuda: '',
-    juzgado: 'Juzgado Fiscal Río Cuarto',
-    cidiNotif: 'Pendiente CIDI'
+    juzgado: 'Juzgado Fiscal Río Cuarto'
   });
 
-  const [newFiscalMovement, setNewFiscalMovement] = useState({ fiscalId: '', date: '', title: '', text: '', notes: '' });
+  const [newFiscalMovement, setNewFiscalMovement] = useState({ 
+    fiscalId: '', 
+    date: '', 
+    title: 'Cédula de Notificación de Demanda', 
+    text: '', 
+    estadoProcesal: 'NOTIFICACIÓN DE DEMANDA (3 días excepciones)' 
+  });
+
   const [newCautelar, setNewCautelar] = useState({ fiscalId: '', tipo: 'SOJ (Bancario)', fecha: '', montoEmbargo: '' });
   const [newHonorario, setNewHonorario] = useState({ fiscalId: '', fecha: '', concepto: '', monto: '', tipoIngreso: 'HONORARIOS' });
 
   const handleAddFiscalCase = (e) => {
     e.preventDefault();
     if (!newFiscalCase.contribuyente || !newFiscalCase.monto || !newFiscalCase.nroLiquidacion) return;
-
-    let excepcionStr = 'Pendiente Notificación';
-    if (newFiscalCase.fechaNotificacion) {
-      const notifDate = new Date(newFiscalCase.fechaNotificacion);
-      notifDate.setDate(notifDate.getDate() + 3);
-      excepcionStr = notifDate.toISOString().split('T')[0];
-    }
-
-    let perencionStr = 'A calcular';
-    if (newFiscalCase.fechaNotificacion) {
-      const perDate = new Date(newFiscalCase.fechaNotificacion);
-      perDate.setMonth(perDate.getMonth() + 6);
-      perencionStr = perDate.toISOString().split('T')[0];
-    }
 
     let prescripcionStr = 'A calcular';
     if (newFiscalCase.fechaDeuda) {
@@ -168,10 +159,12 @@ export default function Home() {
     const created = {
       ...newFiscalCase,
       id: 'f_' + Date.now(),
-      plazoExcepcionesFecha: excepcionStr,
-      plazoPerencion: perencionStr,
+      fechaNotificacion: '',
+      plazoExcepcionesFecha: 'Pendiente Notificación',
+      plazoPerencion: 'A calcular',
       plazoPrescripcion: prescripcionStr,
-      estadoFiscal: 'TÍTULO HÁBIL CARGADO'
+      estadoFiscal: 'INICIO / TÍTULO CARGADO',
+      cidiNotif: 'Pendiente'
     };
 
     const updated = [...fiscalCases, created];
@@ -184,10 +177,8 @@ export default function Home() {
       nroLiquidacion: '',
       periodo: '',
       monto: '',
-      fechaNotificacion: '',
       fechaDeuda: '',
-      juzgado: 'Juzgado Fiscal Río Cuarto',
-      cidiNotif: 'Pendiente CIDI'
+      juzgado: 'Juzgado Fiscal Río Cuarto'
     });
   };
 
@@ -212,9 +203,10 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
+  // REGISTRO DE MOVIMIENTOS Y CÁLCULO INTELIGENTE DE PLAZOS FISCALES SEGÚN CÓDIGO DE PROCEDIMIENTO
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
-    if (!newFiscalMovement.title || !newFiscalMovement.date) return;
+    if (!newFiscalMovement.date) return;
     const targetId = selectedFiscalId || newFiscalMovement.fiscalId;
     if (!targetId) return;
 
@@ -223,34 +215,50 @@ export default function Home() {
     setFiscalMovements(updatedMovements);
     updateFiscalMovements(updatedMovements);
 
-    const titleLower = newFiscalMovement.title.toLowerCase();
-    if (titleLower.includes('notificacion') || titleLower.includes('cédula') || titleLower.includes('demanda')) {
-      const notifDateStr = newFiscalMovement.date;
-      const notifDate = new Date(notifDateStr);
-      notifDate.setDate(notifDate.getDate() + 3);
-      const excepcionStr = notifDate.toISOString().split('T')[0];
+    const movDateStr = newFiscalMovement.date;
+    const movDateObj = new Date(movDateStr);
 
-      const perDate = new Date(notifDateStr);
+    let excepcionStr = undefined;
+    let perencionStr = undefined;
+    let estadoNuevo = newFiscalMovement.estadoProcesal;
+    let cidiStatus = 'Registrado';
+
+    // Si el movimiento implica notificación de demanda, calculamos los 3 días hábiles para excepciones (Ley de Concursos / Código Fiscal)
+    if (newFiscalMovement.title.toLowerCase().includes('cédula') || newFiscalMovement.title.toLowerCase().includes('notificación') || newFiscalMovement.estadoProcesal.includes('3 días')) {
+      const expDate = new Date(movDateObj);
+      expDate.setDate(expDate.getDate() + 3);
+      excepcionStr = expDate.toISOString().split('T')[0];
+
+      const perDate = new Date(movDateObj);
       perDate.setMonth(perDate.getMonth() + 6);
-      const perencionStr = perDate.toISOString().split('T')[0];
-
-      const updatedCases = fiscalCases.map(fc => {
-        if (fc.id === targetId) {
-          return {
-            ...fc,
-            fechaNotificacion: notifDateStr,
-            plazoExcepcionesFecha: excepcionStr,
-            plazoPerencion: perencionStr,
-            cidiNotif: 'Notificado vía Cédula / CIDI'
-          };
-        }
-        return fc;
-      });
-      setFiscalCases(updatedCases);
-      updateFiscalCases(updatedCases);
+      perencionStr = perDate.toISOString().split('T')[0];
+      cidiStatus = 'Notificado vía Cédula/CIDI';
     }
 
-    setNewFiscalMovement({ fiscalId: targetId, date: '', title: '', text: '', notes: '' });
+    const updatedCases = fiscalCases.map(fc => {
+      if (fc.id === targetId) {
+        return {
+          ...fc,
+          fechaNotificacion: movDateStr,
+          plazoExcepcionesFecha: excepcionStr !== undefined ? excepcionStr : fc.plazoExcepcionesFecha,
+          plazoPerencion: perencionStr !== undefined ? perencionStr : fc.plazoPerencion,
+          estadoFiscal: estadoNuevo,
+          cidiNotif: cidiStatus
+        };
+      }
+      return fc;
+    });
+
+    setFiscalCases(updatedCases);
+    updateFiscalCases(updatedCases);
+
+    setNewFiscalMovement({ 
+      fiscalId: targetId, 
+      date: '', 
+      title: 'Cédula de Notificación de Demanda', 
+      text: '', 
+      estadoProcesal: 'NOTIFICACIÓN DE DEMANDA (3 días excepciones)' 
+    });
   };
 
   const handleAddCautelar = (e) => {
@@ -501,14 +509,13 @@ export default function Home() {
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
-  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD (Solo muestra si faltan 10 días o menos, o si ya venció) ---
+  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD ---
   const today = new Date();
   const urgentFiscalAlerts = fiscalCases.filter(fc => {
     if (!fc.plazoExcepcionesFecha || fc.plazoExcepcionesFecha.includes('Pendiente') || fc.plazoExcepcionesFecha.includes('A calcular')) return false;
     const expDate = new Date(fc.plazoExcepcionesFecha);
     const diffTime = expDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    // Mostrar si faltan 10 días o menos para el vencimiento de excepciones
     return diffDays <= 10;
   });
 
@@ -639,7 +646,7 @@ export default function Home() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-950 relative">
           
-          {/* DETALLE INDIVIDUAL DE EXPEDIENTE JUDICIAL */}
+          {/* DETALLE DE EXPEDIENTE JUDICIAL */}
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
@@ -658,13 +665,13 @@ export default function Home() {
                 </div>
                 {selectedCaseData.notes && (
                   <p className="text-xs bg-zinc-950 p-3 rounded border border-zinc-800 text-zinc-300">
-                    💬 <strong>Observaciones del Abogado:</strong> {selectedCaseData.notes}
+                    💬 <strong>Observaciones:</strong> {selectedCaseData.notes}
                   </p>
                 )}
               </div>
 
               <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento en este Expediente</h4>
+                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <input 
                     type="text" placeholder="Título de la actuación (Ej. Cédula / Proveído)" 
@@ -682,7 +689,7 @@ export default function Home() {
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                  Guardar Movimiento en este Expediente
+                  Guardar Movimiento
                 </button>
               </form>
 
@@ -699,7 +706,7 @@ export default function Home() {
                     </div>
                   ))}
                   {movements.filter(m => m.caseId === selectedCaseId).length === 0 && (
-                    <p className="text-xs text-zinc-600">No hay actuaciones registradas para este expediente.</p>
+                    <p className="text-xs text-zinc-600">No hay actuaciones registradas.</p>
                   )}
                 </div>
               </div>
@@ -707,7 +714,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE INDIVIDUAL DE LIQUIDACIÓN FISCAL (CON OPCIÓN DE EDICIÓN DE FECHAS) */
+            /* DETALLE DE LIQUIDACIÓN FISCAL (EDICIÓN MANUAL Y REGISTRO DE CÉDULA POSTERIOR) */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -719,7 +726,7 @@ export default function Home() {
                       {selectedFiscalData.tributo}
                     </span>
                     <h3 className="text-lg font-bold text-white mt-2">{selectedFiscalData.contribuyente}</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Juzgado: {selectedFiscalData.juzgado} • Período: {selectedFiscalData.periodo}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">Juzgado: {selectedFiscalData.juzgado} • Estado: {selectedFiscalData.estadoFiscal}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="bg-orange-500 text-black text-xs font-black px-3 py-1.5 rounded">{selectedFiscalData.monto}</span>
@@ -727,27 +734,27 @@ export default function Home() {
                       onClick={() => startEditingFiscal(selectedFiscalData)}
                       className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700 transition-colors"
                     >
-                      ✏️ Editar Plazos y Título
+                      ✏️ Edición Manual de Plazos
                     </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
-                  <div>📅 <strong>Notificación:</strong> {formatDateToArg(selectedFiscalData.fechaNotificacion)}</div>
-                  <div>⚠️ <strong className="text-amber-400">Vence Excepción (Demandado - 3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
-                  <div>⏳ <strong className="text-red-400">Alerta Perención (Procurador):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
-                  <div>🔒 <strong className="text-purple-400">Prescripción (5 años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
+                  <div>📅 <strong>Notificación:</strong> {formatDateToArg(selectedFiscalData.fechaNotificacion) || 'Pendiente'}</div>
+                  <div>⚠️ <strong className="text-amber-400">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
+                  <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
+                  <div>🔒 <strong className="text-purple-400">Prescripción:</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
               </div>
 
-              {/* MODAL / FORMULARIO DE EDICIÓN DE PLAZOS Y DATOS FISCALES */}
+              {/* MODAL DE EDICIÓN MANUAL */}
               {isEditingFiscal && (
                 <form onSubmit={handleSaveEditFiscal} className="bg-zinc-900 border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Editar Datos, Plazos y Vencimientos Manualmente</h4>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Manual de Fechas y Vencimientos</h4>
                     <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
                   </div>
-                  <p className="text-[10px] text-zinc-400">💡 Modificá cualquier fecha libremente para adaptarla a feriados locales de Río Cuarto o días inhábiles específicos.</p>
+                  <p className="text-[10px] text-zinc-400">💡 Modificá cualquier fecha libremente para adaptarla a feriados locales de Río Cuarto o días inhábiles.</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
                       <label className="text-zinc-400 block mb-1">Contribuyente:</label>
@@ -777,7 +784,16 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción (Demandado):</label>
+                      <label className="text-zinc-400 block mb-1">Fecha Notificación:</label>
+                      <input 
+                        type="date" 
+                        value={editFiscalForm.fechaNotificacion || ''} 
+                        onChange={e => setEditFiscalForm({...editFiscalForm, fechaNotificacion: e.target.value})}
+                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción:</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoExcepcionesFecha || ''} 
@@ -786,7 +802,7 @@ export default function Home() {
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Alerta Perención (Procurador):</label>
+                      <label className="text-zinc-400 block mb-1">Alerta Perención:</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoPerencion || ''} 
@@ -794,48 +810,53 @@ export default function Home() {
                         className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Prescripción:</label>
-                      <input 
-                        type="date" 
-                        value={editFiscalForm.plazoPrescripcion || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoPrescripcion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
                   </div>
                   <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                    Guardar Fechas y Plazos Editados
+                    Guardar Cambios Manuales
                   </button>
                 </form>
               )}
 
-              {/* CARGA DE MOVIMIENTOS */}
+              {/* REGISTRO DE MOVIMIENTOS Y ESTADOS PROCESALES */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento o Cédula en esta Liquidación</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento Procesal (Ley 9024)</h4>
+                <p className="text-[10px] text-zinc-400">Seleccioná el estado de la causa. Si elegís notificación de demanda, se computarán automáticamente los 3 días para excepciones[cite: 7].</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <select 
+                    value={newFiscalMovement.estadoProcesal} 
+                    onChange={e => {
+                      const val = e.target.value;
+                      setNewFiscalMovement({...newFiscalMovement, estadoProcesal: val, title: val});
+                    }}
+                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                  >
+                    <option value="NOTIFICACIÓN DE DEMANDA (3 días excepciones)">Cédula / CIDI: Notificación de Demanda (Corre plazo 3 días)</option>
+                    <option value="CONTESTACIÓN DE EXCEPCIONES">Oposición / Contestación de Excepciones</option>
+                    <option value="APERTURA A PRUEBA">Apertura a Prueba</option>
+                    <option value="SENTENCIA FISCAL DICTADA">Sentencia Fiscal</option>
+                    <option value="OTRO MOVIMIENTO">Otro Trámite / Proveído General</option>
+                  </select>
+
                   <input 
-                    type="text" placeholder="Título (Ej. Cédula Notificación de Demanda)" 
-                    value={newFiscalMovement.title} onChange={e => setNewFiscalMovement({...newFiscalMovement, title: e.target.value})}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                  />
-                  <input 
-                    type="date" value={newFiscalMovement.date} onChange={e => setNewFiscalMovement({...newFiscalMovement, date: e.target.value})}
+                    type="date" 
+                    value={newFiscalMovement.date} 
+                    onChange={e => setNewFiscalMovement({...newFiscalMovement, date: e.target.value})}
                     className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                   />
                 </div>
                 <textarea 
                   placeholder="Detalle o texto de la actuación procesal..."
-                  value={newFiscalMovement.text} onChange={e => setNewFiscalMovement({...newFiscalMovement, text: e.target.value})}
+                  value={newFiscalMovement.text} 
+                  onChange={e => setNewFiscalMovement({...newFiscalMovement, text: e.target.value})}
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                  Guardar Movimiento y Autocalcular Plazos
+                  Guardar Movimiento y Actualizar Plazos
                 </button>
               </form>
 
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Actuaciones de la Liquidación</h4>
+                <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Actuaciones</h4>
                 <div className="space-y-2">
                   {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).map(fm => (
                     <div key={fm.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
@@ -847,7 +868,7 @@ export default function Home() {
                     </div>
                   ))}
                   {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).length === 0 && (
-                    <p className="text-xs text-zinc-600">No hay movimientos registrados para esta liquidación fiscal.</p>
+                    <p className="text-xs text-zinc-600">No hay movimientos registrados para esta liquidación.</p>
                   )}
                 </div>
               </div>
@@ -855,7 +876,7 @@ export default function Home() {
 
           ) : (
             <>
-              {/* DASHBOARD GENERAL CON ALERTAS URGENTES FILTRADAS */}
+              {/* DASHBOARD GENERAL */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
@@ -899,7 +920,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* SECCIÓN DE ALERTAS URGENTES FILTRADAS (Solo muestra si vence pronto) */}
+                  {/* ALERTAS URGENTES FILTRADAS */}
                   <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl space-y-3">
                     <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
                     {urgentFiscalAlerts.length > 0 ? (
@@ -1010,7 +1031,7 @@ export default function Home() {
                       </select>
                     </div>
                     <textarea 
-                      placeholder="Observaciones o notas manuales sobre el expediente..."
+                      placeholder="Observaciones..."
                       value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                     />
@@ -1020,7 +1041,7 @@ export default function Home() {
                   </form>
 
                   <div className="space-y-3">
-                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar y ver sus actuaciones:</p>
+                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar:</p>
                     {cases.map(c => (
                       <div 
                         key={c.id} 
@@ -1043,7 +1064,6 @@ export default function Home() {
                           <button 
                             onClick={() => deleteCase(c.id)}
                             className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                            title="Eliminar Expediente"
                           >
                             🗑️ Eliminar
                           </button>
@@ -1078,7 +1098,7 @@ export default function Home() {
                       className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
                     />
                     <textarea 
-                      placeholder="Transcripción o síntesis de la actuación..."
+                      placeholder="Transcripción o síntesis..."
                       value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
                       className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
                     />
@@ -1159,7 +1179,7 @@ export default function Home() {
                         <div>
                           {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
                           <h4 className="font-bold text-white">{d.title}</h4>
-                          <p className="text-zinc-500">Vencimiento: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
+                          <p className="text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
@@ -1337,7 +1357,7 @@ export default function Home() {
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                       <input 
-                        type="text" placeholder="Teléfono / Celular de contacto" 
+                        type="text" placeholder="Teléfono" 
                         value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
@@ -1365,12 +1385,10 @@ export default function Home() {
                             {c.phone && `Tel: ${c.phone} • `}
                             {c.email && `Mail: ${c.email}`}
                           </p>
-                          {c.address && <p className="text-zinc-500 text-[10px]">📍 {c.address}</p>}
                         </div>
                         <button 
                           onClick={() => deleteClient(c.id)}
                           className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20"
-                          title="Eliminar Cliente"
                         >
                           🗑️ Eliminar
                         </button>
@@ -1407,7 +1425,7 @@ export default function Home() {
                   {procuracionSubTab === 'titulos' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddFiscalCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga de Título Ejecutivo Fiscal y Nro. de Liquidación</h3>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Sin fecha de notificación obligatoria)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
                             type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
@@ -1435,16 +1453,7 @@ export default function Home() {
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                           <div>
-                            <label className="text-[10px] text-zinc-400 block mb-1">Fecha Notificación (Opcional):</label>
-                            <input 
-                              type="date" 
-                              value={newFiscalCase.fechaNotificacion} 
-                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaNotificacion: e.target.value})}
-                              className="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white outline-none focus:border-orange-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] text-zinc-400 block mb-1">Vencimiento Deuda (Prescripción):</label>
+                            <label className="text-[10px] text-zinc-400 block mb-1">Vencimiento Deuda (Prescripción 5 años):</label>
                             <input 
                               type="date" 
                               value={newFiscalCase.fechaDeuda} 
@@ -1459,12 +1468,12 @@ export default function Home() {
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Título Fiscal
+                          Registrar Título Fiscal Inicial
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados (Haga clic para ingresar y editar plazos)</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados</h4>
                         {fiscalCases.map(fc => (
                           <div key={fc.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
                             <div className="flex justify-between items-center font-bold text-white">
@@ -1478,7 +1487,7 @@ export default function Home() {
                             </div>
 
                             <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
-                              <div>📅 <strong>Período:</strong> {fc.periodo}</div>
+                              <div>📅 <strong>Notificación:</strong> {formatDateToArg(fc.fechaNotificacion) || 'Pendiente'}</div>
                               <div>⚠️ <strong className="text-amber-400">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
                               <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
                               <div>🔒 <strong className="text-purple-400">Prescripción:</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
@@ -1486,13 +1495,13 @@ export default function Home() {
 
                             <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
                               <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                                Ingresar a Ficha / Editar Plazos →
+                                Ingresar a Ficha / Cargar Cédula →
                               </button>
                               <button 
                                 onClick={() => deleteFiscalCase(fc.id)}
                                 className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                               >
-                                🗑️ Eliminar Título Fiscal
+                                🗑️ Eliminar Título
                               </button>
                             </div>
                           </div>
@@ -1504,20 +1513,20 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos</h3>
-                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde la notificación por CIDI/Cédula para oponer excepciones[cite: 7].</p>
-                        <p>• <strong>Perención de Instancia:</strong> Plazo procesal de inactividad que debe vigilarse para evitar caducidad[cite: 7].</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Plazos Fiscales (Ley 9024)</h3>
+                        <p>• <strong>Citación a estar a derecho:</strong> 3 días hábiles desde que se notifica fehacientemente al demandado para oponer excepciones legítimas[cite: 7].</p>
+                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años desde la exigibilidad de la deuda fiscal.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Alertas de Plazos Activos</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos</h4>
                         <div className="space-y-2">
                           {fiscalCases.map(fc => (
                             <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors">
                               <div>
                                 <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
                                 <p className="text-[10px] text-zinc-400">
-                                  Excepción (Demandado): <span className="text-amber-400 font-bold">{formatDateToArg(fc.plazoExcepcionesFecha)}</span> | 
+                                  Excepción: <span className="text-amber-400 font-bold">{formatDateToArg(fc.plazoExcepcionesFecha)}</span> | 
                                   Perención: <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span> | 
                                   Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span>
                                 </p>
@@ -1568,19 +1577,19 @@ export default function Home() {
 
                           <input 
                             type="text" 
-                            placeholder="Monto / Límite de Embargo ($)" 
+                            placeholder="Monto Embargo ($)" 
                             value={newCautelar.montoEmbargo} 
                             onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar y Trabar Medida Cautelar
+                          Registrar Medida Cautelar
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Registradas y Vigentes</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Vigentes</h4>
                         {cautelares.map(c => (
                           <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
                             <div>
@@ -1590,20 +1599,14 @@ export default function Home() {
                                 </span>
                                 <span className="text-white font-bold">Liq: {c.nroLiquidacion}</span>
                               </div>
-                              <p className="text-zinc-400 mt-1">Titular/Deudor: {c.titular} • Fecha Traba: {formatDateToArg(c.fecha)} • Monto: {c.montoEmbargo || 'Total'}</p>
+                              <p className="text-zinc-400 mt-1">Deudor: {c.titular} • Fecha: {formatDateToArg(c.fecha)}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-1 rounded border border-emerald-500/20 text-[10px]">
-                                {c.estado}
-                              </span>
-                              <button 
-                                onClick={() => deleteCautelar(c.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                                title="Levantar / Eliminar Cautelar"
-                              >
-                                🗑️ Levantar / Borrar
-                              </button>
-                            </div>
+                            <button 
+                              onClick={() => deleteCautelar(c.id)}
+                              className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                            >
+                              🗑️ Levantar / Borrar
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -1613,7 +1616,7 @@ export default function Home() {
                   {procuracionSubTab === 'pagos' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddHonorario} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos (Resolución FTA)</h3>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newHonorario.fiscalId} 
@@ -1632,9 +1635,9 @@ export default function Home() {
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           >
                             <option value="HONORARIOS">Honorarios Procurador</option>
-                            <option value="CEDULA_GASTOS">Gastos de Cédula / Notificación</option>
+                            <option value="CEDULA_GASTOS">Gastos de Cédula</option>
                             <option value="TASA_JUSTICIA">Tasa de Justicia</option>
-                            <option value="OTRO">Otro Concepto</option>
+                            <option value="OTRO">Otro</option>
                           </select>
 
                           <input 
@@ -1646,7 +1649,7 @@ export default function Home() {
 
                           <input 
                             type="text" 
-                            placeholder="Monto Recibido ($)" 
+                            placeholder="Monto ($)" 
                             value={newHonorario.monto} 
                             onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
@@ -1654,36 +1657,32 @@ export default function Home() {
                         </div>
                         <input 
                           type="text" 
-                          placeholder="Concepto detallado (ej. Honorarios etapa inicio demanda 3.5% / Viáticos)" 
+                          placeholder="Concepto detallado..." 
                           value={newHonorario.concepto} 
                           onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
                           className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
                         />
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Guardar Registro de Cobro
+                          Guardar Registro
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Honorarios y Cobros Registrados</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Cobros y Honorarios</h4>
                         {honorariosProcuracion.map(h => (
                           <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
                             <div>
-                              <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20">
-                                  {h.tipoIngreso}
-                                </span>
-                                <span className="text-white font-bold">Liq: {h.nroLiquidacion}</span>
-                              </div>
+                              <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2">
+                                {h.tipoIngreso}
+                              </span>
+                              <span className="text-white font-bold">Liq: {h.nroLiquidacion}</span>
                               <p className="text-zinc-300 mt-1"><strong>{h.concepto}</strong></p>
-                              <p className="text-zinc-500 text-[10px]">Fecha: {formatDateToArg(h.fecha)}</p>
                             </div>
                             <div className="flex items-center gap-4">
                               <span className="text-emerald-400 font-black font-mono text-sm">{h.monto}</span>
                               <button 
                                 onClick={() => deleteHonorario(h.id)}
                                 className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                                title="Eliminar registro"
                               >
                                 🗑️ Borrar
                               </button>
@@ -1701,7 +1700,6 @@ export default function Home() {
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
                     <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
-                    <p className="text-xs text-zinc-400">Podés registrar hasta 6 casillas de correo para asignarles eventos y audiencias:</p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       {[0, 1, 2, 3, 4, 5].map((index) => (
                         <div key={index} className="flex items-center gap-2">
