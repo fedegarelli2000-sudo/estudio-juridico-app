@@ -95,13 +95,14 @@ export default function Home() {
       periodo: '2026',
       monto: '$99.800.000',
       fechaVencimientoLiquidacion: '2025-01-20',
-      fechaNotificacion: '',
-      plazoExcepcionesFecha: 'Pendiente Notificación', 
-      plazoPerencion: 'A calcular (Por movimiento)',
+      fechaNotificacion: '2026-09-10',
+      plazoExcepcionesFecha: '2026-09-13', 
+      plazoPerencion: '2027-03-10',
       plazoPrescripcion: '2030-01-20',
-      estadoFiscal: 'TÍTULO PRESENTADO / PENDIENTE NOTIFICACIÓN',
+      estadoFiscal: 'TÍTULO PRESENTADO / NOTIFICADO',
       juzgado: 'Juzgado Fiscal Río Cuarto',
-      cidiNotif: 'Pendiente'
+      cidiNotif: 'Notificado vía Cédula/CIDI',
+      alertaExcepcionCumplida: false // Opción para marcar la alerta como cumplida/descartada desde la ficha
     }
   ]);
 
@@ -143,7 +144,7 @@ export default function Home() {
     juzgado: 'Juzgado Fiscal Río Cuarto'
   });
 
-  // NUEVOS CAMPOS EN MOVIMIENTO FISCAL PARA CONVERTIR DIRECTO A TAREA O PLAZO
+  // MOVIMIENTO FISCAL CON OPCIÓN DE AGENDAR EN GOOGLE CALENDAR
   const [newFiscalMovement, setNewFiscalMovement] = useState({ 
     fiscalId: '', 
     date: '', 
@@ -153,7 +154,9 @@ export default function Home() {
     convertirATarea: false,
     tareaPrioridad: 'ALTA',
     convertirAPlazo: false,
-    plazoDias: 3
+    plazoDias: 3,
+    agendarEnGoogle: false,
+    googleMailSeleccionado: ''
   });
 
   const [newCautelar, setNewCautelar] = useState({ fiscalId: '', tipo: 'SOJ (Bancario)', fecha: '', montoEmbargo: '' });
@@ -178,7 +181,8 @@ export default function Home() {
       plazoPerencion: 'A calcular (Por movimiento)',
       plazoPrescripcion: prescripcionStr,
       estadoFiscal: 'INICIO / TÍTULO CARGADO',
-      cidiNotif: 'Pendiente'
+      cidiNotif: 'Pendiente',
+      alertaExcepcionCumplida: false
     };
 
     const updated = [...fiscalCases, created];
@@ -217,7 +221,7 @@ export default function Home() {
     if (selectedFiscalId === id) setSelectedFiscalId(null);
   };
 
-  // REGISTRO DE MOVIMIENTOS Y CONVERSIÓN OPCIONAL A TAREA / PLAZO PROCESAL
+  // REGISTRO DE MOVIMIENTOS Y ENVÍO A GOOGLE CALENDAR SI SE SELECCIONA
   const handleAddFiscalMovement = (e) => {
     e.preventDefault();
     if (!newFiscalMovement.date) return;
@@ -237,7 +241,7 @@ export default function Home() {
     let excepcionStr = undefined;
     let perencionStr = undefined;
     let estadoNuevo = newFiscalMovement.estadoProcesal;
-    let cidiStatus = 'Registrado';
+    let cidiStatus = 'Notificado vía Cédula/CIDI';
 
     const perDate = new Date(movDateObj);
     perDate.setMonth(perDate.getMonth() + 6);
@@ -247,7 +251,6 @@ export default function Home() {
       const expDate = new Date(movDateObj);
       expDate.setDate(expDate.getDate() + 3);
       excepcionStr = expDate.toISOString().split('T')[0];
-      cidiStatus = 'Notificado vía Cédula/CIDI';
     }
 
     const updatedCases = fiscalCases.map(fc => {
@@ -258,7 +261,8 @@ export default function Home() {
           plazoExcepcionesFecha: excepcionStr !== undefined ? excepcionStr : fc.plazoExcepcionesFecha,
           plazoPerencion: perencionStr,
           estadoFiscal: estadoNuevo,
-          cidiNotif: cidiStatus
+          cidiNotif: cidiStatus,
+          alertaExcepcionCumplida: false // Reinicia la alerta al agregar nuevo movimiento
         };
       }
       return fc;
@@ -267,19 +271,17 @@ export default function Home() {
     setFiscalCases(updatedCases);
     updateFiscalCases(updatedCases);
 
-    // SI EL USUARIO MARCÓ CONVERTIR A TAREA, LO AGREGAMOS AL MÓDULO DE TAREAS GENERALES
     if (newFiscalMovement.convertirATarea) {
       const newTaskObj = {
         id: 't_' + Date.now(),
         caseId: targetId,
-        title: `[Fiscal Liq ${targetCase?.nroLiquidacion}] ${newFiscalMovement.title}`,
+        title: `[Liq ${targetCase?.nroLiquidacion}] ${newFiscalMovement.title}`,
         priority: newFiscalMovement.tareaPrioridad,
         completed: false
       };
       updateTasks([...tasks, newTaskObj]);
     }
 
-    // SI EL USUARIO MARCÓ CONVERTIR A PLAZO PROCESAL, LO AGREGAMOS AL MÓDULO DE PLAZOS
     if (newFiscalMovement.convertirAPlazo) {
       const dueDateCalc = new Date(movDateObj);
       dueDateCalc.setDate(dueDateCalc.getDate() + (newFiscalMovement.plazoDias || 3));
@@ -295,6 +297,24 @@ export default function Home() {
       updateDeadlines([...deadlines, newDeadlineObj]);
     }
 
+    // SI EL USUARIO MARCÓ AGENDAR EN GOOGLE CALENDAR
+    if (newFiscalMovement.agendarEnGoogle) {
+      const startDate = new Date(movDateObj);
+      startDate.setHours(9, 0, 0, 0);
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+      const googleUrl = new URL('https://calendar.google.com/calendar/render');
+      googleUrl.searchParams.append('action', 'TEMPLATE');
+      googleUrl.searchParams.append('text', `FISCAL LIQ ${targetCase?.nroLiquidacion}: ${newFiscalMovement.title}`);
+      googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
+      googleUrl.searchParams.append('details', `Actuación registrada en Estudio Jurídico MM. Contribuyente: ${targetCase?.contribuyente}`);
+      if (newFiscalMovement.googleMailSeleccionado) {
+        googleUrl.searchParams.append('add', newFiscalMovement.googleMailSeleccionado);
+      }
+      window.open(googleUrl.toString(), '_blank');
+    }
+
     setNewFiscalMovement({ 
       fiscalId: targetId, 
       date: '', 
@@ -304,7 +324,9 @@ export default function Home() {
       convertirATarea: false,
       tareaPrioridad: 'ALTA',
       convertirAPlazo: false,
-      plazoDias: 3
+      plazoDias: 3,
+      agendarEnGoogle: false,
+      googleMailSeleccionado: ''
     });
   };
 
@@ -388,7 +410,8 @@ export default function Home() {
   ]);
 
   const [deadlines, setDeadlines] = useState([
-    { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: true }
+    { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: true },
+    { id: 'd2', caseId: 'f1', title: '[Liq 8763587] CONTESTACIÓN DE EXCEPCIONES', dueDate: '2026-09-13', days: 3, status: 'PENDIENTE', isAI: false }
   ]);
 
   const [hearings, setHearings] = useState([
@@ -560,9 +583,10 @@ export default function Home() {
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
-  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD ---
+  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD (EXCLUYE LAS MARCADAS COMO CUMPLIDAS) ---
   const today = new Date();
   const urgentFiscalAlerts = fiscalCases.filter(fc => {
+    if (fc.alertaExcepcionCumplida) return false;
     if (!fc.plazoExcepcionesFecha || fc.plazoExcepcionesFecha.includes('Pendiente') || fc.plazoExcepcionesFecha.includes('A calcular')) return false;
     const expDate = new Date(fc.plazoExcepcionesFecha);
     const diffTime = expDate - today;
@@ -765,7 +789,7 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE DE LIQUIDACIÓN FISCAL ( CON OPCIÓN DE CONVERTIR A TAREA O PLAZO ) */
+            /* DETALLE DE LIQUIDACIÓN FISCAL (CON OPCIÓN DE MARCAR ALERTA COMO CUMPLIDA Y AGENDAR EN GOOGLE) */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -795,6 +819,24 @@ export default function Home() {
                   <div>⚠️ <strong className="text-amber-400">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
                   <div>⏳ <strong className="text-red-400">Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
                   <div>🔒 <strong className="text-purple-400">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
+                </div>
+
+                {/* BOTÓN PARA MARCAR LA ALERTA DE EXCEPCIÓN COMO CUMPLIDA / DESCARTADA */}
+                <div className="pt-2 flex justify-between items-center bg-zinc-950 p-3 rounded border border-zinc-800 text-xs">
+                  <div>
+                    <span className="font-bold text-white">Estado de la Alerta Urgente:</span>
+                    <p className="text-[10px] text-zinc-400">Si ya contestaste o controlaste la excepción, podés marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      const updated = fiscalCases.map(fc => fc.id === selectedFiscalId ? { ...fc, alertaExcepcionCumplida: !fc.alertaExcepcionCumplida } : fc);
+                      setFiscalCases(updated);
+                      updateFiscalCases(updated);
+                    }}
+                    className={`px-3 py-1.5 rounded font-bold text-xs transition-colors ${selectedFiscalData.alertaExcepcionCumplida ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+                  >
+                    {selectedFiscalData.alertaExcepcionCumplida ? '✓ Alerta Cumplida (Hacer Visible)' : '✓ Marcar Alerta como Cumplida / Descartar'}
+                  </button>
                 </div>
               </div>
 
@@ -894,7 +936,7 @@ export default function Home() {
                 </form>
               )}
 
-              {/* REGISTRO DE MOVIMIENTOS CON OPCIÓN DE CONVERTIR A TAREA O PLAZO */}
+              {/* REGISTRO DE MOVIMIENTOS CON OPCIÓN DE AGENDAR EN GOOGLE CALENDAR */}
               <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento Procesal (Actualiza Perención)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -928,11 +970,11 @@ export default function Home() {
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
                 />
 
-                {/* OPCIONES PARA GUARDAR COMO TAREA O PLAZO EN EL DASHBOARD */}
+                {/* OPCIONES PARA GUARDAR COMO TAREA, PLAZO O AGENDAR EN GOOGLE CALENDAR */}
                 <div className="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-3 text-xs">
-                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard:</p>
+                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard y Calendario:</p>
                   
-                  <div className="flex flex-col md:flex-row gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
                         type="checkbox" 
@@ -940,20 +982,8 @@ export default function Home() {
                         onChange={e => setNewFiscalMovement({...newFiscalMovement, convertirATarea: e.target.checked})}
                         className="w-4 h-4 accent-orange-500"
                       />
-                      <span>Convertir en <strong>Tarea Pendiente</strong></span>
+                      <span>Convertir en Tarea Pendiente</span>
                     </label>
-
-                    {newFiscalMovement.convertirATarea && (
-                      <select 
-                        value={newFiscalMovement.tareaPrioridad} 
-                        onChange={e => setNewFiscalMovement({...newFiscalMovement, tareaPrioridad: e.target.value})}
-                        className="bg-zinc-900 border border-zinc-800 p-1 rounded text-white"
-                      >
-                        <option value="ALTA">Prioridad ALTA</option>
-                        <option value="MEDIA">Prioridad MEDIA</option>
-                        <option value="BAJA">Prioridad BAJA</option>
-                      </select>
-                    )}
 
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
@@ -962,25 +992,37 @@ export default function Home() {
                         onChange={e => setNewFiscalMovement({...newFiscalMovement, convertirAPlazo: e.target.checked})}
                         className="w-4 h-4 accent-orange-500"
                       />
-                      <span>Guardar como <strong>Plazo Procesal</strong> (Vencimiento)</span>
+                      <span>Guardar como Plazo Procesal</span>
                     </label>
 
-                    {newFiscalMovement.convertirAPlazo && (
-                      <div className="flex items-center gap-1">
-                        <span>Días hábiles:</span>
-                        <input 
-                          type="number" 
-                          value={newFiscalMovement.plazoDias} 
-                          onChange={e => setNewFiscalMovement({...newFiscalMovement, plazoDias: parseInt(e.target.value) || 3})}
-                          className="w-16 bg-zinc-900 border border-zinc-800 p-1 rounded text-white text-center"
-                        />
-                      </div>
-                    )}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newFiscalMovement.agendarEnGoogle} 
+                        onChange={e => setNewFiscalMovement({...newFiscalMovement, agendarEnGoogle: e.target.checked})}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span className="text-orange-400 font-bold">📅 Agendar en Google Calendar</span>
+                    </label>
                   </div>
+
+                  {newFiscalMovement.agendarEnGoogle && (
+                    <div className="pt-2 border-t border-zinc-800 flex items-center gap-2">
+                      <span className="text-zinc-400">Seleccionar Mail del Equipo:</span>
+                      <select 
+                        value={newFiscalMovement.googleMailSeleccionado} 
+                        onChange={e => setNewFiscalMovement({...newFiscalMovement, googleMailSeleccionado: e.target.value})}
+                        className="bg-zinc-900 border border-zinc-800 p-1.5 rounded text-white flex-1"
+                      >
+                        <option value="">(Opcional) Enviar invitación a correo configurado</option>
+                        {teamEmails.filter(m => m !== '').map((m, i) => <option key={i} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                  Guardar Movimiento, Renovar Perención y Enviar a Dashboard
+                  Guardar Movimiento, Renovar Perención y Sincronizar
                 </button>
               </form>
 
@@ -1057,8 +1099,7 @@ export default function Home() {
                         {urgentFiscalAlerts.map(fc => (
                           <div 
                             key={fc.id} 
-                            onClick={() => setSelectedFiscalId(fc.id)}
-                            className="p-3 bg-zinc-950 border border-amber-500/40 rounded flex justify-between items-center text-xs cursor-pointer hover:border-orange-500 transition-colors"
+                            className="p-3 bg-zinc-950 border border-amber-500/40 rounded flex justify-between items-center text-xs"
                           >
                             <div>
                               <span className="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
@@ -1069,9 +1110,25 @@ export default function Home() {
                                 Vencimiento Excepción (Demandado): <strong className="text-amber-400">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong>
                               </p>
                             </div>
-                            <button className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                              Revisar Causa →
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => setSelectedFiscalId(fc.id)}
+                                className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded"
+                              >
+                                Revisar Causa →
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const updated = fiscalCases.map(item => item.id === fc.id ? { ...item, alertaExcepcionCumplida: true } : item);
+                                  setFiscalCases(updated);
+                                  updateFiscalCases(updated);
+                                }}
+                                className="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700"
+                                title="Descartar o marcar alerta como cumplida"
+                              >
+                                ✓ Cumplida
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1527,7 +1584,7 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) - TABLA AMPLIADA DE PLAZOS PROCESALES */}
+              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) */}
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
