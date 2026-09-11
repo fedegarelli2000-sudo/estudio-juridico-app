@@ -21,24 +21,19 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
-  // --- CONTROL DE ACCESO Y CONTRASEÑA ---
+  // --- CONTROL DE ACCESO Y CONTRASEÑA UNIVERSAL EN NUBE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('estudioGarelli2026');
+  const [currentPassword, setCurrentPassword] = useState('Gina2468');
   const [recoveryEmailConfig, setRecoveryEmailConfig] = useState('federico@estudio.com');
   
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [recoveryInputEmail, setRecoveryInputEmail] = useState('');
   const [recoveryMessage, setRecoveryMessage] = useState('');
 
+  // Sincronización inicial de credenciales desde la nube
   useEffect(() => {
-    const savedPassword = localStorage.getItem('lex_app_password');
-    if (savedPassword) setCurrentPassword(savedPassword);
-
-    const savedRecoveryMail = localStorage.getItem('lex_recovery_email');
-    if (savedRecoveryMail) setRecoveryEmailConfig(savedRecoveryMail);
-
     const savedAuth = sessionStorage.getItem('lex_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
   }, []);
@@ -62,7 +57,7 @@ export default function Home() {
   const handleRecoverPassword = (e) => {
     e.preventDefault();
     if (recoveryInputEmail.trim().toLowerCase() === recoveryEmailConfig.toLowerCase()) {
-      setRecoveryMessage(`✅ ¡Correo verificado! Su contraseña actual es: "${currentPassword}". Anótela en un lugar seguro.`);
+      setRecoveryMessage(`✅ ¡Correo verificado! Su contraseña actual universal es: "${currentPassword}". Anótela en un lugar seguro.`);
     } else {
       setRecoveryMessage('❌ El correo ingresado no coincide con el mail de recuperación configurado.');
     }
@@ -81,13 +76,13 @@ export default function Home() {
     }
     if (newPass) {
       setCurrentPassword(newPass);
-      localStorage.setItem('lex_app_password', newPass);
+      updateAppPassword(newPass);
     }
     if (newRecoveryMail) {
       setRecoveryEmailConfig(newRecoveryMail);
-      localStorage.setItem('lex_recovery_email', newRecoveryMail);
+      updateRecoveryEmail(newRecoveryMail);
     }
-    setPassMessage('✅ ¡Credenciales y ajustes de seguridad actualizados con éxito!');
+    setPassMessage('✅ ¡Credenciales universales actualizadas en la nube para todos los dispositivos!');
     setNewPass('');
     setConfirmPass('');
     setNewRecoveryMail('');
@@ -527,6 +522,8 @@ export default function Home() {
         if (data.lex_cautelares) setCautelares(data.lex_cautelares);
         if (data.lex_honorarios) setHonorariosProcuracion(data.lex_honorarios);
         if (data.lex_templates) setTemplates(data.lex_templates);
+        if (data.lex_app_password) setCurrentPassword(data.lex_app_password);
+        if (data.lex_recovery_email) setRecoveryEmailConfig(data.lex_recovery_email);
       }
     } catch (e) {
       console.error('Error obteniendo de nube:', e);
@@ -551,6 +548,8 @@ export default function Home() {
   const updateCautelares = (val) => { setCautelares(val); syncWithCloud('lex_cautelares', val); };
   const updateHonorarios = (val) => { setHonorariosProcuracion(val); syncWithCloud('lex_honorarios', val); };
   const updateTemplates = (val) => { setTemplates(val); syncWithCloud('lex_templates', val); };
+  const updateAppPassword = (val) => { setCurrentPassword(val); syncWithCloud('lex_app_password', val); };
+  const updateRecoveryEmail = (val) => { setRecoveryEmailConfig(val); syncWithCloud('lex_recovery_email', val); };
 
   // FORMULARIOS GENERALES
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
