@@ -26,13 +26,12 @@ export default function Home() {
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
   const [currentPassword, setCurrentPassword] = useState('Gina2468');
-  const [recoveryEmailConfig, setRecoveryEmailConfig] = useState('federico@estudio.com');
+  const [recoveryEmailConfig, setRecoveryEmailConfig] = useState('fedegarelli2000@gmail.com');
   
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [recoveryInputEmail, setRecoveryInputEmail] = useState('');
   const [recoveryMessage, setRecoveryMessage] = useState('');
 
-  // Sincronización inicial de credenciales desde la nube
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('lex_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
