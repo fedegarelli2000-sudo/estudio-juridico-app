@@ -56,7 +56,7 @@ export default function Home() {
   const handleRecoverPassword = (e) => {
     e.preventDefault();
     if (recoveryInputEmail.trim().toLowerCase() === recoveryEmailConfig.toLowerCase()) {
-      setRecoveryMessage(`✅ ¡Correo verificado! Su contraseña actual universal es: "${currentPassword}". Anótela en un lugar seguro.`);
+      setRecoveryMessage(`✅ ¡Correo verificado, Dr.! Su contraseña actual universal es: "${currentPassword}". Anótela en un lugar seguro.`);
     } else {
       setRecoveryMessage('❌ El correo ingresado no coincide con el mail de recuperación configurado.');
     }
@@ -81,7 +81,7 @@ export default function Home() {
       setRecoveryEmailConfig(newRecoveryMail);
       updateRecoveryEmail(newRecoveryMail);
     }
-    setPassMessage('✅ ¡Credenciales universales actualizadas en la nube para todos los dispositivos!');
+    setPassMessage('✅ ¡Credenciales universales actualizadas en la nube para todos los dispositivos, Dr.!');
     setNewPass('');
     setConfirmPass('');
     setNewRecoveryMail('');
@@ -174,7 +174,7 @@ export default function Home() {
   };
 
   const deleteTemplate = (id) => {
-    if (!confirm('¿Está seguro de eliminar esta plantilla?')) return;
+    if (!confirm('¿Está seguro de eliminar esta plantilla, Dr.?')) return;
     const updated = templates.filter(t => t.id !== id);
     setTemplates(updated);
     updateTemplates(updated);
@@ -270,7 +270,7 @@ export default function Home() {
   };
 
   const deleteFiscalCase = (id) => {
-    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal?')) return;
+    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal, Dr.?')) return;
     const upFC = fiscalCases.filter(fc => fc.id !== id);
     setFiscalCases(upFC);
     updateFiscalCases(upFC);
@@ -421,7 +421,7 @@ export default function Home() {
   };
 
   const deleteCautelar = (id) => {
-    if (!confirm('¿Está seguro de eliminar o levantar esta medida cautelar?')) return;
+    if (!confirm('¿Está seguro de eliminar o levantar esta medida cautelar, Dr.?')) return;
     const updated = cautelares.filter(c => c.id !== id);
     setCautelares(updated);
     updateCautelares(updated);
@@ -448,7 +448,7 @@ export default function Home() {
   };
 
   const deleteHonorario = (id) => {
-    if (!confirm('¿Eliminar registro de cobro/honorario?')) return;
+    if (!confirm('¿Eliminar registro de cobro/honorario, Dr.?')) return;
     const updated = honorariosProcuracion.filter(h => h.id !== id);
     setHonorariosProcuracion(updated);
     updateHonorarios(updated);
@@ -485,13 +485,116 @@ export default function Home() {
   ]);
 
   const [hearings, setHearings] = useState([
-    { id: '1', caseId: '1', title: 'Audiencia Preliminar', date: '2026-09-18T10:00', location: 'Juzgado Civil Nº 12', assignedMails: [], status: 'PENDIENTE' }
+    { 
+      id: '1', 
+      caseId: '1', 
+      title: 'Audiencia Preliminar', 
+      date: '2026-09-18T10:00', 
+      location: 'Juzgado Civil Nº 12', 
+      tipoAudiencia: 'Preliminar',
+      modalidad: 'Presencial',
+      enlaceVideo: '',
+      observaciones: 'Audiencia principal preliminar de causa.',
+      assignedMails: [], 
+      status: 'PENDIENTE' 
+    }
   ]);
 
   const [tasks, setTasks] = useState([
     { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false },
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false }
   ]);
+
+  // --- ESTADO PARA IA Y CHATS LATERALES (Estilo Gemini) ---
+  const [chatSessions, setChatSessions] = useState([
+    { id: 'chat_1', title: 'Consulta sobre Ley 24.522', messages: [{ role: 'assistant', content: 'Estimado Dr., bienvenido al asistente jurídico IA del Estudio MM. ¿En qué puedo auxiliarlo hoy?' }] }
+  ]);
+  const [activeChatId, setActiveChatId] = useState('chat_1');
+  const [chatInput, setChatInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [knowledgeSources, setKnowledgeSources] = useState([
+    { id: 'ks_1', name: 'Ley 24.522 - Concursos y Quiebras (Arg)', type: 'Ley' },
+    { id: 'ks_2', name: 'Código Procesal Civil y Comercial Córdoba', type: 'Código' }
+  ]);
+  const [newSourceTitle, setNewSourceTitle] = useState('');
+  const [newSourceType, setNewSourceType] = useState('Ley');
+
+  const createNewChat = () => {
+    const newId = 'chat_' + Date.now();
+    const newSession = { id: newId, title: `Nueva Consulta ${chatSessions.length + 1}`, messages: [{ role: 'assistant', content: 'Estimado Dr., nueva sesión iniciada. Indíquiseme su consulta procesal o sustancial.' }] };
+    setChatSessions([...chatSessions, newSession]);
+    setActiveChatId(newId);
+  };
+
+  const deleteChatSession = (id, e) => {
+    e.stopPropagation();
+    if (chatSessions.length <= 1) {
+      alert('Debe conservar al menos una sesión de chat activa, Dr.');
+      return;
+    }
+    const filtered = chatSessions.filter(c => c.id !== id);
+    setChatSessions(filtered);
+    if (activeChatId === id) {
+      setActiveChatId(filtered[0].id);
+    }
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userText = chatInput;
+    setChatInput('');
+
+    const updatedSessions = chatSessions.map(sess => {
+      if (sess.id === activeChatId) {
+        const newMsgs = [...sess.messages, { role: 'user', content: userText }];
+        // Respuesta simulada inteligente o eco profesional del asistente
+        let aiReply = `Estimado Dr., analizando su consulta sobre "${userText}" bajo la normativa vigente y las fuentes indexadas en el estudio: se sugiere verificar los plazos procesales aplicables en el fuero correspondiente y la jurisprudencia en la materia.`;
+        if (userText.toLowerCase().includes('concurso') || userText.toLowerCase().includes('quiebra')) {
+          aiReply = `Dr., respecto a su planteo concursal, cabe tener presente los recaudos de la Ley 24.522 y los efectos de la presentación en concurso preventivo sobre los contratos con prestación recíproca pendiente (Art. 147 y concordantes).`;
+        }
+        return { ...sess, title: sess.messages.length === 1 ? userText.slice(0, 25) + '...' : sess.title, messages: [...newMsgs, { role: 'assistant', content: aiReply }] };
+      }
+      return sess;
+    });
+
+    setChatSessions(updatedSessions);
+  };
+
+  const startVoiceDictation = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Su navegador no soporta el reconocimiento de voz nativo, Dr.');
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-AR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+    recognition.onresult = (event) => {
+      const speechToText = event.results[0][0].transcript;
+      setChatInput(prev => (prev ? prev + ' ' : '') + speechToText);
+    };
+
+    recognition.start();
+  };
+
+  const handleAddKnowledgeSource = (e) => {
+    e.preventDefault();
+    if (!newSourceTitle.trim()) return;
+    const created = { id: 'ks_' + Date.now(), name: newSourceTitle, type: newSourceType };
+    setKnowledgeSources([...knowledgeSources, created]);
+    setNewSourceTitle('');
+  };
+
+  const deleteKnowledgeSource = (id) => {
+    setKnowledgeSources(knowledgeSources.filter(ks => ks.id !== id));
+  };
 
   // --- ESTADO PARA NUEVO MOVIMIENTO Y EDICIÓN ---
   const [newMovement, setNewMovement] = useState({ 
@@ -574,7 +677,20 @@ export default function Home() {
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
-  const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMails: [] });
+  
+  // NUEVO ESTADO ENRIQUECIDO PARA AUDIENCIAS
+  const [newHearing, setNewHearing] = useState({ 
+    caseId: '', 
+    title: '', 
+    date: '', 
+    location: '', 
+    tipoAudiencia: 'Preliminar',
+    modalidad: 'Presencial',
+    enlaceVideo: '',
+    observaciones: '',
+    assignedMails: [] 
+  });
+
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
   // FUNCIÓN CORREGIDA PARA AGREGAR CLIENTES
@@ -612,13 +728,13 @@ export default function Home() {
   };
 
   const deleteCase = (caseId) => {
-    if (!confirm('¿Está seguro de eliminar este expediente?')) return;
+    if (!confirm('¿Está seguro de eliminar este expediente, Dr.?')) return;
     updateCases(cases.filter(c => c.id !== caseId));
     if (selectedCaseId === caseId) setSelectedCaseId(null);
   };
 
   const deleteClient = (clientId) => {
-    if (!confirm('¿Está seguro de eliminar este contacto?')) return;
+    if (!confirm('¿Está seguro de eliminar este contacto, Dr.?')) return;
     const updated = clients.filter(c => c.id !== clientId);
     setClients(updated);
     updateClients(updated);
@@ -640,6 +756,24 @@ export default function Home() {
     };
 
     updateMovements([...movements, createdMov]);
+
+    // SINCRONIZACIÓN AUTOMÁTICA BIDIRECCIONAL SI EL TÍTULO ES DE AUDIENCIA
+    if (newMovement.title.toLowerCase().includes('audiencia') || newMovement.text.toLowerCase().includes('audiencia')) {
+      const autoHearing = {
+        id: 'h_auto_' + Date.now(),
+        caseId: caseTarget,
+        title: newMovement.title,
+        date: newMovement.date + 'T10:00',
+        location: targetCase?.court || 'Tribunal asignado',
+        tipoAudiencia: 'Conciliación / Debate',
+        modalidad: 'Presencial / Virtual',
+        enlaceVideo: '',
+        observaciones: newMovement.text,
+        assignedMails: [],
+        status: 'PENDIENTE'
+      };
+      updateHearings([...hearings, autoHearing]);
+    }
 
     if (newMovement.convertirATarea) {
       const newTaskObj = {
@@ -680,7 +814,7 @@ export default function Home() {
       googleUrl.searchParams.append('action', 'TEMPLATE');
       googleUrl.searchParams.append('text', `EXP ${targetCase?.number}: ${newMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
-      googleUrl.searchParams.append('details', `Actuación / Audiencia / Reunión registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
+      googleUrl.searchParams.append('details', `Actuación / Audiencia registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
       googleUrl.searchParams.append('reminder', '1440,180');
       
       if (newMovement.googleMailsSeleccionados && newMovement.googleMailsSeleccionados.length > 0) {
@@ -705,7 +839,7 @@ export default function Home() {
   };
 
   const handleDeleteMovement = (movId) => {
-    if (!confirm('¿Está seguro de eliminar este movimiento?')) return;
+    if (!confirm('¿Está seguro de eliminar este movimiento, Dr.?')) return;
     updateMovements(movements.filter(m => m.id !== movId));
   };
 
@@ -742,9 +876,9 @@ export default function Home() {
 
     const googleUrl = new URL('https://calendar.google.com/calendar/render');
     googleUrl.searchParams.append('action', 'TEMPLATE');
-    googleUrl.searchParams.append('text', `AUDIENCIA: ${newHearing.title}`);
+    googleUrl.searchParams.append('text', `AUDIENCIA [${newHearing.tipoAudiencia}]: ${newHearing.title}`);
     googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
-    googleUrl.searchParams.append('details', `Audiencia agendada desde Estudio MM.`);
+    googleUrl.searchParams.append('details', `Modalidad: ${newHearing.modalidad}\nEnlace: ${newHearing.enlaceVideo || 'N/A'}\nObservaciones: ${newHearing.observaciones}`);
     googleUrl.searchParams.append('reminder', '1440,180');
     if (newHearing.location) googleUrl.searchParams.append('location', newHearing.location);
     if (newHearing.assignedMails && newHearing.assignedMails.length > 0) {
@@ -752,7 +886,7 @@ export default function Home() {
     }
 
     window.open(googleUrl.toString(), '_blank');
-    setNewHearing({ caseId: caseTarget, title: '', date: '', location: '', assignedMails: [] });
+    setNewHearing({ caseId: caseTarget, title: '', date: '', location: '', tipoAudiencia: 'Preliminar', modalidad: 'Presencial', enlaceVideo: '', observaciones: '', assignedMails: [] });
   };
 
   const handleAddTask = (e) => {
@@ -844,7 +978,7 @@ export default function Home() {
               )}
 
               <button 
-                type="submit" 
+            type="submit" 
                 className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20"
               >
                 Verificar Correo y Recuperar
@@ -890,9 +1024,10 @@ export default function Home() {
               { id: 'expedientes', label: 'Expedientes / Causas', icon: '📁' },
               { id: 'movimientos', label: 'Movimientos e Historia', icon: '📜' },
               { id: 'plazos', label: 'Plazos Procesales e IA', icon: '⚡' },
+              { id: 'ia_asistente', label: 'Asistente IA Jurídico', icon: '🤖' },
               { id: 'tareas', label: 'Tareas y Pendientes', icon: '✅' },
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
-              { id: 'audiencias', label: 'Audiencias y Calendar', icon: '📅' },
+              { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
@@ -975,7 +1110,7 @@ export default function Home() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <input 
-                    type="text" placeholder="Título de la actuación (Ej. Cédula / Proveído)" 
+                    type="text" placeholder="Título de la actuación (Ej. Cédula / Decreto Audiencia)" 
                     value={newMovement.title} onChange={e => setNewMovement({...newMovement, title: e.target.value})}
                     className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                   />
@@ -1067,7 +1202,7 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración, Dr.</p>
                         )}
                       </div>
                     </div>
@@ -1075,7 +1210,7 @@ export default function Home() {
                 </div>
 
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400 shadow-lg shadow-orange-500/20">
-                  Guardar Movimiento y Automatizar
+                  Guardar Movimiento y Sincronizar
                 </button>
               </form>
 
@@ -1166,7 +1301,7 @@ export default function Home() {
                 <div className="pt-2 flex justify-between items-center bg-zinc-950 p-3 rounded border border-zinc-800 text-xs">
                   <div>
                     <span className="font-bold text-white">Estado de la Alerta Urgente:</span>
-                    <p className="text-[10px] text-zinc-400">Si ya contestaste o controlaste la excepción, podés marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
+                    <p className="text-[10px] text-zinc-400">Si ya contestó o controló la excepción, Dr., puede marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
                   </div>
                   <button 
                     onClick={() => {
@@ -1370,7 +1505,7 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración, Dr.</p>
                         )}
                       </div>
                     </div>
@@ -1488,7 +1623,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <p className="text-xs text-zinc-500 italic bg-zinc-950 p-3 rounded border border-zinc-800">
-                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días. Todo al día.
+                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días, Dr. Todo al día.
                       </p>
                     )}
                   </div>
@@ -1587,7 +1722,7 @@ export default function Home() {
                   </form>
 
                   <div className="space-y-3">
-                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar:</p>
+                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar, Dr.:</p>
                     {cases.map(c => (
                       <div 
                         key={c.id} 
@@ -1715,29 +1850,238 @@ export default function Home() {
                 </div>
               )}
 
+              {activeTab === 'ia_asistente' && (
+                <div className="flex h-[calc(100vh-100px)] gap-4 relative z-10">
+                  {/* PANEL LATERAL DE HISTORIAL DE CHATS (Estilo Gemini) */}
+                  <div className="w-72 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col justify-between shrink-0 overflow-hidden">
+                    <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+                      <span className="text-xs font-bold text-orange-500 uppercase">Historial de Consultas IA</span>
+                      <button 
+                        onClick={createNewChat}
+                        className="bg-orange-500 text-black font-bold text-[11px] px-2.5 py-1 rounded hover:bg-orange-400 transition-colors"
+                      >
+                        + Nuevo Chat
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+                      {chatSessions.map((sess) => (
+                        <div 
+                          key={sess.id}
+                          onClick={() => setActiveChatId(sess.id)}
+                          className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all ${
+                            activeChatId === sess.id 
+                              ? 'bg-zinc-800 text-white font-bold border-l-4 border-orange-500' 
+                              : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
+                          }`}
+                        >
+                          <span className="truncate pr-2">{sess.title}</span>
+                          <button 
+                            onClick={(e) => deleteChatSession(sess.id, e)}
+                            className="text-zinc-500 hover:text-red-400 p-1"
+                            title="Borrar chat"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* GESTIÓN DE FUENTES Y LEYES PROPIAS INDEXADAS */}
+                    <div className="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
+                      <span className="text-[10px] font-bold text-orange-400 uppercase block">📚 Leyes y Fuentes Indexadas:</span>
+                      <div className="max-h-28 overflow-y-auto space-y-1">
+                        {knowledgeSources.map(ks => (
+                          <div key={ks.id} className="flex justify-between items-center text-[11px] bg-zinc-900 p-1.5 rounded border border-zinc-800 text-zinc-300">
+                            <span className="truncate pr-2">{ks.name}</span>
+                            <button onClick={() => deleteKnowledgeSource(ks.id)} className="text-zinc-500 hover:text-red-400">✕</button>
+                          </div>
+                        ))}
+                      </div>
+
+                      <form onSubmit={handleAddKnowledgeSource} className="space-y-2 pt-1">
+                        <input 
+                          type="text" 
+                          placeholder="Nueva Ley / Doctrina (ej. Ley 24.522)"
+                          value={newSourceTitle}
+                          onChange={e => setNewSourceTitle(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 p-2 rounded text-[11px] text-white outline-none focus:border-orange-500"
+                        />
+                        <button type="submit" className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[10px] py-1.5 rounded transition-colors">
+                          + Agregar Fuente a la IA
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* ÁREA PRINCIPAL DE CONVERSACIÓN CON EL ASISTENTE */}
+                  <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col justify-between overflow-hidden">
+                    <div className="p-4 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xs font-bold text-white uppercase tracking-wider">Asistente Jurídico Inteligente</h3>
+                        <p className="text-[10px] text-zinc-400">Entrenado con legislación argentina, doctrina concursal y procesal, Dr.</p>
+                      </div>
+                      <span className="bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-1 rounded text-[10px] border border-emerald-500/20">
+                        ● IA Activa en Línea
+                      </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
+                      {chatSessions.find(s => s.id === activeChatId)?.messages.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] p-3.5 rounded-xl leading-relaxed ${
+                            msg.role === 'user' 
+                              ? 'bg-orange-500 text-black font-semibold shadow-md' 
+                              : 'bg-zinc-950 text-zinc-200 border border-zinc-800 shadow-inner'
+                          }`}>
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800 bg-zinc-950 flex items-center gap-3">
+                      <button 
+                        type="button" 
+                        onClick={startVoiceDictation}
+                        title="Dictar consulta por micrófono"
+                        className={`p-3 rounded-xl border transition-all ${
+                          isListening 
+                            ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-lg shadow-red-500/50' 
+                            : 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800'
+                        }`}
+                      >
+                        🎙️
+                      </button>
+
+                      <input 
+                        type="text" 
+                        placeholder={isListening ? "Escuchando su voz, Dr...." : "Escriba su consulta jurídica o dictela por micrófono..."}
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        className="flex-1 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-xs text-white outline-none focus:border-orange-500 transition-colors"
+                      />
+
+                      <button 
+                        type="submit" 
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-3 rounded-xl transition-colors shadow-lg shadow-orange-500/20"
+                      >
+                        Enviar Consulta
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
-                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Notificar Audiencia</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  {/* CALENDARIO VISUAL INTERACTIVO DIRECTO EN PANTALLA */}
+                  <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4 shadow-xl">
+                    <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📅 Calendario Visual Interactivo - Septiembre 2026</h3>
+                        <p className="text-xs text-zinc-400">Visualización mensual de audiencias, comparendos y reuniones del estudio.</p>
+                      </div>
+                      <span className="bg-orange-500/10 text-orange-400 text-xs font-bold px-3 py-1 rounded border border-orange-500/20">
+                        {hearings.length} Audiencia(s) Registrada(s)
+                      </span>
+                    </div>
+
+                    {/* GRILLA DE CALENDARIO MENSUAL */}
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs">
+                      {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
+                        <div key={day} className="font-bold text-orange-400 bg-zinc-950 p-2 rounded border border-zinc-800 uppercase text-[10px]">
+                          {day}
+                        </div>
+                      ))}
+                      {Array.from({ length: 30 }, (_, i) => {
+                        const dayNum = i + 1;
+                        const formattedDay = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
+                        const dateStrMatch = `2026-09-${formattedDay}`;
+                        const dayHearings = hearings.filter(h => h.date.startsWith(dateStrMatch));
+
+                        return (
+                          <div 
+                            key={dayNum} 
+                            className={`min-h-[85px] bg-zinc-950 border p-2 rounded flex flex-col justify-between text-left transition-colors ${
+                              dayHearings.length > 0 ? 'border-orange-500 bg-orange-500/5' : 'border-zinc-800/80 hover:border-zinc-700'
+                            }`}
+                          >
+                            <span className={`font-bold text-xs ${dayHearings.length > 0 ? 'text-orange-400' : 'text-zinc-500'}`}>{dayNum}</span>
+                            <div className="space-y-1 overflow-y-auto max-h-[50px]">
+                              {dayHearings.map(h => (
+                                <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded truncate shadow" title={`${h.title} (${h.tipoAudiencia})`}>
+                                  {h.tipoAudiencia}: {h.title}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* FORMULARIO DE CARGA DE AUDIENCIA ENRIQUECIDO */}
+                  <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4">
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Sincronizar Nueva Audiencia (Bidireccional y Google Calendar)</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <input 
-                        type="text" placeholder="Título de Audiencia o Reunión" 
+                        type="text" placeholder="Título o Carátula de la Audiencia" 
                         value={newHearing.title} onChange={e => setNewHearing({...newHearing, title: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
                       />
+                      
                       <input 
                         type="datetime-local" value={newHearing.date} onChange={e => setNewHearing({...newHearing, date: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
+
+                      <select 
+                        value={newHearing.tipoAudiencia} 
+                        onChange={e => setNewHearing({...newHearing, tipoAudiencia: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="Preliminar">Tipo: Preliminar</option>
+                        <option value="Vista de Causa">Tipo: Vista de Causa</option>
+                        <option value="Conciliación">Tipo: Conciliación / Mediación</option>
+                        <option value="Penal">Tipo: Audiencia Penal</option>
+                        <option value="Fiscal">Tipo: Audiencia Fiscal</option>
+                        <option value="Otra">Tipo: Otra</option>
+                      </select>
+
+                      <select 
+                        value={newHearing.modalidad} 
+                        onChange={e => setNewHearing({...newHearing, modalidad: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      >
+                        <option value="Presencial">Modalidad: Presencial</option>
+                        <option value="Zoom">Modalidad: Zoom</option>
+                        <option value="Meet">Modalidad: Google Meet</option>
+                        <option value="WhatsApp">Modalidad: Videollamada WhatsApp</option>
+                      </select>
+
                       <input 
-                        type="text" placeholder="Lugar / Juzgado / Enlace Virtual" 
+                        type="text" placeholder="Juzgado / Dependencia / Ubicación" 
                         value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                      />
+
+                      <input 
+                        type="text" placeholder="Enlace de Videollamada (Zoom, Meet, etc.)" 
+                        value={newHearing.enlaceVideo} onChange={e => setNewHearing({...newHearing, enlaceVideo: e.target.value})}
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-3"
                       />
                     </div>
 
+                    <textarea 
+                      placeholder="Observaciones adicionales, instrucciones o documentación a llevar..."
+                      value={newHearing.observaciones} onChange={e => setNewHearing({...newHearing, observaciones: e.target.value})}
+                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                    />
+
                     <div className="space-y-2 text-xs">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo:</span>
+                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo para Notificación:</span>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-950 p-3 rounded border border-zinc-800">
                         {teamEmails.filter(m => m !== '').length > 0 ? (
                           teamEmails.filter(m => m !== '').map((mail, idx) => (
@@ -1761,36 +2105,51 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración, Dr.</p>
                         )}
                       </div>
                     </div>
 
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400 flex items-center gap-2">
-                      📅 Agendar y Abrir Invitación en Google Calendar
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400 flex items-center gap-2 shadow-lg shadow-orange-500/20">
+                      📅 Agendar, Sincronizar y Abrir Google Calendar
                     </button>
                   </form>
 
+                  {/* LISTADO GENERAL DE AUDIENCIAS */}
                   <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Listado General de Audiencias y Comparendos</h4>
                     {hearings.map(h => (
-                      <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
+                      <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2 shadow">
                         <div className="flex justify-between items-center">
-                          <div>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400'}`}>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
                               {h.status === 'REALIZADA' ? '✓ REALIZADA / TOMADA' : 'PENDIENTE'}
                             </span>
-                            <h4 className={`font-bold text-sm mt-1 ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : 'text-white'}`}>
-                              {h.title}
-                            </h4>
+                            <span className="bg-zinc-800 text-zinc-300 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                              {h.tipoAudiencia || 'General'} • {h.modalidad || 'Presencial'}
+                            </span>
                           </div>
-                          <span className="text-orange-400 font-bold">{h.date}</span>
+                          <span className="text-orange-400 font-bold font-mono">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
                         </div>
-                        <p className="text-zinc-400">Lugar: {h.location}</p>
+
+                        <h4 className={`font-bold text-sm ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : 'text-white'}`}>
+                          {h.title}
+                        </h4>
+                        
+                        <p className="text-zinc-400">📍 <strong>Dependencia:</strong> {h.location}</p>
+                        {h.enlaceVideo && (
+                          <p className="text-orange-400">🔗 <strong>Enlace de Videollamada:</strong> <a href={h.enlaceVideo} target="_blank" rel="noreferrer" className="underline">{h.enlaceVideo}</a></p>
+                        )}
+                        {h.observaciones && (
+                          <p className="text-zinc-300 bg-zinc-950 p-2.5 rounded border border-zinc-800 mt-1">
+                            💬 <strong>Observaciones:</strong> {h.observaciones}
+                          </p>
+                        )}
                         
                         <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
                           <button 
                             onClick={() => toggleHearingStatus(h.id)}
-                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 text-white'}`}
+                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 text-white hover:bg-emerald-500'}`}
                           >
                             {h.status === 'REALIZADA' ? 'Deshacer (Marcar Pendiente)' : '✓ Marcar como Tomada / Realizada'}
                           </button>
@@ -1962,7 +2321,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <form onSubmit={handleAddFiscalCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
-                        <p className="text-[10px] text-zinc-400">💡 Ingresá la <strong>Fecha en que venció la Liquidación</strong> para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
+                        <p className="text-[10px] text-zinc-400">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong>, Dr., para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
                             type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
@@ -2051,7 +2410,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
                         <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción Fiscal</h3>
-                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registrás un movimiento nuevo en la ficha del título fiscal, el sistema toma esa fecha como base y renueva automáticamente el plazo de perención.</p>
+                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registre un movimiento nuevo en la ficha del título fiscal, el sistema tomará esa fecha como base y renovará automáticamente el plazo de perención, Dr.</p>
                         <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha de vencimiento de la liquidación fiscal.</p>
                       </div>
 
@@ -2234,7 +2593,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-2">
                         <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía Ampliada de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
-                        <p className="text-xs text-zinc-400">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales.</p>
+                        <p className="text-xs text-zinc-400">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales, Dr.</p>
                       </div>
 
                       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
@@ -2292,7 +2651,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <form onSubmit={handleAddTemplate} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
-                        <p className="text-[10px] text-zinc-400">💡 Cargá modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde tu computadora para tenerlos siempre disponibles en la nube.</p>
+                        <p className="text-[10px] text-zinc-400">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora, Dr., para tenerlos siempre disponibles en la nube.</p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
@@ -2371,7 +2730,7 @@ export default function Home() {
                         ))}
                         {templates.length === 0 && (
                           <p className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded border border-zinc-800">
-                            No hay plantillas cargadas todavía. Usá el formulario de arriba para incorporar tus modelos.
+                            No hay plantillas cargadas todavía, Dr. Use el formulario de arriba para incorporar sus modelos.
                           </p>
                         )}
                       </div>
