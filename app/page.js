@@ -1677,7 +1677,7 @@ export default function Home() {
                       />
                       <input 
                         type="number" placeholder="Días hábiles (ej. 5)" 
-                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)}
+                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
@@ -2275,7 +2275,7 @@ export default function Home() {
                             <tr>
                               <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
                               <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className="p-3 text-zinc-400">In case of haber hechos controvertidos debatibles en las excepciones.</td>
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
