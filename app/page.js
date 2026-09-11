@@ -836,6 +836,7 @@ export default function Home() {
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
+  const today = new Date();
   const urgentFiscalAlerts = fiscalCases.filter(fc => {
     if (fc.alertaExcepcionCumplida) return false;
     if (!fc.plazoExcepcionesFecha || fc.plazoExcepcionesFecha.includes('Pendiente') || fc.plazoExcepcionesFecha.includes('A calcular')) return false;
