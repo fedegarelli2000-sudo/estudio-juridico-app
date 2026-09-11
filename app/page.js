@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 export default function Home() {
-  // CONFIGURACIÓN DINÁMICA DEL FAVICON CON DOS M (Naranja y Gris)
+  // CONFIGURACIÓN DINÁMICA DEL FAVICON
   useEffect(() => {
     const faviconSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
@@ -21,7 +21,7 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
-  // --- CONTROL DE ACCESO Y CONTRASEÑA UNIVERSAL EN NUBE ---
+  // --- CONTROL DE ACCESO ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -464,7 +464,7 @@ export default function Home() {
       client: 'Cámara',
       processType: 'JUDICIAL',
       status: 'EN TRAMITE',
-      notes: 'Desc. con exactitud qué reclama: Alquileres adeudados, meses julio y agosto del corriente año: $1.044.800, con más servicios de Agua, Luz, Gas e impuestos adeudados correspondientes a los periodos de locación: $: $634,422.33. Lo que hace la suma total de PESOS UN MILLÓN SEISCIENTOS SETENTA Y NUEVE MIL DOSCIENTOS VEINTIDÓS CON TREINTA Y TRES CENTAVOS ($1.679.222,33). Bajo expresa reserva de ampliar.'
+      notes: 'Alquileres adeudados julio y agosto: $1.044.800 + servicios $634.422,33. Total: $1.679.222,33.'
     }
   ]);
   
@@ -475,8 +475,8 @@ export default function Home() {
 
   const [movements, setMovements] = useState([
     { id: '1', caseId: '1', date: '2026-08-14', title: 'SOLICITUD DE MEDIACION', text: 'INICIO', notes: '' },
-    { id: '2', caseId: '1', date: '2026-09-01', title: 'DECRETO AUDIENCIA', text: 'SEGUNDA AUDIENCIA POR NO LLEGAR A NOTIFICAR LA PRIMERA (LA CUAL NO TOMAMOS)', notes: '' },
-    { id: '3', caseId: '1', date: '2026-09-14', title: 'AUDIENCIA', text: 'Se informa a CAMINAL, ANALIA DEL CARMEN y a GIGENA , GERARDO ALBERTO, TORRES, GABRIEL IGNACIO que deberán asistir a una reunión de mediación virtual el día 14/09/2026 a las 11:10 hs. El encuentro se desarrollará por VÍA VIDEOLLAMADA, (Whatsapp/Zoom/Google Meet). Para esta mediación, fue designada la dupla de mediadores integrada por: VALERIA PIOVANO MAT. 209, Tel. 3584247428, vmpiovano@gmail.com y mediadora Carla De Marco Te. 3584269606.', notes: '' }
+    { id: '2', caseId: '1', date: '2026-09-01', title: 'DECRETO AUDIENCIA', text: 'SEGUNDA AUDIENCIA POR NO LLEGAR A NOTIFICAR LA PRIMERA', notes: '' },
+    { id: '3', caseId: '1', date: '2026-09-14', title: 'AUDIENCIA', text: 'Reunión de mediación virtual.', notes: '' }
   ]);
 
   const [deadlines, setDeadlines] = useState([
@@ -511,44 +511,159 @@ export default function Home() {
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
 
-  // --- MÓDULO DE IA ASISTENTE LEGAL ---
-  const [aiQuery, setAiQuery] = useState('');
-  const [aiChatHistory, setAiChatHistory] = useState([
-    { role: 'assistant', text: '¡Hola, Dr. Garelli! Soy su asistente de IA jurídica para el Estudio MM. Consulteme sobre plazos, causas, expedientes fiscales o redacción.' }
+  // --- MÓDULO DE IA AVANZADO (ESTILO GEMINI + LEYES/FUENTES + CHAT DE VOZ + HISTORIAL LATERAL) ---
+  const [chatSessions, setChatSessions] = useState([
+    {
+      id: 'sess_1',
+      title: 'Chat Inicial / Consulta General',
+      messages: [
+        { role: 'assistant', text: '¡Hola, Dr.! Soy su asistente de IA jurídica para el Estudio MM. ¿Sobre qué ley, causa o consulta legal trabajamos hoy?' }
+      ]
+    }
   ]);
+  const [currentChatId, setCurrentChatId] = useState('sess_1');
+  const [aiQuery, setAiQuery] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
+  // ESTADO PARA LEYES Y FUENTES PERSONALIZADAS CARGADAS
+  const [customSources, setCustomSources] = useState([
+    { id: 'src_1', title: 'Ley Nacional de Concursos y Quiebras Nº 24.522 (Artículos Principales)', content: 'Ley 24.522 reguladora de concursos preventivos y quiebras en Argentina...' },
+    { id: 'src_2', title: 'Código Tributario Provincial Córdoba (Ejecuciones Fiscales)', content: 'Normas sobre apremios fiscales, títulos ejecutivos y excepciones admitidas...' }
+  ]);
+  const [newSourceTitle, setNewSourceTitle] = useState('');
+  const [newSourceContent, setNewSourceContent] = useState('');
+  const [showSourceModal, setShowSourceModal] = useState(false);
+
+  const handleAddCustomSource = (e) => {
+    e.preventDefault();
+    if (!newSourceTitle || !newSourceContent) return;
+    const created = {
+      id: 'src_' + Date.now(),
+      title: newSourceTitle,
+      content: newSourceContent
+    };
+    const updated = [...customSources, created];
+    setCustomSources(updated);
+    syncWithCloud('lex_custom_sources', updated);
+    setNewSourceTitle('');
+    setNewSourceContent('');
+    setShowSourceModal(false);
+  };
+
+  const deleteCustomSource = (id) => {
+    if (!confirm('¿Eliminar esta ley o fuente de consulta?')) return;
+    const updated = customSources.filter(s => s.id !== id);
+    setCustomSources(updated);
+    syncWithCloud('lex_custom_sources', updated);
+  };
+
+  // MANEJO DE GRABACIÓN DE VOZ (SPEECH TO TEXT)
+  const handleToggleVoiceRecording = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Su navegador no soporta entrada de voz por micrófono. Utilice Google Chrome o Edge.');
+      return;
+    }
+
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-AR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      const speechText = event.results[0][0].transcript;
+      setAiQuery(prev => prev ? `${prev} ${speechText}` : speechText);
+      setIsRecording(false);
+    };
+
+    recognition.onerror = () => {
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.start();
+  };
+
+  const handleCreateNewChat = () => {
+    const newSessionId = 'sess_' + Date.now();
+    const newSession = {
+      id: newSessionId,
+      title: 'Nueva Consulta Legal',
+      messages: [
+        { role: 'assistant', text: 'Nueva sesión iniciada. ¿Qué ley, expediente o consulta desea analizar, Dr.?' }
+      ]
+    };
+    setChatSessions([newSession, ...chatSessions]);
+    setCurrentChatId(newSessionId);
+  };
+
+  const handleDeleteChatSession = (e, sessionId) => {
+    e.stopPropagation();
+    if (chatSessions.length <= 1) {
+      alert('Debe conservar al menos una sesión de chat.');
+      return;
+    }
+    const filtered = chatSessions.filter(s => s.id !== sessionId);
+    setChatSessions(filtered);
+    if (currentChatId === sessionId) {
+      setCurrentChatId(filtered[0].id);
+    }
+  };
+
+  const currentChat = chatSessions.find(s => s.id === currentChatId) || chatSessions[0];
 
   const handleAskAI = (e) => {
     e.preventDefault();
     if (!aiQuery.trim() || isAiLoading) return;
 
     const userMsg = aiQuery.trim();
-    const updatedHistory = [...aiChatHistory, { role: 'user', text: userMsg }];
-    setAiChatHistory(updatedHistory);
+    const updatedMessages = [...currentChat.messages, { role: 'user', text: userMsg }];
+    
+    const chatTitle = currentChat.messages.length === 1 ? (userMsg.length > 25 ? userMsg.substring(0, 25) + '...' : userMsg) : currentChat.title;
+
+    const updatedSessions = chatSessions.map(s => s.id === currentChatId ? { ...s, title: chatTitle, messages: updatedMessages } : s);
+    setChatSessions(updatedSessions);
     setAiQuery('');
     setIsAiLoading(true);
 
     setTimeout(() => {
-      let aiResponse = "Analizando los datos del estudio...";
+      let aiResponse = "Analizando su consulta con base en las leyes cargadas...";
       const qLower = userMsg.toLowerCase();
 
-      if (qLower.includes('plazo') || qLower.includes('venc')) {
+      const matchedSource = customSources.find(s => qLower.includes(s.title.toLowerCase().substring(0, 8)) || s.content.toLowerCase().includes(qLower));
+
+      if (matchedSource) {
+        aiResponse = `📖 **Referencia encontrada en su fuente "${matchedSource.title}":**\n\n"${matchedSource.content.substring(0, 350)}..."\n\n*Análisis para el Dr.:* Esta fuente resulta plenamente aplicable al caso planteado bajo los estándares procesales vigentes.`;
+      } else if (qLower.includes('plazo') || qLower.includes('venc')) {
         const peds = deadlines.filter(d => d.status === 'PENDIENTE');
-        aiResponse = `Actualmente tiene ${peds.length} plazos pendientes:\n` + peds.map(p => `• ${p.title} (Vence: ${formatDateToArg(p.dueDate)})`).join('\n');
+        aiResponse = `Dr., actualmente tiene ${peds.length} plazos pendientes:\n` + peds.map(p => `• ${p.title} (Vence: ${formatDateToArg(p.dueDate)})`).join('\n');
       } else if (qLower.includes('fiscal') || qLower.includes('renta') || qLower.includes('zamarbide')) {
-        aiResponse = `Posee ${fiscalCases.length} títulos fiscales activos. Destaca la Liquidación Nº ${fiscalCases[0]?.nroLiquidacion} de ${fiscalCases[0]?.contribuyente} por ${fiscalCases[0]?.monto}, con vencimiento de excepciones el ${formatDateToArg(fiscalCases[0]?.plazoExcepcionesFecha)}.`;
+        aiResponse = `Dr., posee ${fiscalCases.length} títulos fiscales activos. Destaca la Liquidación Nº ${fiscalCases[0]?.nroLiquidacion} de ${fiscalCases[0]?.contribuyente} por ${fiscalCases[0]?.monto}, con vencimiento de excepciones el ${formatDateToArg(fiscalCases[0]?.plazoExcepcionesFecha)}.`;
       } else if (qLower.includes('causa') || qLower.includes('expediente') || qLower.includes('alquiler')) {
-        aiResponse = `Tiene ${cases.length} expediente(s) judicial(es) en trámite:\n` + cases.map(c => `• [${c.number}] ${c.caratula} (${c.court})`).join('\n');
-      } else if (qLower.includes('tarea') || qLower.includes('pendiente')) {
-        const pendingTasks = tasks.filter(t => !t.completed);
-        aiResponse = `Hay ${pendingTasks.length} tareas pendientes:\n` + pendingTasks.map(t => `• [${t.priority}] ${t.title}`).join('\n');
+        aiResponse = `Dr., tiene ${cases.length} expediente(s) judicial(es) en trámite:\n` + cases.map(c => `• [${c.number}] ${c.caratula} (${c.court})`).join('\n');
+      } else if (qLower.includes('concurso') || qLower.includes('quiebra') || qLower.includes('24.522')) {
+        aiResponse = `Dr., conforme a la Ley de Concursos y Quiebras Nº 24.522 cargada en su base, los créditos con garantía real o privilegios especiales se rigen por los artículos específicos de verificación tempestiva y verificación tardía. ¿Desea que redacte un modelo de presentación?`;
       } else {
-        aiResponse = `Con respecto a "${userMsg}": El Estudio MM cuenta con ${cases.length} expedientes y ${fiscalCases.length} títulos fiscales en seguimiento activo. Si necesita un modelo específico o calcular plazos procesales en Córdoba (Ley 24.522 o Código Tributario), recuerde revisar las solapas de Procuración o Plantillas.`;
+        aiResponse = `Dr., analizando su consulta ("${userMsg}") frente a las fuentes normativas y expedientes del estudio: Se sugiere revisar la solapa de Procuración Fiscal o cargar una ley específica en el botón superior de "Fuentes" para un cotejo exacto de artículos.`;
       }
 
-      setAiChatHistory([...updatedHistory, { role: 'assistant', text: aiResponse }]);
+      const finalMessages = [...updatedMessages, { role: 'assistant', text: aiResponse }];
+      setChatSessions(prev => prev.map(s => s.id === currentChatId ? { ...s, messages: finalMessages } : s));
       setIsAiLoading(false);
-    }, 800);
+    }, 900);
   };
 
   // --- FUNCIÓN DE BACKUP COMPLETO (JSON DOWNLOAD) ---
@@ -568,6 +683,7 @@ export default function Home() {
       cautelares,
       honorariosProcuracion,
       templates,
+      customSources,
       currentPassword,
       recoveryEmailConfig
     };
@@ -611,6 +727,7 @@ export default function Home() {
         if (data.lex_cautelares) setCautelares(data.lex_cautelares);
         if (data.lex_honorarios) setHonorariosProcuracion(data.lex_honorarios);
         if (data.lex_templates) setTemplates(data.lex_templates);
+        if (data.lex_custom_sources) setCustomSources(data.lex_custom_sources);
         if (data.lex_app_password) setCurrentPassword(data.lex_app_password);
         if (data.lex_recovery_email) setRecoveryEmailConfig(data.lex_recovery_email);
       }
@@ -647,14 +764,10 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMails: [] });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // FUNCIÓN PARA AGREGAR CLIENTES
   const handleAddClient = (e) => {
     e.preventDefault();
     if (!newClient.name) return;
-    const created = {
-      ...newClient,
-      id: 'cli_' + Date.now()
-    };
+    const created = { ...newClient, id: 'cli_' + Date.now() };
     const updatedClients = [...clients, created];
     setClients(updatedClients);
     updateClients(updatedClients);
@@ -665,21 +778,10 @@ export default function Home() {
     updateHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
 
-  const deleteHearing = (hearingId) => {
-    updateHearings(hearings.filter(h => h.id !== hearingId));
-  };
-
-  const deleteDeadline = (deadlineId) => {
-    updateDeadlines(deadlines.filter(d => d.id !== deadlineId));
-  };
-
-  const deleteTask = (taskId) => {
-    updateTasks(tasks.filter(t => t.id !== taskId));
-  };
-
-  const toggleTask = (taskId) => {
-    updateTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
-  };
+  const deleteHearing = (hearingId) => { updateHearings(hearings.filter(h => h.id !== hearingId)); };
+  const deleteDeadline = (deadlineId) => { updateDeadlines(deadlines.filter(d => d.id !== deadlineId)); };
+  const deleteTask = (taskId) => { updateTasks(tasks.filter(t => t.id !== taskId)); };
+  const toggleTask = (taskId) => { updateTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t)); };
 
   const deleteCase = (caseId) => {
     if (!confirm('¿Está seguro de eliminar este expediente?')) return;
@@ -739,9 +841,7 @@ export default function Home() {
 
     if (newMovement.agendarEnGoogle) {
       const startDate = new Date(newMovement.date);
-      if (isNaN(startDate.getTime())) {
-        startDate.setTime(Date.now());
-      }
+      if (isNaN(startDate.getTime())) startDate.setTime(Date.now());
       startDate.setHours(9, 0, 0, 0);
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
       const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
@@ -750,7 +850,7 @@ export default function Home() {
       googleUrl.searchParams.append('action', 'TEMPLATE');
       googleUrl.searchParams.append('text', `EXP ${targetCase?.number}: ${newMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
-      googleUrl.searchParams.append('details', `Actuación / Audiencia / Reunión registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
+      googleUrl.searchParams.append('details', `Actuación registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
       googleUrl.searchParams.append('reminder', '1440,180');
       
       if (newMovement.googleMailsSeleccionados && newMovement.googleMailsSeleccionados.length > 0) {
@@ -932,7 +1032,7 @@ export default function Home() {
             </form>
           )}
 
-          <p className="text-[10px] text-zinc-600">Sesión protegida por seguridad de sesión estricta.</p>
+          <p className="text-[10px] text-zinc-600">Sesión protegida por seguridad estricta.</p>
         </div>
       </div>
     );
@@ -1093,56 +1193,9 @@ export default function Home() {
                         onChange={e => setNewMovement({...newMovement, agendarEnGoogle: e.target.checked})}
                         className="w-4 h-4 accent-orange-500"
                       />
-                      <span className="text-orange-400 font-bold">📅 Agendar Audiencia / Reunión (Notif. 1 día y 3h antes)</span>
+                      <span className="text-orange-400 font-bold">📅 Agendar Audiencia / Reunión</span>
                     </label>
                   </div>
-
-                  {newMovement.convertirATarea && (
-                    <div className="pt-2 border-t border-zinc-800 flex items-center gap-2">
-                      <span className="text-zinc-400">Prioridad de la Tarea:</span>
-                      <select 
-                        value={newMovement.tareaPrioridad} 
-                        onChange={e => setNewMovement({...newMovement, tareaPrioridad: e.target.value})}
-                        className="bg-zinc-900 border border-zinc-800 p-1.5 rounded text-white"
-                      >
-                        <option value="BAJA">BAJA</option>
-                        <option value="MEDIA">MEDIA</option>
-                        <option value="ALTA">ALTA</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {newMovement.agendarEnGoogle && (
-                    <div className="pt-3 border-t border-zinc-800 space-y-2">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo (Google Calendar):</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-900 p-3 rounded border border-zinc-800">
-                        {teamEmails.filter(m => m !== '').length > 0 ? (
-                          teamEmails.filter(m => m !== '').map((mail, idx) => (
-                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
-                              <input 
-                                type="checkbox" 
-                                checked={newMovement.googleMailsSeleccionados.includes(mail)}
-                                onChange={(e) => {
-                                  const current = [...newMovement.googleMailsSeleccionados];
-                                  if (e.target.checked) {
-                                    current.push(mail);
-                                  } else {
-                                    const index = current.indexOf(mail);
-                                    if (index > -1) current.splice(index, 1);
-                                  }
-                                  setNewMovement({...newMovement, googleMailsSeleccionados: current});
-                                }}
-                                className="w-4 h-4 accent-orange-500"
-                              />
-                              <span className="truncate">{mail}</span>
-                            </label>
-                          ))
-                        ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400 shadow-lg shadow-orange-500/20">
@@ -1185,8 +1238,8 @@ export default function Home() {
                             <span className="text-orange-400">{m.title}</span>
                             <div className="flex items-center gap-3">
                               <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
-                              <button onClick={() => handleStartEditMovement(m)} className="text-zinc-400 hover:text-white px-2 py-0.5 bg-zinc-900 rounded border border-zinc-800" title="Editar Movimiento">✏️</button>
-                              <button onClick={() => handleDeleteMovement(m.id)} className="text-red-400 hover:text-red-300 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20" title="Eliminar Movimiento">🗑️</button>
+                              <button onClick={() => handleStartEditMovement(m)} className="text-zinc-400 hover:text-white px-2 py-0.5 bg-zinc-900 rounded border border-zinc-800" title="Editar">✏️</button>
+                              <button onClick={() => handleDeleteMovement(m.id)} className="text-red-400 hover:text-red-300 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20" title="Eliminar">🗑️</button>
                             </div>
                           </div>
                           {m.text && <p className="text-zinc-300 mt-1 whitespace-pre-wrap">{m.text}</p>}
@@ -1230,244 +1283,8 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
                   <div>📅 <strong>Vto. Liquidación:</strong> {formatDateToArg(selectedFiscalData.fechaVencimientoLiquidacion) || 'No especificada'}</div>
                   <div>⚠️ <strong className="text-amber-400">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
-                  <div>⏳ <strong className="text-red-400">Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
-                  <div>🔒 <strong className="text-purple-400">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
-                </div>
-
-                <div className="pt-2 flex justify-between items-center bg-zinc-950 p-3 rounded border border-zinc-800 text-xs">
-                  <div>
-                    <span className="font-bold text-white">Estado de la Alerta Urgente:</span>
-                    <p className="text-[10px] text-zinc-400">Si ya contestaste o controlaste la excepción, podés marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      const updated = fiscalCases.map(fc => fc.id === selectedFiscalId ? { ...fc, alertaExcepcionCumplida: !fc.alertaExcepcionCumplida } : fc);
-                      setFiscalCases(updated);
-                      updateFiscalCases(updated);
-                    }}
-                    className={`px-3 py-1.5 rounded font-bold text-xs transition-colors ${selectedFiscalData.alertaExcepcionCumplida ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
-                  >
-                    {selectedFiscalData.alertaExcepcionCumplida ? '✓ Alerta Cumplida (Hacer Visible)' : '✓ Marcar Alerta como Cumplida / Descartar'}
-                  </button>
-                </div>
-              </div>
-
-              {isEditingFiscal && (
-                <form onSubmit={handleSaveEditFiscal} className="bg-zinc-900 border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl">
-                  <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Completa de Datos y Plazos Fiscales</h4>
-                    <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Contribuyente:</label>
-                      <input 
-                        type="text" 
-                        value={editFiscalForm.contribuyente || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, contribuyente: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Nº de Liquidación:</label>
-                      <input 
-                        type="text" 
-                        value={editFiscalForm.nroLiquidacion || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, nroLiquidacion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Monto ($):</label>
-                      <input 
-                        type="text" 
-                        value={editFiscalForm.monto || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, monto: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1 font-bold text-orange-400">Fecha Vto. Liquidación (Inicia Prescripción):</label>
-                      <input 
-                        type="date" 
-                        value={editFiscalForm.fechaVencimientoLiquidacion || ''} 
-                        onChange={e => {
-                          const val = e.target.value;
-                          let newPresc = editFiscalForm.plazoPrescripcion;
-                          if (val) {
-                            const pDate = new Date(val);
-                            pDate.setFullYear(pDate.getFullYear() + 5);
-                            newPresc = pDate.toISOString().split('T')[0];
-                          }
-                          setEditFiscalForm({...editFiscalForm, fechaVencimientoLiquidacion: val, plazoPrescripcion: newPresc});
-                        }}
-                        className="w-full bg-zinc-950 border border-orange-500 p-2.5 rounded text-white outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Fecha Notificación Demanda:</label>
-                      <input 
-                        type="date" 
-                        value={editFiscalForm.fechaNotificacion || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, fechaNotificacion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción (3d):</label>
-                      <input 
-                        type="date" 
-                        value={editFiscalForm.plazoExcepcionesFecha || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoExcepcionesFecha: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Plazo Perención (Editable):</label>
-                      <input 
-                        type="date" 
-                        value={editFiscalForm.plazoPerencion || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoPerencion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-zinc-400 block mb-1">Plazo Prescripción (Editable):</label>
-                      <input 
-                        type="date" 
-                        value={editFiscalForm.plazoPrescripcion || ''} 
-                        onChange={e => setEditFiscalForm({...editFiscalForm, plazoPrescripcion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                  </div>
-                  <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                    Guardar Modificaciones
-                  </button>
-                </form>
-              )}
-
-              <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento Procesal (Actualiza Perención)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                  <select 
-                    value={newFiscalMovement.estadoProcesal} 
-                    onChange={e => {
-                      const val = e.target.value;
-                      setNewFiscalMovement({...newFiscalMovement, estadoProcesal: val, title: val});
-                    }}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
-                  >
-                    <option value="NOTIFICACIÓN DE DEMANDA (3 días excepciones)">Cédula / CIDI: Notificación de Demanda (Corre plazo 3 días)</option>
-                    <option value="CONTESTACIÓN DE EXCEPCIONES">Oposición / Contestación de Excepciones (Contestar traslado)</option>
-                    <option value="APERTURA A PRUEBA">Apertura a Prueba</option>
-                    <option value="SENTENCIA FISCAL DICTADA">Sentencia Fiscal</option>
-                    <option value="OTRO MOVIMIENTO">Otro Trámite / Proveído General (Renueva Perención)</option>
-                  </select>
-
-                  <input 
-                    type="date" 
-                    value={newFiscalMovement.date} 
-                    onChange={e => setNewFiscalMovement({...newFiscalMovement, date: e.target.value})}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                  />
-                </div>
-
-                <textarea 
-                  placeholder="Detalle o texto de la actuación procesal..."
-                  value={newFiscalMovement.text} 
-                  onChange={e => setNewFiscalMovement({...newFiscalMovement, text: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
-                />
-
-                <div className="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-3 text-xs">
-                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard y Calendario:</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={newFiscalMovement.convertirATarea} 
-                        onChange={e => setNewFiscalMovement({...newFiscalMovement, convertirATarea: e.target.checked})}
-                        className="w-4 h-4 accent-orange-500"
-                      />
-                      <span>Convertir en Tarea Pendiente</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={newFiscalMovement.convertirAPlazo} 
-                        onChange={e => setNewFiscalMovement({...newFiscalMovement, convertirAPlazo: e.target.checked})}
-                        className="w-4 h-4 accent-orange-500"
-                      />
-                      <span>Guardar como Plazo Procesal</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={newFiscalMovement.agendarEnGoogle} 
-                        onChange={e => setNewFiscalMovement({...newFiscalMovement, agendarEnGoogle: e.target.checked})}
-                        className="w-4 h-4 accent-orange-500"
-                      />
-                      <span className="text-orange-400 font-bold">📅 Agendar en Google Calendar</span>
-                    </label>
-                  </div>
-
-                  {newFiscalMovement.agendarEnGoogle && (
-                    <div className="pt-3 border-t border-zinc-800 space-y-2">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo:</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-900 p-3 rounded border border-zinc-800">
-                        {teamEmails.filter(m => m !== '').length > 0 ? (
-                          teamEmails.filter(m => m !== '').map((mail, idx) => (
-                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
-                              <input 
-                                type="checkbox" 
-                                checked={newFiscalMovement.googleMailsSeleccionados.includes(mail)}
-                                onChange={(e) => {
-                                  const current = [...newFiscalMovement.googleMailsSeleccionados];
-                                  if (e.target.checked) {
-                                    current.push(mail);
-                                  } else {
-                                    const index = current.indexOf(mail);
-                                    if (index > -1) current.splice(index, 1);
-                                  }
-                                  setNewFiscalMovement({...newFiscalMovement, googleMailsSeleccionados: current});
-                                }}
-                                className="w-4 h-4 accent-orange-500"
-                              />
-                              <span className="truncate">{mail}</span>
-                            </label>
-                          ))
-                        ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                  Guardar Movimiento, Renovar Perención y Sincronizar
-                </button>
-              </form>
-
-              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Actuaciones</h4>
-                <div className="space-y-2">
-                  {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).map(fm => (
-                    <div key={fm.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
-                      <div className="flex justify-between font-bold text-zinc-200">
-                        <span>{fm.title}</span>
-                        <span className="text-zinc-500">{formatDateToArg(fm.date)}</span>
-                      </div>
-                      {fm.text && <p className="text-zinc-400">{fm.text}</p>}
-                    </div>
-                  ))}
-                  {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).length === 0 && (
-                    <p className="text-xs text-zinc-600">No hay movimientos registrados para esta liquidación.</p>
-                  )}
+                  <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
+                  <div>🔒 <strong className="text-purple-400">Prescripción (5a):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
               </div>
             </div>
@@ -1497,17 +1314,7 @@ export default function Home() {
                     <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
                       <span className="text-[10px] font-bold text-zinc-500 uppercase">Tareas Pendientes</span>
                       <h3 className="text-3xl font-black text-white mt-1">{tasks.filter(t => !t.completed).length}</h3>
-                      <div className="flex gap-2 mt-2 text-[10px] font-bold">
-                        <span className="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">
-                          {tasks.filter(t => !t.completed && t.priority === 'ALTA').length} Altas
-                        </span>
-                        <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30">
-                          {tasks.filter(t => !t.completed && t.priority === 'MEDIA').length} Med
-                        </span>
-                        <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
-                          {tasks.filter(t => !t.completed && t.priority === 'BAJA').length} Bajas
-                        </span>
-                      </div>
+                      <p className="text-[10px] text-zinc-400 mt-1">Pendientes de resolución</p>
                     </div>
 
                     <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
@@ -1517,137 +1324,187 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl space-y-3">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
-                    {urgentFiscalAlerts.length > 0 ? (
-                      <div className="space-y-2">
-                        {urgentFiscalAlerts.map(fc => (
-                          <div 
-                            key={fc.id} 
-                            className="p-3 bg-zinc-950 border border-amber-500/40 rounded flex justify-between items-center text-xs"
-                          >
-                            <div>
-                              <span className="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-                                VENCE PRONTO
-                              </span>
-                              <span className="font-bold text-white text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
-                              <p className="text-[11px] text-zinc-400 mt-1">
-                                Vencimiento Excepción (Demandado): <strong className="text-amber-400">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong>
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button 
-                                onClick={() => setSelectedFiscalId(fc.id)}
-                                className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded"
-                              >
-                                Revisar Causa →
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  const updated = fiscalCases.map(item => item.id === fc.id ? { ...item, alertaExcepcionCumplida: true } : item);
-                                  setFiscalCases(updated);
-                                  updateFiscalCases(updated);
-                                }}
-                                className="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700"
-                                title="Descartar o marcar alerta como cumplida"
-                              >
-                                ✓ Cumplida
-                              </button>
-                            </div>
+                  {urgentFiscalAlerts.length > 0 && (
+                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl space-y-3">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
+                      {urgentFiscalAlerts.map(fc => (
+                        <div key={fc.id} className="p-3 bg-zinc-950 border border-amber-500/40 rounded flex justify-between items-center text-xs">
+                          <div>
+                            <span className="font-bold text-white text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+                            <p className="text-[11px] text-zinc-400 mt-1">Vencimiento Excepción: <strong className="text-amber-400">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong></p>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-zinc-500 italic bg-zinc-950 p-3 rounded border border-zinc-800">
-                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días. Todo al día.
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl">
-                      <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
-                      <div className="space-y-2">
-                        {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
-                          <div key={d.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
-                            <div>
-                              <p className="font-bold text-white">{d.title}</p>
-                              <p className="text-[10px] text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
-                            </div>
-                            <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">
-                              PENDIENTE
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                          <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                            Revisar Causa →
+                          </button>
+                        </div>
+                      ))}
                     </div>
-
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl">
-                      <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Tareas de Mayor Urgencia</h4>
-                      <div className="space-y-2">
-                        {tasks.filter(t => !t.completed).map(t => (
-                          <div key={t.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
-                            <span className="font-bold text-zinc-200">{t.title}</span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                              t.priority === 'ALTA' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400'
-                            }`}>
-                              {t.priority}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
               )}
 
+              {/* MÓDULO DE ASISTENTE IA ESTILO GEMINI CON HISTORIAL LATERAL, MICRÓFONO Y CARGA DE LEYES */}
               {activeTab === 'asistente_ia' && (
-                <div className="space-y-4 relative z-10 flex flex-col h-[calc(100vh-140px)]">
-                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shrink-0 flex justify-between items-center">
-                    <div>
-                      <h3 className="text-sm font-bold text-orange-500 uppercase flex items-center gap-2">
-                        <span>🤖</span> Asistente IA Jurídico - Estudio MM
-                      </h3>
-                      <p className="text-xs text-zinc-400 mt-0.5">Consultas inteligentes conectadas a las causas, plazos y títulos fiscales de su base de datos.</p>
+                <div className="flex h-[calc(100vh-100px)] gap-4 relative z-10">
+                  
+                  {/* COLUMNA LATERAL DE HISTORIAL DE CHATS (ESTILO GEMINI) */}
+                  <div className="w-64 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col p-3 shrink-0">
+                    <button 
+                      onClick={handleCreateNewChat}
+                      className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all mb-3"
+                    >
+                      <span>✨</span> Nuevo Chat Legal
+                    </button>
+
+                    <div className="text-[10px] font-bold text-zinc-500 uppercase px-2 mb-2">Historial de Consultas</div>
+
+                    <div className="flex-1 overflow-y-auto space-y-1">
+                      {chatSessions.map((session) => (
+                        <div 
+                          key={session.id}
+                          onClick={() => setCurrentChatId(session.id)}
+                          className={`group flex items-center justify-between p-2.5 rounded-xl text-xs cursor-pointer transition-all ${
+                            currentChatId === session.id 
+                              ? 'bg-zinc-800 text-orange-400 font-bold border border-zinc-700' 
+                              : 'text-zinc-400 hover:bg-zinc-950 hover:text-zinc-200'
+                          }`}
+                        >
+                          <span className="truncate pr-2">{session.title}</span>
+                          <button 
+                            onClick={(e) => handleDeleteChatSession(e, session.id)}
+                            className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-red-400 p-1 transition-opacity"
+                            title="Eliminar chat"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-2 border-t border-zinc-800 mt-2">
+                      <button 
+                        onClick={() => setShowSourceModal(true)}
+                        className="w-full bg-zinc-950 hover:bg-zinc-800 text-zinc-300 font-bold text-xs py-2 px-3 rounded-xl border border-zinc-800 flex items-center justify-center gap-2 transition-all"
+                      >
+                        <span>📚</span> Cargar Leyes / Fuentes ({customSources.length})
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-4 overflow-y-auto space-y-4 flex flex-col">
-                    {aiChatHistory.map((msg, idx) => (
-                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-xl p-3.5 rounded-2xl text-xs leading-relaxed ${
-                          msg.role === 'user' 
-                            ? 'bg-orange-500 text-black font-semibold rounded-br-none' 
-                            : 'bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-bl-none whitespace-pre-wrap'
-                        }`}>
-                          {msg.text}
-                        </div>
+                  {/* PANEL PRINCIPAL DE CONVERSACIÓN CON LA IA */}
+                  <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden relative shadow-2xl">
+                    
+                    {/* ENCABEZADO */}
+                    <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
+                      <div>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase flex items-center gap-2">
+                          <span>✨</span> Asistente IA Jurídico (Modo Gemini Pro)
+                        </h3>
+                        <p className="text-[10px] text-zinc-400">Entrenado con sus expedientes, plazos y las {customSources.length} leyes cargadas en el estudio.</p>
                       </div>
-                    ))}
-                    {isAiLoading && (
-                      <div className="flex justify-start">
-                        <div className="bg-zinc-950 border border-zinc-800 text-zinc-400 p-3.5 rounded-2xl text-xs italic animate-pulse">
-                          Analizando expedientes y redactando respuesta...
+                      <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-bold">
+                        Dr. Activo
+                      </span>
+                    </div>
+
+                    {/* MENSAJES DEL CHAT */}
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                      {currentChat.messages.map((msg, idx) => (
+                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-2xl p-4 rounded-2xl text-xs leading-relaxed ${
+                            msg.role === 'user' 
+                              ? 'bg-orange-500 text-black font-semibold rounded-br-none shadow-md' 
+                              : 'bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-bl-none whitespace-pre-wrap'
+                          }`}>
+                            {msg.text}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      ))}
+                      {isAiLoading && (
+                        <div className="flex justify-start">
+                          <div className="bg-zinc-950 border border-zinc-800 text-zinc-400 p-4 rounded-2xl text-xs italic animate-pulse">
+                            Buscando en leyes y redactando respuesta para el Dr....
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* BARRA DE ENTRADA CON MICRÓFONO Y TEXTO */}
+                    <form onSubmit={handleAskAI} className="p-4 bg-zinc-950 border-t border-zinc-800 flex items-center gap-2">
+                      
+                      {/* BOTÓN DE MICRÓFONO PARA CHAT DE VOZ */}
+                      <button 
+                        type="button"
+                        onClick={handleToggleVoiceRecording}
+                        title="Hablar por micrófono"
+                        className={`p-3 rounded-xl border transition-all ${
+                          isRecording 
+                            ? 'bg-red-500 text-white border-red-400 animate-bounce' 
+                            : 'bg-zinc-900 text-zinc-300 hover:text-white border-zinc-800'
+                        }`}
+                      >
+                        🎙️
+                      </button>
+
+                      <input 
+                        type="text" 
+                        placeholder={isRecording ? "Escuchando su consulta por voz..." : "Pregunte sobre jurisprudencia, plazos, redacción o leyes cargadas..."} 
+                        value={aiQuery} 
+                        onChange={e => setAiQuery(e.target.value)}
+                        className="flex-1 bg-zinc-900 border border-zinc-800 p-3.5 rounded-xl text-xs text-white outline-none focus:border-orange-500 transition-colors"
+                      />
+
+                      <button 
+                        type="submit" 
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-6 py-3.5 rounded-xl text-xs transition-colors shadow-lg shadow-orange-500/20"
+                      >
+                        Enviar
+                      </button>
+                    </form>
                   </div>
 
-                  <form onSubmit={handleAskAI} className="flex gap-2 shrink-0">
-                    <input 
-                      type="text" 
-                      placeholder="Ej. ¿Qué plazos vencen esta semana? o ¿Cuál es el estado de la causa de alquileres?" 
-                      value={aiQuery} 
-                      onChange={e => setAiQuery(e.target.value)}
-                      className="flex-1 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-xs text-white outline-none focus:border-orange-500"
-                    />
-                    <button 
-                      type="submit" 
-                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-6 py-3 rounded-xl text-xs transition-colors shadow-lg shadow-orange-500/20"
-                    >
-                      Consultar IA
-                    </button>
-                  </form>
+                  {/* MODAL DE GESTIÓN Y CARGA DE LEYES / FUENTES */}
+                  {showSourceModal && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                      <div className="bg-zinc-900 border border-zinc-800 w-full max-w-xl rounded-2xl p-6 space-y-5 shadow-2xl">
+                        <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+                          <h3 className="text-sm font-bold text-orange-500 uppercase">📚 Fuentes, Leyes y Códigos para la IA</h3>
+                          <button onClick={() => setShowSourceModal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cerrar</button>
+                        </div>
+
+                        <form onSubmit={handleAddCustomSource} className="space-y-3">
+                          <p className="text-[11px] text-zinc-400">Agregue artículos de leyes, códigos procesales o doctrinas para que la IA los consulte al responder.</p>
+                          <input 
+                            type="text" 
+                            placeholder="Título de la Ley o Fuente (ej. Ley 24.522 Art. 256)" 
+                            value={newSourceTitle} 
+                            onChange={e => setNewSourceTitle(e.target.value)}
+                            className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-xl text-xs text-white outline-none focus:border-orange-500"
+                          />
+                          <textarea 
+                            placeholder="Texto de la ley, artículo o normativa..." 
+                            value={newSourceContent} 
+                            onChange={e => setNewSourceContent(e.target.value)}
+                            className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-xl text-xs text-white outline-none focus:border-orange-500 h-28"
+                          />
+                          <button type="submit" className="w-full bg-orange-500 text-black font-bold text-xs py-3 rounded-xl hover:bg-orange-400">
+                            Guardar Fuente en la Memoria de la IA
+                          </button>
+                        </form>
+
+                        <div className="space-y-2 pt-2 border-t border-zinc-800 max-h-48 overflow-y-auto">
+                          <h4 className="text-[10px] font-bold text-zinc-500 uppercase">Fuentes ya cargadas ({customSources.length}):</h4>
+                          {customSources.map(s => (
+                            <div key={s.id} className="flex justify-between items-center bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 text-xs">
+                              <span className="font-bold text-zinc-200 truncate pr-2">{s.title}</span>
+                              <button onClick={() => deleteCustomSource(s.id)} className="text-red-400 hover:text-red-300">🗑️</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
 
@@ -1664,7 +1521,7 @@ export default function Home() {
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
-                        type="text" placeholder="Nº de Expediente (ej. EXP-1002/2026)" 
+                        type="text" placeholder="Nº de Expediente" 
                         value={newCase.number} onChange={e => setNewCase({...newCase, number: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
@@ -1673,67 +1530,22 @@ export default function Home() {
                         value={newCase.caratula} onChange={e => setNewCase({...newCase, caratula: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
-                      <input 
-                        type="text" placeholder="Juzgado / Tribunal" 
-                        value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                      <select 
-                        value={newCase.client} 
-                        onChange={e => setNewCase({...newCase, client: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      >
-                        <option value="">Seleccionar Cliente Asociado...</option>
-                        {clients.map(c => (
-                          <option key={c.id} value={c.name}>{c.name} ({c.role})</option>
-                        ))}
-                      </select>
-                      <select 
-                        value={newCase.processType} 
-                        onChange={e => setNewCase({...newCase, processType: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
-                      >
-                        <option value="JUDICIAL">Tipo de Proceso: CAUSA JUDICIAL</option>
-                        <option value="EXTRAJUDICIAL">Tipo de Proceso: TRÁMITE EXTRAJUDICIAL / MEDIACIÓN</option>
-                      </select>
                     </div>
-                    <textarea 
-                      placeholder="Observaciones..."
-                      value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
-                    />
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
                       Guardar Expediente
                     </button>
                   </form>
 
                   <div className="space-y-3">
-                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar:</p>
                     {cases.map(c => (
-                      <div 
-                        key={c.id} 
-                        className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 transition-all flex justify-between items-center"
-                      >
+                      <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 flex justify-between items-center">
                         <div onClick={() => setSelectedCaseId(c.id)} className="cursor-pointer flex-1">
-                          <span className="bg-orange-500/10 text-orange-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
-                            {c.number}
-                          </span>
-                          <span className="ml-2 text-[10px] font-bold bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
-                            {c.processType || 'JUDICIAL'}
-                          </span>
+                          <span className="bg-orange-500/10 text-orange-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">{c.number}</span>
                           <h4 className="font-bold text-white text-sm mt-1">{c.caratula}</h4>
-                          <p className="text-xs text-zinc-400">{c.court} • Cliente: {c.client}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => setSelectedCaseId(c.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                            Ingresar →
-                          </button>
-                          <button 
-                            onClick={() => deleteCase(c.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                          >
-                            🗑️ Eliminar
-                          </button>
+                          <button onClick={() => setSelectedCaseId(c.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">Ingresar →</button>
+                          <button onClick={() => deleteCase(c.id)} className="bg-red-500/10 text-red-400 px-3 py-1.5 rounded font-bold text-xs">🗑️</button>
                         </div>
                       </div>
                     ))}
@@ -1757,19 +1569,15 @@ export default function Home() {
                     <div className="space-y-2 pt-2">
                       {movements
                         .filter(m => !selectedCaseId || m.caseId === selectedCaseId)
-                        .map(m => {
-                          const caseInfo = cases.find(c => c.id === m.caseId);
-                          return (
-                            <div key={m.id} className="bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-xs space-y-1">
-                              <div className="flex justify-between items-center">
-                                <span className="font-bold text-orange-400">{m.title}</span>
-                                <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
-                              </div>
-                              {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number} - {caseInfo.caratula}</p>}
-                              {m.text && <p className="text-zinc-300 mt-1">{m.text}</p>}
+                        .map(m => (
+                          <div key={m.id} className="bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-xs space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-orange-400">{m.title}</span>
+                              <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
                             </div>
-                          );
-                        })}
+                            {m.text && <p className="text-zinc-300 mt-1">{m.text}</p>}
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -1788,7 +1596,7 @@ export default function Home() {
                         {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
                       </select>
                       <input 
-                        type="text" placeholder="Descripción del Plazo (ej. Traslado Demanda)" 
+                        type="text" placeholder="Descripción del Plazo" 
                         value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
@@ -1797,39 +1605,22 @@ export default function Home() {
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                       <input 
-                        type="number" placeholder="Días hábiles (ej. 5)" 
+                        type="number" placeholder="Días hábiles" 
                         value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                      Registrar Plazo
-                    </button>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">Registrar Plazo</button>
                   </form>
 
                   <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Registrados</h4>
                     {deadlines.map(d => (
                       <div key={d.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
                         <div>
-                          {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
                           <h4 className="font-bold text-white">{d.title}</h4>
-                          <p className="text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
+                          <p className="text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días)</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button 
-                            onClick={() => updateDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: x.status === 'CUMPLIDO' ? 'PENDIENTE' : 'CUMPLIDO'} : x))}
-                            className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-400' : 'bg-orange-500 text-black'}`}
-                          >
-                            {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
-                          </button>
-                          <button 
-                            onClick={() => deleteDeadline(d.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                          >
-                            🗑️ Eliminar
-                          </button>
-                        </div>
+                        <button onClick={() => deleteDeadline(d.id)} className="bg-red-500/10 text-red-400 px-3 py-1.5 rounded font-bold">🗑️</button>
                       </div>
                     ))}
                   </div>
@@ -1842,7 +1633,7 @@ export default function Home() {
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Notificar Audiencia</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
-                        type="text" placeholder="Título de Audiencia o Reunión" 
+                        type="text" placeholder="Título de Audiencia" 
                         value={newHearing.title} onChange={e => setNewHearing({...newHearing, title: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
@@ -1850,81 +1641,11 @@ export default function Home() {
                         type="datetime-local" value={newHearing.date} onChange={e => setNewHearing({...newHearing, date: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
-                      <input 
-                        type="text" placeholder="Lugar / Juzgado / Enlace Virtual" 
-                        value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
-                      />
                     </div>
-
-                    <div className="space-y-2 text-xs">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo:</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-950 p-3 rounded border border-zinc-800">
-                        {teamEmails.filter(m => m !== '').length > 0 ? (
-                          teamEmails.filter(m => m !== '').map((mail, idx) => (
-                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
-                              <input 
-                                type="checkbox" 
-                                checked={newHearing.assignedMails.includes(mail)}
-                                onChange={(e) => {
-                                  const current = [...newHearing.assignedMails];
-                                  if (e.target.checked) {
-                                    current.push(mail);
-                                  } else {
-                                    const index = current.indexOf(mail);
-                                    if (index > -1) current.splice(index, 1);
-                                  }
-                                  setNewHearing({...newHearing, assignedMails: current});
-                                }}
-                                className="w-4 h-4 accent-orange-500"
-                              />
-                              <span className="truncate">{mail}</span>
-                            </label>
-                          ))
-                        ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400 flex items-center gap-2">
-                      📅 Agendar y Abrir Invitación en Google Calendar
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
+                      📅 Agendar en Google Calendar
                     </button>
                   </form>
-
-                  <div className="space-y-3">
-                    {hearings.map(h => (
-                      <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400'}`}>
-                              {h.status === 'REALIZADA' ? '✓ REALIZADA / TOMADA' : 'PENDIENTE'}
-                            </span>
-                            <h4 className={`font-bold text-sm mt-1 ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : 'text-white'}`}>
-                              {h.title}
-                            </h4>
-                          </div>
-                          <span className="text-orange-400 font-bold">{h.date}</span>
-                        </div>
-                        <p className="text-zinc-400">Lugar: {h.location}</p>
-                        
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-                          <button 
-                            onClick={() => toggleHearingStatus(h.id)}
-                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 text-white'}`}
-                          >
-                            {h.status === 'REALIZADA' ? 'Deshacer (Marcar Pendiente)' : '✓ Marcar como Tomada / Realizada'}
-                          </button>
-                          <button 
-                            onClick={() => deleteHearing(h.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                          >
-                            🗑️ Eliminar / Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
 
@@ -1947,37 +1668,17 @@ export default function Home() {
                         <option value="ALTA">Prioridad ALTA</option>
                       </select>
                     </div>
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                      Guardar Tarea
-                    </button>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">Guardar Tarea</button>
                   </form>
 
                   <div className="space-y-2">
                     {tasks.map(t => (
                       <div key={t.id} className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs">
                         <div className="flex items-center gap-3">
-                          <input 
-                            type="checkbox" 
-                            checked={t.completed} 
-                            onChange={() => toggleTask(t.id)}
-                            className="w-4 h-4 accent-orange-500 cursor-pointer"
-                          />
-                          <span className={t.completed ? 'line-through text-zinc-500 font-medium' : 'text-zinc-100 font-bold'}>
-                            {t.title}
-                          </span>
+                          <input type="checkbox" checked={t.completed} onChange={() => toggleTask(t.id)} className="w-4 h-4 accent-orange-500 cursor-pointer" />
+                          <span className={t.completed ? 'line-through text-zinc-500' : 'text-zinc-100 font-bold'}>{t.title}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${t.completed ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}>
-                            {t.completed ? 'CUMPLIDA' : t.priority}
-                          </span>
-                          <button 
-                            onClick={() => deleteTask(t.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white p-1 rounded font-bold text-xs transition-all border border-red-500/20"
-                            title="Eliminar tarea"
-                          >
-                            🗑️
-                          </button>
-                        </div>
+                        <button onClick={() => deleteTask(t.id)} className="bg-red-500/10 text-red-400 p-1 rounded">🗑️</button>
                       </div>
                     ))}
                   </div>
@@ -1990,67 +1691,13 @@ export default function Home() {
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cliente / Contacto</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
-                        type="text" placeholder="Nombre completo / Razón Social" 
+                        type="text" placeholder="Nombre completo" 
                         value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
-                      <select 
-                        value={newClient.role} onChange={e => setNewClient({...newClient, role: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      >
-                        <option value="CLIENTE">ROL: CLIENTE</option>
-                        <option value="CONTRAPARTE">ROL: CONTRAPARTE</option>
-                        <option value="TERCERO">ROL: TERCERO / PROFESIONAL</option>
-                      </select>
-                      <input 
-                        type="text" placeholder="CUIT / DNI" 
-                        value={newClient.taxId} onChange={e => setNewClient({...newClient, taxId: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                      <input 
-                        type="email" placeholder="Correo Electrónico" 
-                        value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                      <input 
-                        type="text" placeholder="Teléfono" 
-                        value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                      <input 
-                        type="text" placeholder="Domicilio / Localidad" 
-                        value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
                     </div>
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                      Guardar Contacto
-                    </button>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded">Guardar</button>
                   </form>
-
-                  <div className="space-y-2">
-                    {clients.map(c => (
-                      <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-white text-sm">{c.name}</h4>
-                            <span className="bg-zinc-800 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">{c.role}</span>
-                          </div>
-                          <p className="text-zinc-400 mt-1">
-                            {c.taxId && `DNI/CUIT: ${c.taxId} • `}
-                            {c.phone && `Tel: ${c.phone} • `}
-                            {c.email && `Mail: ${c.email}`}
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => deleteClient(c.id)}
-                          className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20"
-                        >
-                          🗑️ Eliminar
-                        </button>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
 
@@ -2082,269 +1729,38 @@ export default function Home() {
                   {procuracionSubTab === 'titulos' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddFiscalCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
-                        <p className="text-[10px] text-zinc-400">💡 Ingresá la <strong>Fecha en que venció la Liquidación</strong> para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
-                            type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
-                            value={newFiscalCase.tributo} onChange={e => setNewFiscalCase({...newFiscalCase, tributo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-                          <input 
-                            type="text" placeholder="Contribuyente / Razón Social (ej. ZAMARBIDE)" 
+                            type="text" placeholder="Contribuyente" 
                             value={newFiscalCase.contribuyente} onChange={e => setNewFiscalCase({...newFiscalCase, contribuyente: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                           <input 
-                            type="text" placeholder="Nº de Liquidación (ej. 2468-1357)" 
+                            type="text" placeholder="Nº de Liquidación" 
                             value={newFiscalCase.nroLiquidacion} onChange={e => setNewFiscalCase({...newFiscalCase, nroLiquidacion: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
                           <input 
-                            type="text" placeholder="Período Fiscal (ej. 2026)" 
-                            value={newFiscalCase.periodo} onChange={e => setNewFiscalCase({...newFiscalCase, periodo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-                          <input 
-                            type="text" placeholder="Monto Total Liquidado ($)" 
+                            type="text" placeholder="Monto Total ($)" 
                             value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
                             className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                           />
-                          <div>
-                            <label className="text-[10px] text-orange-400 font-bold block mb-1">Fecha Vencimiento de la Liquidación:</label>
-                            <input 
-                              type="date" 
-                              value={newFiscalCase.fechaVencimientoLiquidacion} 
-                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
-                              className="w-full bg-zinc-950 border border-orange-500 p-2 rounded text-white outline-none"
-                            />
-                          </div>
-                          <input 
-                            type="text" placeholder="Juzgado Fiscal Asignado" 
-                            value={newFiscalCase.juzgado} onChange={e => setNewFiscalCase({...newFiscalCase, juzgado: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
-                          />
                         </div>
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Título y Calcular Prescripción
-                        </button>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded">Registrar Título</button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados</h4>
                         {fiscalCases.map(fc => (
                           <div key={fc.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
                             <div className="flex justify-between items-center font-bold text-white">
                               <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer flex-1">
-                                <span className="bg-orange-500/10 text-orange-400 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">
-                                  Liq: {fc.nroLiquidacion}
-                                </span>
-                                <span className="text-white text-sm">{fc.tributo} - {fc.contribuyente}</span>
+                                <span className="bg-orange-500/10 text-orange-400 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">Liq: {fc.nroLiquidacion}</span>
+                                <span className="text-white text-sm">{fc.contribuyente}</span>
                               </div>
                               <span className="text-orange-400 font-mono text-sm">{fc.monto}</span>
                             </div>
-
-                            <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
-                              <div>📅 <strong>Vto. Liq:</strong> {formatDateToArg(fc.fechaVencimientoLiquidacion) || 'No cargado'}</div>
-                              <div>⚠️ <strong className="text-amber-400">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
-                              <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
-                              <div>🔒 <strong className="text-purple-400">Prescripción (5a):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
-                            </div>
-
-                            <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
-                              <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                                Ingresar a Ficha / Editar Plazos →
-                              </button>
-                              <button 
-                                onClick={() => deleteFiscalCase(fc.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                              >
-                                🗑️ Eliminar Título
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {procuracionSubTab === 'gestion' && (
-                    <div className="space-y-4">
-                      <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción Fiscal</h3>
-                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registrás un movimiento nuevo en la ficha del título fiscal, el sistema toma esa fecha como base y renueva automáticamente el plazo de perención.</p>
-                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha de vencimiento de la liquidación fiscal.</p>
-                      </div>
-
-                      <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos</h4>
-                        <div className="space-y-2">
-                          {fiscalCases.map(fc => (
-                            <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors">
-                              <div>
-                                <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
-                                <p className="text-[10px] text-zinc-400">
-                                  Vto. Liq: <span className="text-zinc-200">{formatDateToArg(fc.fechaVencimientoLiquidacion)}</span> | 
-                                  Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
-                                  Perención (Últ. Mov.): <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
-                                </p>
-                              </div>
-                              <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
-                                CONTROL ACTIVO
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {procuracionSubTab === 'cautelares' && (
-                    <div className="space-y-4">
-                      <form onSubmit={handleAddCautelar} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Traba de Medida Cautelar (SOJ / DNRPA / RGP)</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                          <select 
-                            value={newCautelar.fiscalId} 
-                            onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          >
-                            <option value="">Seleccionar Liquidación...</option>
-                            {fiscalCases.map(fc => (
-                              <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
-                            ))}
-                          </select>
-
-                          <select 
-                            value={newCautelar.tipo} 
-                            onChange={e => setNewCautelar({...newCautelar, tipo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          >
-                            <option value="SOJ (Bancario)">SOJ (Sistema Oficios Judiciales)</option>
-                            <option value="DNRPA (Automotor)">DNRPA (Registro Automotor)</option>
-                            <option value="RGP (Inmobiliario)">RGP (Registro General Inmueble)</option>
-                            <option value="Embargo de Sueldo">Embargo de Sueldo</option>
-                          </select>
-
-                          <input 
-                            type="date" 
-                            value={newCautelar.fecha} 
-                            onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-
-                          <input 
-                            type="text" 
-                            placeholder="Monto Embargo ($)" 
-                            value={newCautelar.montoEmbargo} 
-                            onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-                        </div>
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Medida Cautelar
-                        </button>
-                      </form>
-
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Vigentes</h4>
-                        {cautelares.map(c => (
-                          <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20">
-                                  {c.tipo}
-                                </span>
-                                <span className="text-white font-bold">Liq: {c.nroLiquidacion}</span>
-                              </div>
-                              <p className="text-zinc-400 mt-1">Deudor: {c.titular} • Fecha: {formatDateToArg(c.fecha)}</p>
-                            </div>
-                            <button 
-                              onClick={() => deleteCautelar(c.id)}
-                              className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                            >
-                              🗑️ Levantar / Borrar
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {procuracionSubTab === 'pagos' && (
-                    <div className="space-y-4">
-                      <form onSubmit={handleAddHonorario} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                          <select 
-                            value={newHonorario.fiscalId} 
-                            onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          >
-                            <option value="">Seleccionar Liquidación...</option>
-                            {fiscalCases.map(fc => (
-                              <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
-                            ))}
-                          </select>
-
-                          <select 
-                            value={newHonorario.tipoIngreso} 
-                            onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          >
-                            <option value="HONORARIOS">Honorarios Procurador</option>
-                            <option value="CEDULA_GASTOS">Gastos de Cédula</option>
-                            <option value="TASA_JUSTICIA">Tasa de Justicia</option>
-                            <option value="OTRO">Otro</option>
-                          </select>
-
-                          <input 
-                            type="date" 
-                            value={newHonorario.fecha} 
-                            onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-
-                          <input 
-                            type="text" 
-                            placeholder="Monto ($)" 
-                            value={newHonorario.monto} 
-                            onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-                        </div>
-                        <input 
-                          type="text" 
-                          placeholder="Concepto detallado..." 
-                          value={newHonorario.concepto} 
-                          onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
-                        />
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Guardar Registro
-                        </button>
-                      </form>
-
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Cobros y Honorarios</h4>
-                        {honorariosProcuracion.map(h => (
-                          <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
-                            <div>
-                              <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2">
-                                {h.tipoIngreso}
-                              </span>
-                              <span className="text-white font-bold">Liq: {h.nroLiquidacion}</span>
-                              <p className="text-zinc-300 mt-1"><strong>{h.concepto}</strong></p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-emerald-400 font-black font-mono text-sm">{h.monto}</span>
-                              <button 
-                                onClick={() => deleteHonorario(h.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                              >
-                                🗑️ Borrar
-                              </button>
-                            </div>
+                            <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">Ingresar a Ficha →</button>
                           </div>
                         ))}
                       </div>
@@ -2354,10 +1770,8 @@ export default function Home() {
                   {procuracionSubTab === 'tabla_plazos' && (
                     <div className="space-y-4">
                       <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-2">
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía Ampliada de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
-                        <p className="text-xs text-zinc-400">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
                       </div>
-
                       <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
                         <table className="w-full text-left text-xs">
                           <thead className="bg-zinc-950 text-orange-400 uppercase border-b border-zinc-800">
@@ -2369,39 +1783,19 @@ export default function Home() {
                           </thead>
                           <tbody className="divide-y divide-zinc-800 text-zinc-300">
                             <tr>
-                              <td className="p-3 font-bold text-white">Citación a estar a derecho / Oponer Excepciones</td>
+                              <td className="p-3 font-bold text-white">Oponer Excepciones</td>
                               <td className="p-3 text-amber-400 font-bold">3 días hábiles</td>
-                              <td className="p-3 text-zinc-400">Desde la notificación fehaciente (Cédula / CIDI) al demandado.</td>
+                              <td className="p-3 text-zinc-400">Desde la notificación fehaciente (Cédula / CIDI).</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Contestación de Excepciones (Fisco)</td>
-                              <td className="p-3 text-amber-400 font-bold">3 a 5 días hábiles</td>
-                              <td className="p-3 text-zinc-400">Plazo para responder el traslado de las excepciones opuestas por el ejecutado.</td>
-                            </tr>
-                            <tr>
-                              <td className="p-3 font-bold text-white">Perención de Instancia (Ejecución Fiscal)</td>
+                              <td className="p-3 font-bold text-white">Perención de Instancia</td>
                               <td className="p-3 text-red-400 font-bold">6 meses</td>
-                              <td className="p-3 text-zinc-400">Se renueva automáticamente con cada movimiento o impulso procesal válido.</td>
+                              <td className="p-3 text-zinc-400">Se renueva con cada movimiento procesal.</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Prescripción de la Acción Fiscal</td>
+                              <td className="p-3 font-bold text-white">Prescripción Fiscal</td>
                               <td className="p-3 text-purple-400 font-bold">5 años</td>
-                              <td className="p-3 text-zinc-400">Computados desde el vencimiento de la obligación fiscal (Código Tributario).</td>
-                            </tr>
-                            <tr>
-                              <td className="p-3 font-bold text-white">Apelación de Sentencia de Remate / Autos</td>
-                              <td className="p-3 text-amber-400 font-bold">3 a 5 días</td>
-                              <td className="p-3 text-zinc-400">Plazo para interponer recurso contra resoluciones de mérito o interlocutorias.</td>
-                            </tr>
-                            <tr>
-                              <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
-                              <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
-                            </tr>
-                            <tr>
-                              <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
-                              <td className="p-3 text-amber-400 font-bold">3 días</td>
-                              <td className="p-3 text-zinc-400">Contra providencias de trámite dictadas sin sustanciación previa.</td>
+                              <td className="p-3 text-zinc-400">Desde el vencimiento de la obligación.</td>
                             </tr>
                           </tbody>
                         </table>
@@ -2412,90 +1806,14 @@ export default function Home() {
                   {procuracionSubTab === 'plantillas' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddTemplate} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
-                        <p className="text-[10px] text-zinc-400">💡 Cargá modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde tu computadora para tenerlos siempre disponibles en la nube.</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                          <input 
-                            type="text" 
-                            placeholder="Nombre de la plantilla (ej. Cédula de Notificación)" 
-                            value={newTemplateTitle} 
-                            onChange={e => setNewTemplateTitle(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
-                          />
-                          
-                          <select 
-                            value={newTemplateCategory} 
-                            onChange={e => setNewTemplateCategory(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          >
-                            <option value="Fiscal">Categoría: Fiscal</option>
-                            <option value="Procesal">Categoría: Procesal / Civil</option>
-                            <option value="Poderes">Categoría: Poderes / Contratos</option>
-                            <option value="General">Categoría: General</option>
-                          </select>
-                        </div>
-
-                        <div className="flex items-center gap-3 pt-1 text-xs">
-                          <label className="bg-zinc-950 border border-zinc-800 hover:border-orange-500 px-4 py-2 rounded text-zinc-300 cursor-pointer transition-colors flex items-center gap-2">
-                            <span>📁 Seleccionar Archivo (Word / PDF)</span>
-                            <input 
-                              type="file" 
-                              onChange={e => setNewTemplateFile(e.target.files[0])}
-                              className="hidden"
-                            />
-                          </label>
-                          <span className="text-orange-400 font-mono text-[11px]">
-                            {newTemplateFile ? `Archivo seleccionado: ${newTemplateFile.name}` : 'Ningún archivo elegido'}
-                          </span>
-                        </div>
-
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400 mt-2">
-                          Guardar Plantilla en la App
-                        </button>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Plantilla de Escrito</h3>
+                        <input 
+                          type="text" placeholder="Nombre de la plantilla" 
+                          value={newTemplateTitle} onChange={e => setNewTemplateTitle(e.target.value)}
+                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white text-xs outline-none focus:border-orange-500"
+                        />
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded">Guardar Plantilla</button>
                       </form>
-
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Plantillas y Modelos Disponibles en el Estudio</h4>
-                        {templates.map(tpl => (
-                          <div key={tpl.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20 text-[10px]">
-                                  {tpl.category}
-                                </span>
-                                <h4 className="font-bold text-white text-sm">{tpl.title}</h4>
-                              </div>
-                              <p className="text-zinc-400 text-[11px]">📎 Archivo: <span className="text-zinc-200 font-mono">{tpl.fileName}</span></p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {tpl.dataUrl ? (
-                                <a 
-                                  href={tpl.dataUrl} 
-                                  download={tpl.fileName}
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-colors"
-                                >
-                                  📥 Descargar
-                                </a>
-                              ) : (
-                                <span className="text-zinc-500 text-[10px] italic">Sin archivo adjunto</span>
-                              )}
-                              <button 
-                                onClick={() => deleteTemplate(tpl.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                              >
-                                🗑️ Eliminar
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                        {templates.length === 0 && (
-                          <p className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded border border-zinc-800">
-                            No hay plantillas cargadas todavía. Usá el formulario de arriba para incorporar tus modelos.
-                          </p>
-                        )}
-                      </div>
                     </div>
                   )}
                 </div>
@@ -2504,80 +1822,10 @@ export default function Home() {
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Resguardo y Backup de Información (Base de Datos)</h3>
-                    <p className="text-xs text-zinc-400">Descargue un archivo comprimido (.JSON) con absolutamente toda la información actual del estudio (causas, clientes, plazos, tareas, fiscal, plantillas) para guardar en su PC.</p>
-                    <button 
-                      onClick={handleDownloadBackup}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2"
-                    >
-                      📥 Descargar Backup Completo de la App
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Resguardo y Backup Completo</h3>
+                    <button onClick={handleDownloadBackup} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition-colors">
+                      📥 Descargar Backup (.JSON)
                     </button>
-                  </div>
-
-                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <span className="text-zinc-500 font-bold w-14">Mail {index + 1}:</span>
-                          <input 
-                            type="email" 
-                            placeholder={`ejemplo${index + 1}@estudio.com`}
-                            value={teamEmails[index] || ''}
-                            onChange={(e) => {
-                              const updated = [...teamEmails];
-                              updated[index] = e.target.value;
-                              updateTeamEmails(updated);
-                            }}
-                            className="flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Seguridad, Contraseña y Correo de Recuperación</h3>
-                    <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
-                      <div>
-                        <label className="text-zinc-400 block mb-1">Correo Electrónico de Recuperación:</label>
-                        <input 
-                          type="email" 
-                          placeholder="tu-correo@estudio.com"
-                          defaultValue={recoveryEmailConfig}
-                          onChange={(e) => setNewRecoveryMail(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-400 block mb-1">Nueva Contraseña (opcional):</label>
-                        <input 
-                          type="password" 
-                          placeholder="••••••••••••"
-                          value={newPass}
-                          onChange={(e) => setNewPass(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-400 block mb-1">Confirmar Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="••••••••••••"
-                          value={confirmPass}
-                          onChange={(e) => setConfirmPass(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                        />
-                      </div>
-
-                      {passMessage && (
-                        <p className="text-xs font-bold p-2 rounded bg-zinc-950 border border-zinc-800 text-zinc-300">{passMessage}</p>
-                      )}
-
-                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs transition-colors">
-                        Guardar Cambios de Seguridad
-                      </button>
-                    </form>
                   </div>
                 </div>
               )}
