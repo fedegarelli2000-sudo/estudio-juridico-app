@@ -225,7 +225,7 @@ export default function Home() {
     convertirAPlazo: false,
     plazoDias: 3,
     agendarEnGoogle: false,
-    googleMailSeleccionado: ''
+    googleMailsSeleccionados: []
   });
 
   const [newCautelar, setNewCautelar] = useState({ fiscalId: '', tipo: 'SOJ (Bancario)', fecha: '', montoEmbargo: '' });
@@ -376,8 +376,8 @@ export default function Home() {
       googleUrl.searchParams.append('text', `FISCAL LIQ ${targetCase?.nroLiquidacion}: ${newFiscalMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
       googleUrl.searchParams.append('details', `Actuación registrada en Estudio Jurídico MM. Contribuyente: ${targetCase?.contribuyente}`);
-      if (newFiscalMovement.googleMailSeleccionado) {
-        googleUrl.searchParams.append('add', newFiscalMovement.googleMailSeleccionado);
+      if (newFiscalMovement.googleMailsSeleccionados && newFiscalMovement.googleMailsSeleccionados.length > 0) {
+        googleUrl.searchParams.append('add', newFiscalMovement.googleMailsSeleccionados.join(','));
       }
       window.open(googleUrl.toString(), '_blank');
     }
@@ -393,7 +393,7 @@ export default function Home() {
       convertirAPlazo: false,
       plazoDias: 3,
       agendarEnGoogle: false,
-      googleMailSeleccionado: ''
+      googleMailsSeleccionados: []
     });
   };
 
@@ -457,13 +457,13 @@ export default function Home() {
   const [cases, setCases] = useState([
     {
       id: '1',
-      number: 'EXP-9821/2026',
-      caratula: 'García, Roberto c/ Aseguradora del Sur S.A. s/ Daños',
+      number: '14900698',
+      caratula: 'Cámara de Alquileres / Cobro',
       court: 'Juzgado Civil y Comercial Nº 12',
-      client: 'Roberto García',
+      client: 'Cámara',
       processType: 'JUDICIAL',
       status: 'EN TRAMITE',
-      notes: 'Cliente prefiere contacto por correo por la tarde.'
+      notes: 'Desc. con exactitud qué reclama: Alquileres adeudados, meses julio y agosto del corriente año: $1.044.800, con más servicios de Agua, Luz, Gas e impuestos adeudados correspondientes a los periodos de locación: $: $634,422.33. Lo que hace la suma total de PESOS UN MILLÓN SEISCIENTOS SETENTA Y NUEVE MIL DOSCIENTOS VEINTIDÓS CON TREINTA Y TRES CENTAVOS ($1.679.222,33). Bajo expresa reserva de ampliar.'
     }
   ]);
   
@@ -473,7 +473,8 @@ export default function Home() {
   ]);
 
   const [movements, setMovements] = useState([
-    { id: '1', caseId: '1', date: '2026-09-09', title: 'Cédula de Traslado', text: 'Se concede traslado por el término de ley.', notes: 'Revisar con perito antes del vencimiento.' }
+    { id: '1', caseId: '1', date: '2026-08-14', title: 'SOLICITUD DE MEDIACION', text: 'INICIO', notes: '' },
+    { id: '2', caseId: '1', title: 'DECRETO AUDIENCIA', text: 'SEGUNDA AUDIENCIA POR NO LLEGAR A NOTIFICAR LA PRIMERA (LA CUAL NO TOMAMOS)', notes: '' }
   ]);
 
   const [deadlines, setDeadlines] = useState([
@@ -482,14 +483,28 @@ export default function Home() {
   ]);
 
   const [hearings, setHearings] = useState([
-    { id: '1', caseId: '1', title: 'Audiencia Preliminar', date: '2026-09-18T10:00', location: 'Juzgado Civil Nº 12', assignedMail: '', status: 'PENDIENTE' }
+    { id: '1', caseId: '1', title: 'Audiencia Preliminar', date: '2026-09-18T10:00', location: 'Juzgado Civil Nº 12', assignedMails: [], status: 'PENDIENTE' }
   ]);
 
   const [tasks, setTasks] = useState([
     { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false },
-    { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false },
-    { id: '3', caseId: '1', title: 'Buscar copia de DNI en archivo', priority: 'BAJA', completed: true }
+    { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false }
   ]);
+
+  // --- ESTADO PARA NUEVO MOVIMIENTO EN EXPEDIENTES (CON OPCIONES DE AGENDAR Y MÚLTIPLES MAILS) ---
+  const [newMovement, setNewMovement] = useState({ 
+    caseId: '', 
+    date: '', 
+    title: '', 
+    text: '', 
+    notes: '',
+    convertirATarea: false,
+    tareaPrioridad: 'MEDIA',
+    convertirAPlazo: false,
+    plazoDias: 5,
+    agendarEnGoogle: false,
+    googleMailsSeleccionados: []
+  });
 
   // --- SINCRONIZACIÓN NUBE ---
   const syncWithCloud = async (key, value) => {
@@ -553,9 +568,8 @@ export default function Home() {
   // FORMULARIOS GENERALES
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
-  const [newMovement, setNewMovement] = useState({ caseId: '', date: '', title: '', text: '', notes: '' });
   const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
-  const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMail: '' });
+  const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMails: [] });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
   const toggleHearingStatus = (hearingId) => {
@@ -605,12 +619,84 @@ export default function Home() {
     setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   };
 
+  // --- GUARDAR MOVIMIENTO DESDE EXPEDIENTE CON AUTOMATIZACIONES Y MÚLTIPLES MAILS ---
   const handleAddMovementForCase = (e) => {
     e.preventDefault();
-    if (!newMovement.title) return;
+    if (!newMovement.title || !newMovement.date) return;
     const caseTarget = selectedCaseId || newMovement.caseId || cases[0]?.id || '1';
-    updateMovements([...movements, { ...newMovement, caseId: caseTarget, id: Date.now().toString() }]);
-    setNewMovement({ caseId: caseTarget, date: '', title: '', text: '', notes: '' });
+    const targetCase = cases.find(c => c.id === caseTarget);
+
+    const createdMov = {
+      id: 'm_' + Date.now(),
+      caseId: caseTarget,
+      date: newMovement.date,
+      title: newMovement.title,
+      text: newMovement.text,
+      notes: newMovement.notes
+    };
+
+    updateMovements([...movements, createdMov]);
+
+    if (newMovement.convertirATarea) {
+      const newTaskObj = {
+        id: 't_' + Date.now(),
+        caseId: caseTarget,
+        title: `[Exp ${targetCase?.number}] ${newMovement.title}`,
+        priority: newMovement.tareaPrioridad,
+        completed: false
+      };
+      updateTasks([...tasks, newTaskObj]);
+    }
+
+    if (newMovement.convertirAPlazo) {
+      const movDateObj = new Date(newMovement.date);
+      movDateObj.setDate(movDateObj.getDate() + (newMovement.plazoDias || 5));
+      const newDeadlineObj = {
+        id: 'd_' + Date.now(),
+        caseId: caseTarget,
+        title: `[Exp ${targetCase?.number}] ${newMovement.title}`,
+        dueDate: movDateObj.toISOString().split('T')[0],
+        days: newMovement.plazoDias || 5,
+        status: 'PENDIENTE',
+        isAI: false
+      };
+      updateDeadlines([...deadlines, newDeadlineObj]);
+    }
+
+    if (newMovement.agendarEnGoogle) {
+      const startDate = new Date(newMovement.date);
+      if (isNaN(startDate.getTime())) {
+        startDate.setTime(Date.now());
+      }
+      startDate.setHours(9, 0, 0, 0);
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      const formatGDate = (d) => d.toISOString().replace(/-|:|\.\d\d\d/g, '');
+
+      const googleUrl = new URL('https://calendar.google.com/calendar/render');
+      googleUrl.searchParams.append('action', 'TEMPLATE');
+      googleUrl.searchParams.append('text', `EXP ${targetCase?.number}: ${newMovement.title}`);
+      googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
+      googleUrl.searchParams.append('details', `Actuación / Audiencia / Reunión registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
+      
+      if (newMovement.googleMailsSeleccionados && newMovement.googleMailsSeleccionados.length > 0) {
+        googleUrl.searchParams.append('add', newMovement.googleMailsSeleccionados.join(','));
+      }
+      window.open(googleUrl.toString(), '_blank');
+    }
+
+    setNewMovement({ 
+      caseId: caseTarget, 
+      date: '', 
+      title: '', 
+      text: '', 
+      notes: '',
+      convertirATarea: false,
+      tareaPrioridad: 'MEDIA',
+      convertirAPlazo: false,
+      plazoDias: 5,
+      agendarEnGoogle: false,
+      googleMailsSeleccionados: []
+    });
   };
 
   const handleAddDeadline = (e) => {
@@ -639,10 +725,12 @@ export default function Home() {
     googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
     googleUrl.searchParams.append('details', `Audiencia agendada desde Estudio MM.`);
     if (newHearing.location) googleUrl.searchParams.append('location', newHearing.location);
-    if (newHearing.assignedMail) googleUrl.searchParams.append('add', newHearing.assignedMail);
+    if (newHearing.assignedMails && newHearing.assignedMails.length > 0) {
+      googleUrl.searchParams.append('add', newHearing.assignedMails.join(','));
+    }
 
     window.open(googleUrl.toString(), '_blank');
-    setNewHearing({ caseId: caseTarget, title: '', date: '', location: '', assignedMail: '' });
+    setNewHearing({ caseId: caseTarget, title: '', date: '', location: '', assignedMails: [] });
   };
 
   const handleAddTask = (e) => {
@@ -866,8 +954,10 @@ export default function Home() {
                 )}
               </div>
 
-              <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento</h4>
+              {/* FORMULARIO DE REGISTRAR MOVIMIENTO CON OPCIONES DE AGENDAR Y MÚLTIPLES MAILS */}
+              <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4">
+                <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento / Actuación</h4>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <input 
                     type="text" placeholder="Título de la actuación (Ej. Cédula / Proveído)" 
@@ -879,13 +969,99 @@ export default function Home() {
                     className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                   />
                 </div>
+
                 <textarea 
                   placeholder="Detalle o texto de la actuación..."
                   value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
                 />
-                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                  Guardar Movimiento
+
+                {/* PANEL DE AUTOMATIZACIONES */}
+                <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-800 space-y-3 text-xs">
+                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Automatizar desde este Movimiento:</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newMovement.convertirATarea} 
+                        onChange={e => setNewMovement({...newMovement, convertirATarea: e.target.checked})}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span>Agendar como Tarea</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newMovement.convertirAPlazo} 
+                        onChange={e => setNewMovement({...newMovement, convertirAPlazo: e.target.checked})}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span>Agendar como Plazo / Vencimiento</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newMovement.agendarEnGoogle} 
+                        onChange={e => setNewMovement({...newMovement, agendarEnGoogle: e.target.checked})}
+                        className="w-4 h-4 accent-orange-500"
+                      />
+                      <span className="text-orange-400 font-bold">📅 Agendar Audiencia / Reunión</span>
+                    </label>
+                  </div>
+
+                  {newMovement.convertirATarea && (
+                    <div className="pt-2 border-t border-zinc-800 flex items-center gap-2">
+                      <span className="text-zinc-400">Prioridad de la Tarea:</span>
+                      <select 
+                        value={newMovement.tareaPrioridad} 
+                        onChange={e => setNewMovement({...newMovement, tareaPrioridad: e.target.value})}
+                        className="bg-zinc-900 border border-zinc-800 p-1.5 rounded text-white"
+                      >
+                        <option value="BAJA">BAJA</option>
+                        <option value="MEDIA">MEDIA</option>
+                        <option value="ALTA">ALTA</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {newMovement.agendarEnGoogle && (
+                    <div className="pt-3 border-t border-zinc-800 space-y-2">
+                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo (Google Calendar):</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-900 p-3 rounded border border-zinc-800">
+                        {teamEmails.filter(m => m !== '').length > 0 ? (
+                          teamEmails.filter(m => m !== '').map((mail, idx) => (
+                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
+                              <input 
+                                type="checkbox" 
+                                checked={newMovement.googleMailsSeleccionados.includes(mail)}
+                                onChange={(e) => {
+                                  const current = [...newMovement.googleMailsSeleccionados];
+                                  if (e.target.checked) {
+                                    current.push(mail);
+                                  } else {
+                                    const index = current.indexOf(mail);
+                                    if (index > -1) current.splice(index, 1);
+                                  }
+                                  setNewMovement({...newMovement, googleMailsSeleccionados: current});
+                                }}
+                                className="w-4 h-4 accent-orange-500"
+                              />
+                              <span className="truncate">{mail}</span>
+                            </label>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en la sección Configuración.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400 shadow-lg shadow-orange-500/20">
+                  Guardar Movimiento y Automatizar
                 </button>
               </form>
 
@@ -1124,16 +1300,34 @@ export default function Home() {
                   </div>
 
                   {newFiscalMovement.agendarEnGoogle && (
-                    <div className="pt-2 border-t border-zinc-800 flex items-center gap-2">
-                      <span className="text-zinc-400">Seleccionar Mail del Equipo:</span>
-                      <select 
-                        value={newFiscalMovement.googleMailSeleccionado} 
-                        onChange={e => setNewFiscalMovement({...newFiscalMovement, googleMailSeleccionado: e.target.value})}
-                        className="bg-zinc-900 border border-zinc-800 p-1.5 rounded text-white flex-1"
-                      >
-                        <option value="">(Opcional) Enviar invitación a correo configurado</option>
-                        {teamEmails.filter(m => m !== '').map((m, i) => <option key={i} value={m}>{m}</option>)}
-                      </select>
+                    <div className="pt-3 border-t border-zinc-800 space-y-2">
+                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo:</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-900 p-3 rounded border border-zinc-800">
+                        {teamEmails.filter(m => m !== '').length > 0 ? (
+                          teamEmails.filter(m => m !== '').map((mail, idx) => (
+                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
+                              <input 
+                                type="checkbox" 
+                                checked={newFiscalMovement.googleMailsSeleccionados.includes(mail)}
+                                onChange={(e) => {
+                                  const current = [...newFiscalMovement.googleMailsSeleccionados];
+                                  if (e.target.checked) {
+                                    current.push(mail);
+                                  } else {
+                                    const index = current.indexOf(mail);
+                                    if (index > -1) current.splice(index, 1);
+                                  }
+                                  setNewFiscalMovement({...newFiscalMovement, googleMailsSeleccionados: current});
+                                }}
+                                className="w-4 h-4 accent-orange-500"
+                              />
+                              <span className="truncate">{mail}</span>
+                            </label>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1379,36 +1573,6 @@ export default function Home() {
               {/* MOVIMIENTOS E HISTORIA */}
               {activeTab === 'movimientos' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Movimiento o Actuación</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      <select 
-                        value={newMovement.caseId} onChange={e => setNewMovement({...newMovement, caseId: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      >
-                        <option value="">Seleccionar Expediente Específico...</option>
-                        {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
-                      </select>
-                      <input 
-                        type="date" value={newMovement.date} onChange={e => setNewMovement({...newMovement, date: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      />
-                    </div>
-                    <input 
-                      type="text" placeholder="Título de la actuación (Ej. Cédula / Proveído)" 
-                      value={newMovement.title} onChange={e => setNewMovement({...newMovement, title: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
-                    />
-                    <textarea 
-                      placeholder="Transcripción o síntesis..."
-                      value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
-                    />
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                      Guardar Movimiento
-                    </button>
-                  </form>
-
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Consultar Movimientos por Causa</h4>
                     <select 
@@ -1431,7 +1595,7 @@ export default function Home() {
                                 <span className="font-bold text-orange-400">{m.title}</span>
                                 <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
                               </div>
-                              {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number}</p>}
+                              {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number} - {caseInfo.caratula}</p>}
                               {m.text && <p className="text-zinc-300 mt-1">{m.text}</p>}
                             </div>
                           );
@@ -1506,7 +1670,7 @@ export default function Home() {
               {/* AUDIENCIAS */}
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Notificar Audiencia</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
@@ -1521,16 +1685,40 @@ export default function Home() {
                       <input 
                         type="text" placeholder="Lugar / Juzgado / Enlace Virtual" 
                         value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
                       />
-                      <select 
-                        value={newHearing.assignedMail} onChange={e => setNewHearing({...newHearing, assignedMail: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
-                      >
-                        <option value="">Mail a Notificar (Google Calendar)</option>
-                        {teamEmails.filter(m => m !== '').map((m, i) => <option key={i} value={m}>{m}</option>)}
-                      </select>
                     </div>
+
+                    <div className="space-y-2 text-xs">
+                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo:</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-950 p-3 rounded border border-zinc-800">
+                        {teamEmails.filter(m => m !== '').length > 0 ? (
+                          teamEmails.filter(m => m !== '').map((mail, idx) => (
+                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
+                              <input 
+                                type="checkbox" 
+                                checked={newHearing.assignedMails.includes(mail)}
+                                onChange={(e) => {
+                                  const current = [...newHearing.assignedMails];
+                                  if (e.target.checked) {
+                                    current.push(mail);
+                                  } else {
+                                    const index = current.indexOf(mail);
+                                    if (index > -1) current.splice(index, 1);
+                                  }
+                                  setNewHearing({...newHearing, assignedMails: current});
+                                }}
+                                className="w-4 h-4 accent-orange-500"
+                              />
+                              <span className="truncate">{mail}</span>
+                            </label>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
+                        )}
+                      </div>
+                    </div>
+
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400 flex items-center gap-2">
                       📅 Agendar y Abrir Invitación en Google Calendar
                     </button>
