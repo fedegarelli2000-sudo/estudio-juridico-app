@@ -92,7 +92,7 @@ export default function Home() {
   const [selectedCaseId, setSelectedCaseId] = useState(null);
   const [selectedFiscalId, setSelectedFiscalId] = useState(null);
 
-  const [teamEmails, setTeamEmails] = useState(['', '', '', '', '', '']);
+  const [teamEmails, setTeamEmails] = useState(['fedegarelli2000@gmail.com', 'mmanginim@hotmail.com', 'estudiojuridicogarelli@gmail.com', '', '', '']);
 
   const formatDateToArg = (dateStr) => {
     if (!dateStr || dateStr.includes('Sin fecha') || dateStr.includes('Pendiente') || dateStr.includes('A calcular')) return dateStr;
@@ -376,6 +376,7 @@ export default function Home() {
       googleUrl.searchParams.append('text', `FISCAL LIQ ${targetCase?.nroLiquidacion}: ${newFiscalMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
       googleUrl.searchParams.append('details', `Actuación registrada en Estudio Jurídico MM. Contribuyente: ${targetCase?.contribuyente}`);
+      googleUrl.searchParams.append('reminder', '1440,180'); // Notificación 1 día antes (1440 min) y 3 horas antes (180 min)
       if (newFiscalMovement.googleMailsSeleccionados && newFiscalMovement.googleMailsSeleccionados.length > 0) {
         googleUrl.searchParams.append('add', newFiscalMovement.googleMailsSeleccionados.join(','));
       }
@@ -474,7 +475,8 @@ export default function Home() {
 
   const [movements, setMovements] = useState([
     { id: '1', caseId: '1', date: '2026-08-14', title: 'SOLICITUD DE MEDIACION', text: 'INICIO', notes: '' },
-    { id: '2', caseId: '1', title: 'DECRETO AUDIENCIA', text: 'SEGUNDA AUDIENCIA POR NO LLEGAR A NOTIFICAR LA PRIMERA (LA CUAL NO TOMAMOS)', notes: '' }
+    { id: '2', caseId: '1', date: '2026-09-01', title: 'DECRETO AUDIENCIA', text: 'SEGUNDA AUDIENCIA POR NO LLEGAR A NOTIFICAR LA PRIMERA (LA CUAL NO TOMAMOS)', notes: '' },
+    { id: '3', caseId: '1', date: '2026-09-14', title: 'AUDIENCIA', text: 'Se informa a CAMINAL, ANALIA DEL CARMEN y a GIGENA , GERARDO ALBERTO, TORRES, GABRIEL IGNACIO que deberán asistir a una reunión de mediación virtual el día 14/09/2026 a las 11:10 hs. El encuentro se desarrollará por VÍA VIDEOLLAMADA, (Whatsapp/Zoom/Google Meet). Para esta mediación, fue designada la dupla de mediadores integrada por: VALERIA PIOVANO MAT. 209, Tel. 3584247428, vmpiovano@gmail.com y mediadora Carla De Marco Te. 3584269606.', notes: '' }
   ]);
 
   const [deadlines, setDeadlines] = useState([
@@ -491,7 +493,7 @@ export default function Home() {
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false }
   ]);
 
-  // --- ESTADO PARA NUEVO MOVIMIENTO EN EXPEDIENTES (CON OPCIONES DE AGENDAR Y MÚLTIPLES MAILS) ---
+  // --- ESTADO PARA NUEVO MOVIMIENTO Y EDICIÓN ---
   const [newMovement, setNewMovement] = useState({ 
     caseId: '', 
     date: '', 
@@ -505,6 +507,9 @@ export default function Home() {
     agendarEnGoogle: false,
     googleMailsSeleccionados: []
   });
+
+  const [editingMovementId, setEditingMovementId] = useState(null);
+  const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
 
   // --- SINCRONIZACIÓN NUBE ---
   const syncWithCloud = async (key, value) => {
@@ -603,23 +608,7 @@ export default function Home() {
     updateClients(clients.filter(c => c.id !== clientId));
   };
 
-  const handleAddCase = (e) => {
-    e.preventDefault();
-    if (!newCase.number || !newCase.caratula) return;
-    const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
-    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
-    updateCases([...cases, created]);
-    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
-  };
-
-  const handleAddClient = (e) => {
-    e.preventDefault();
-    if (!newClient.name) return;
-    updateClients([...clients, { ...newClient, id: Date.now().toString() }]);
-    setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
-  };
-
-  // --- GUARDAR MOVIMIENTO DESDE EXPEDIENTE CON AUTOMATIZACIONES Y MÚLTIPLES MAILS ---
+  // --- GUARDAR MOVIMIENTO CON RECORDATORIOS 1 DÍA ANTES Y 3 HORAS ANTES ---
   const handleAddMovementForCase = (e) => {
     e.preventDefault();
     if (!newMovement.title || !newMovement.date) return;
@@ -677,6 +666,7 @@ export default function Home() {
       googleUrl.searchParams.append('text', `EXP ${targetCase?.number}: ${newMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
       googleUrl.searchParams.append('details', `Actuación / Audiencia / Reunión registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
+      googleUrl.searchParams.append('reminder', '1440,180'); // 1 día antes (1440 min) y 3 horas antes (180 min)
       
       if (newMovement.googleMailsSeleccionados && newMovement.googleMailsSeleccionados.length > 0) {
         googleUrl.searchParams.append('add', newMovement.googleMailsSeleccionados.join(','));
@@ -697,6 +687,22 @@ export default function Home() {
       agendarEnGoogle: false,
       googleMailsSeleccionados: []
     });
+  };
+
+  const handleDeleteMovement = (movId) => {
+    if (!confirm('¿Está seguro de eliminar este movimiento?')) return;
+    updateMovements(movements.filter(m => m.id !== movId));
+  };
+
+  const handleStartEditMovement = (m) => {
+    setEditingMovementId(m.id);
+    setEditMovementForm({ title: m.title, date: m.date, text: m.text });
+  };
+
+  const handleSaveEditMovement = (movId) => {
+    const updated = movements.map(m => m.id === movId ? { ...m, ...editMovementForm } : m);
+    updateMovements(updated);
+    setEditingMovementId(null);
   };
 
   const handleAddDeadline = (e) => {
@@ -724,6 +730,7 @@ export default function Home() {
     googleUrl.searchParams.append('text', `AUDIENCIA: ${newHearing.title}`);
     googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
     googleUrl.searchParams.append('details', `Audiencia agendada desde Estudio MM.`);
+    googleUrl.searchParams.append('reminder', '1440,180');
     if (newHearing.location) googleUrl.searchParams.append('location', newHearing.location);
     if (newHearing.assignedMails && newHearing.assignedMails.length > 0) {
       googleUrl.searchParams.append('add', newHearing.assignedMails.join(','));
@@ -1008,7 +1015,7 @@ export default function Home() {
                         onChange={e => setNewMovement({...newMovement, agendarEnGoogle: e.target.checked})}
                         className="w-4 h-4 accent-orange-500"
                       />
-                      <span className="text-orange-400 font-bold">📅 Agendar Audiencia / Reunión</span>
+                      <span className="text-orange-400 font-bold">📅 Agendar Audiencia / Reunión (Notif. 1 día y 3h antes)</span>
                     </label>
                   </div>
 
@@ -1053,7 +1060,7 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en la sección Configuración.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
                         )}
                       </div>
                     </div>
@@ -1065,16 +1072,49 @@ export default function Home() {
                 </button>
               </form>
 
+              {/* HISTORIAL DE MOVIMIENTOS CON EDICIÓN Y ELIMINACIÓN */}
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos</h4>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {movements.filter(m => m.caseId === selectedCaseId).map(m => (
-                    <div key={m.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
-                      <div className="flex justify-between font-bold text-zinc-200">
-                        <span>{m.title}</span>
-                        <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
-                      </div>
-                      {m.text && <p className="text-zinc-400">{m.text}</p>}
+                    <div key={m.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-2">
+                      {editingMovementId === m.id ? (
+                        <div className="space-y-2">
+                          <input 
+                            type="text" 
+                            value={editMovementForm.title} 
+                            onChange={e => setEditMovementForm({...editMovementForm, title: e.target.value})}
+                            className="w-full bg-zinc-900 border border-orange-500 p-2 rounded text-white"
+                          />
+                          <input 
+                            type="date" 
+                            value={editMovementForm.date} 
+                            onChange={e => setEditMovementForm({...editMovementForm, date: e.target.value})}
+                            className="w-full bg-zinc-900 border border-orange-500 p-2 rounded text-white"
+                          />
+                          <textarea 
+                            value={editMovementForm.text} 
+                            onChange={e => setEditMovementForm({...editMovementForm, text: e.target.value})}
+                            className="w-full bg-zinc-900 border border-orange-500 p-2 rounded text-white h-16"
+                          />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleSaveEditMovement(m.id)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded">Guardar Cambios</button>
+                            <button onClick={() => setEditingMovementId(null)} className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded">Cancelar</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex justify-between items-center font-bold text-zinc-200">
+                            <span className="text-orange-400">{m.title}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
+                              <button onClick={() => handleStartEditMovement(m)} className="text-zinc-400 hover:text-white px-2 py-0.5 bg-zinc-900 rounded border border-zinc-800" title="Editar Movimiento">✏️</button>
+                              <button onClick={() => handleDeleteMovement(m.id)} className="text-red-400 hover:text-red-300 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20" title="Eliminar Movimiento">🗑️</button>
+                            </div>
+                          </div>
+                          {m.text && <p className="text-zinc-300 mt-1 whitespace-pre-wrap">{m.text}</p>}
+                        </>
+                      )}
                     </div>
                   ))}
                   {movements.filter(m => m.caseId === selectedCaseId).length === 0 && (
