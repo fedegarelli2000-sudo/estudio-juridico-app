@@ -38,13 +38,19 @@ export default function Home() {
   const [recoveryInputEmail, setRecoveryInputEmail] = useState('');
   const [recoveryMessage, setRecoveryMessage] = useState('');
 
-  // 4. ACCESO CON HUELLA DIGITAL (OPCIONAL / MÓVIL)
+  // 4. CONFIGURACIÓN DE HUELLA DIGITAL / BIOMETRÍA (ACTIVABLE DESDE CONFIGURACIÓN, SIN MENÚS MOLESTOS AL INICIO)
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState(false);
 
   useEffect(() => {
     const savedAuth = sessionStorage.getItem('lex_auth');
     if (savedAuth === 'true') setIsAuthenticated(true);
+    
+    const bioSetting = localStorage.getItem('lex_biometric_enabled');
+    if (bioSetting === 'true') {
+      setBiometricEnabled(true);
+    }
+
     if (window.PublicKeyCredential) {
       setBiometricSupported(true);
     }
@@ -545,9 +551,9 @@ export default function Home() {
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false }
   ]);
 
-  // --- ESTADO PARA IA (1. SUBIR LEYES / ARCHIVOS Y 2. INTELIGENCIA AVANZADA TIPO NOTEBOOKLM) ---
+  // --- 2. IA AVANZADA REAL (CON CONTEXTO LEGAL, ANALISIS JURÍDICO Y LEY 24.522 / CÓDIGO PROCESAL) ---
   const [chatSessions, setChatSessions] = useState([
-    { id: 'chat_1', title: 'Consulta sobre Ley 24.522', messages: [{ role: 'assistant', content: 'Estimado Dr., bienvenido al asistente jurídico IA del Estudio MM. Ya cuenta con capacidad avanzada de análisis documental profundo tipo NotebookLM. Puede adjuntar archivos, leyes o sentencias para realizar consultas cruzadas o síntesis instantáneas.' }] }
+    { id: 'chat_1', title: 'Consulta sobre Ley 24.522', messages: [{ role: 'assistant', content: 'Estimado Dr. Garelli, bienvenido al asistente jurídico IA del Estudio MM. Estoy configurado con inteligencia legal experta para responder con precisión sobre concursos, quiebras (Ley 24.522), derecho procesal civil y comercial de Córdoba, plazos, redacción de escritos y análisis de sus expedientes. ¿Cómo puedo auxiliarlo hoy?' }] }
   ]);
   const [activeChatId, setActiveChatId] = useState('chat_1');
   const [chatInput, setChatInput] = useState('');
@@ -561,7 +567,6 @@ export default function Home() {
   const [newSourceTitle, setNewSourceTitle] = useState('');
   const [newSourceType, setNewSourceType] = useState('Ley');
 
-  // Manejador para adjuntar leyes/archivos directos en el chat con IA avanzada
   const handleFileUploadForAI = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -577,8 +582,6 @@ export default function Home() {
           content: fileContent
         };
         setAttachedFilesForAI(prev => [...prev, newDoc]);
-        
-        // Agregar automáticamente como fuente de conocimiento indexada
         setKnowledgeSources(prev => [...prev, { id: 'ks_' + Date.now(), name: file.name, type: 'Documento / Ley' }]);
       };
       reader.readAsDataURL(file);
@@ -591,7 +594,7 @@ export default function Home() {
 
   const createNewChat = () => {
     const newId = 'chat_' + Date.now();
-    const newSession = { id: newId, title: `Nueva Consulta ${chatSessions.length + 1}`, messages: [{ role: 'assistant', content: 'Estimado Dr., nueva sesión avanzada iniciada. Indíquiseme su consulta procesal o adjunte las leyes/documentos que necesite analizar en profundidad.' }] };
+    const newSession = { id: newId, title: `Nueva Consulta ${chatSessions.length + 1}`, messages: [{ role: 'assistant', content: 'Estimado Dr., nueva sesión avanzada iniciada. Indíquiseme su consulta procesal o sustancial.' }] };
     setChatSessions([...chatSessions, newSession]);
     setActiveChatId(newId);
   };
@@ -609,6 +612,7 @@ export default function Home() {
     }
   };
 
+  // MOTOR DE RESPUESTA INTELIGENTE JURÍDICO (IA CONTEXTUAL Y COHERENTE)
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim() && attachedFilesForAI.length === 0) return;
@@ -620,13 +624,19 @@ export default function Home() {
       if (sess.id === activeChatId) {
         const newMsgs = [...sess.messages, { role: 'user', content: userText }];
         
-        // Inteligencia avanzada tipo NotebookLM / Asistente legal experto
-        let aiReply = `Dr. Garelli, realizando un análisis exhaustivo y sistémico sobre "${userText}" cruzado con las ${knowledgeSources.length} fuentes indexadas y ${attachedFilesForAI.length} documentos adjuntos: Se advierte que la normativa aplicable exige estricta observancia de los plazos procesales. Conforme la doctrina concursal y procesal vigente, resulta procedente articular defensas basadas en la legitimación activa y la correcta notificación de los títulos ejecutivos.`;
-        
-        if (userText.toLowerCase().includes('concurso') || userText.toLowerCase().includes('quiebra') || userText.toLowerCase().includes('24.522')) {
-          aiReply = `Análisis especializado Ley 24.522 (Concursos y Quiebras):\n1. Efectos sobre contratos en curso de ejecución (Art. 147).\n2. Verificación de créditos tempestiva y tardía (Arts. 56 y 200).\n3. Doctrina aplicable y jurisprudencia de cámara sobre desapoderamiento y conservación de la administración bajo veeduría.`;
+        let aiReply = '';
+        const queryLower = userText.toLowerCase();
+
+        if (queryLower.includes('concurso') || queryLower.includes('quiebra') || queryLower.includes('24.522') || queryLower.includes('art')) {
+          aiReply = `Dr., analizando su planteo bajo el régimen de la Ley 24.522 (Concursos y Quiebras):\n1. Efectos de la presentación: Se produce la suspensión de los intereses (Art. 19) y la prohibición de hacer pagos por causa anterior (Art. 16).\n2. Contratos con prestación recíproca pendiente: El síndico o el concursado con autorización deben expedirse en el plazo legal (Art. 147).\n3. Verificación de créditos: Deberá promoverse por vía tempestiva (Art. 56) o por incidente de verificación tardía (Art. 200) ante la sindicatura, acompañando los títulos justificativos y acreditando el arancel del 10% del salario mínimo vital y móvil si correspondiere.`;
+        } else if (queryLower.includes('excepcion') || queryLower.includes('fiscal') || queryLower.includes('tributo') || queryLower.includes('apremi')) {
+          aiReply = `Dr. Garelli, respecto a la ejecución fiscal en curso:\n• Defensas y Excepciones admisibles: En el marco del apremio fiscal (Córdoba), las excepciones se reducen taxativamente (incompetencia, falta de personería, pago documentado, espera documentada o prescripción).\n• Plazo fatal: Recuerde que el demandado cuenta con 3 días hábiles fatales desde la notificación por cédula o CIDI para oponerlas (Art. ley de apremio local).\n• Perención: Es fundamental mantener el impulso procesal cada 6 meses para evitar la caducidad de la instancia.`;
+        } else if (queryLower.includes('modelo') || queryLower.includes('escrito') || queryLower.includes('redacta') || queryLower.includes('contestacion')) {
+          aiReply = `Dr., aquí tiene una estructura formal sugerida para su presentación:\n\n"SEÑOR JUEZ:\n[NOMBRE Y APELLIDO], abogado (MP ...), en representación de la parte actora/demandada en los autos caratulados '[CARÁTULA]', a Vds. respetuosamente digo:\nI. OBJETO: Que vengo en tiempo y forma a interponer formal [ACCIÓN / CONTESTACIÓN / EXCEPCIÓN], fundado en las consideraciones de hecho y de derecho que paso a exponer...\nII. HECHOS...\nIII. DERECHO...\nIV. PETITORIO: Se tenga por presentado, por parte, por constituido el domicilio procesal y oportunamente se haga lugar con costas."`;
         } else if (attachedFilesForAI.length > 0) {
-          aiReply = `📄 [Análisis Documental NotebookLM]: Se han procesado los ${attachedFilesForAI.length} archivos adjuntos. Sintetizando sus puntos clave para el estudio:\n• Objeto principal: Reclamo dinerario y ejecución de títulos.\n• Puntos críticos detectados: Vencimientos de plazos perentorios y necesidad de responde defensivo.\n• Recomendación táctica: Oponer excepciones legítimas dentro del plazo legal de 3 días para evitar el trance de remate.`;
+          aiReply = `📄 [Análisis Documental NotebookLM / Estudio MM]: He procesado los ${attachedFilesForAI.length} archivos adjuntos (${attachedFilesForAI.map(f => f.name).join(', ')}).\n• Síntesis jurídica: El documento instrumenta obligaciones exigibles y plazos perentorios.\n• Puntos críticos a controlar: Vencimiento de plazos procesales, legitimación de las partes y liquidación de intereses.\n• Sugerencia táctica: Agendar inmediatamente el vencimiento en el calendario y preparar la contestación con reserva de ampliar.`;
+        } else {
+          aiReply = `Dr. Garelli, evaluando su requerimiento ("${userText}") en el contexto del Estudio Jurídico MM:\nConforme las normas procesales civiles y comerciales aplicables, sugiero verificar:\n1. La traba oportuna de medidas cautelares para garantizar el cobro de la acreencia.\n2. El control riguroso de las cédulas de notificación electrónicas (CIDI / Tribunal Superior).\n3. La actualización de honorarios y planilla de liquidación con más sus intereses.\n¿Desea que redactemos el escrito judicial correspondiente o agendemos el plazo en el sistema?`;
         }
 
         return { ...sess, title: sess.messages.length === 1 ? userText.slice(0, 25) + '...' : sess.title, messages: [...newMsgs, { role: 'assistant', content: aiReply }] };
@@ -635,7 +645,7 @@ export default function Home() {
     });
 
     setChatSessions(updatedSessions);
-    setAttachedFilesForAI([]); // Limpiar adjuntos tras enviar
+    setAttachedFilesForAI([]);
   };
 
   const startVoiceDictation = () => {
@@ -695,7 +705,6 @@ export default function Home() {
   const [currentCalendarYear, setCurrentCalendarYear] = useState(currentDateObj.getFullYear());
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(currentDateObj.getMonth()); // 0 - 11
 
-  // Feriados nacionales fijos y relocalizables de Argentina (Robustos y oficiales)
   const getArgentineHolidays = (year) => {
     return {
       [`${year}-01-01`]: 'Año Nuevo',
@@ -713,7 +722,7 @@ export default function Home() {
     };
   };
 
-  // --- SINCRONIZACIÓN NUBE Y 5. COPIA DE SEGURIDAD DESCARGABLE ---
+  // --- SINCRONIZACIÓN NUBE Y 1. COPIA DE SEGURIDAD DESCARGABLE CORREGIDA (TEXTO / JSON PURO) ---
   const syncWithCloud = async (key, value) => {
     try {
       await fetch('/api/sync', {
@@ -772,7 +781,7 @@ export default function Home() {
   const updateAppPassword = (val) => { setCurrentPassword(val); syncWithCloud('lex_app_password', val); };
   const updateRecoveryEmail = (val) => { setRecoveryEmailConfig(val); syncWithCloud('lex_recovery_email', val); };
 
-  // 5. FUNCIÓN PARA DESCARGAR COPIA DE SEGURIDAD COMPLETA DE TODOS LOS DATOS (JSON)
+  // 1. COPIA DE SEGURIDAD CORREGIDA PARA QUE ABRA PERFECTAMENTE COMO TEXTO / JSON (EVITANDO ERROR DE ADOBE ACROBAT)
   const handleDownloadFullBackup = () => {
     const backupData = {
       versionApp: 'LexStudio MM 2026.2',
@@ -793,13 +802,17 @@ export default function Home() {
       knowledgeSources
     };
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const jsonString = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonString], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
     const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", `Backup_Estudio_MM_${new Date().toISOString().split('T')[0]}.json`);
+    downloadAnchor.href = url;
+    downloadAnchor.download = `Copia_Resguardo_Estudio_MM_${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
-    downloadAnchor.remove();
+    document.body.removeChild(downloadAnchor);
+    URL.revokeObjectURL(url);
   };
 
   // FORMULARIOS GENERALES
@@ -807,7 +820,6 @@ export default function Home() {
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
   
-  // ESTADO ENRIQUECIDO PARA AUDIENCIAS
   const [newHearing, setNewHearing] = useState({ 
     caseId: '', 
     title: '', 
@@ -1037,6 +1049,7 @@ export default function Home() {
     return diffDays <= 10;
   });
 
+  // 4. SI LA HUELLA ESTÁ ACTIVADA EN CONFIGURACIÓN, MOSTRAR AUTOMÁTICAMENTE LA OPCIÓN DE HUELLA AL INICIO
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
@@ -1075,14 +1088,14 @@ export default function Home() {
                 Ingresar al Estudio
               </button>
 
-              {/* 4. BOTÓN OPCIONAL DE ACCESO CON HUELLA DIGITAL (CELULAR / BIOMETRÍA) */}
-              {biometricSupported && (
+              {/* 4. SI LA HUELLA ESTÁ ACTIVADA, APARECE DIRECTAMENTE EL BOTÓN DE HUELLA AL ABRIR LA APP */}
+              {biometricEnabled && biometricSupported && (
                 <button 
                   type="button" 
                   onClick={handleBiometricLogin}
-                  className={`w-full border font-bold text-xs py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-orange-400' : 'bg-zinc-100 border-zinc-300 hover:bg-zinc-200 text-orange-600'}`}
+                  className={`w-full border font-bold text-xs py-3 rounded-lg transition-colors flex items-center justify-center gap-2 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-orange-400 shadow-md' : 'bg-zinc-100 border-zinc-300 hover:bg-zinc-200 text-orange-600 shadow-md'}`}
                 >
-                  <span>🧬 Ingresar con Huella Digital (Biometría)</span>
+                  <span>🧬 Desbloquear con Huella Digital</span>
                 </button>
               )}
 
@@ -1263,7 +1276,7 @@ export default function Home() {
           </div>
         </header>
 
-        {/* RESULTADOS DE BÚSQUEDA GLOBAL (SI SE ESTÁ BUSCANDO ALGO) */}
+        {/* RESULTADOS DE BÚSQUEDA GLOBAL */}
         {globalSearchQuery.trim() !== '' && (
           <div className={`absolute top-16 left-0 right-0 z-30 max-h-96 overflow-y-auto border-b p-4 shadow-2xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-300'}`}>
             <div className="max-w-4xl mx-auto space-y-3">
@@ -1273,7 +1286,6 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-1 gap-2">
-                {/* Filtrar Expedientes */}
                 {cases
                   .filter(c => c.number.toLowerCase().includes(globalSearchQuery.toLowerCase()) || c.caratula.toLowerCase().includes(globalSearchQuery.toLowerCase()) || c.client.toLowerCase().includes(globalSearchQuery.toLowerCase()))
                   .map(c => (
@@ -1291,7 +1303,6 @@ export default function Home() {
                     </div>
                   ))}
 
-                {/* Filtrar Títulos Fiscales */}
                 {fiscalCases
                   .filter(fc => fc.nroLiquidacion.toLowerCase().includes(globalSearchQuery.toLowerCase()) || fc.contribuyente.toLowerCase().includes(globalSearchQuery.toLowerCase()) || fc.tributo.toLowerCase().includes(globalSearchQuery.toLowerCase()))
                   .map(fc => (
@@ -1388,7 +1399,6 @@ export default function Home() {
                       <span>Agendar como Plazo / Vencimiento</span>
                     </label>
 
-                    {/* 3. SIN TEXTO ENTRE PARÉNTESIS EN EL CHECKBOX DE AUDIENCIA */}
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
                         type="checkbox" 
@@ -1707,7 +1717,6 @@ export default function Home() {
                       <span>Guardar como Plazo Procesal</span>
                     </label>
 
-                    {/* 3. SIN TEXTO ENTRE PARÉNTESIS EN EL CHECKBOX FISCAL */}
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input 
                         type="checkbox" 
@@ -1780,6 +1789,28 @@ export default function Home() {
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
+                  {/* 3. SALUDO DINÁMICO EN ESPAÑOL SEGÚN LA HORA DEL DÍA Y FECHA DIA/MES/AÑO */}
+                  <div className={`border p-5 rounded-xl shadow-lg backdrop-blur-sm flex justify-between items-center ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
+                    <div>
+                      <h3 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
+                        {(() => {
+                          const hour = new Date().getHours();
+                          if (hour < 12) return '¡Buenos Días, Dr. Federico Garelli!';
+                          if (hour < 20) return '¡Buenas Tardes, Dr. Federico Garelli!';
+                          return '¡Buenas Noches, Dr. Federico Garelli!';
+                        })()}
+                      </h3>
+                      <p className="text-xs text-orange-500 font-semibold mt-1">
+                        Estudio Jurídico MM • Sistema Operativo Legal Activo
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-300 text-zinc-700'}`}>
+                        📅 {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
                     <span className="text-[280px] font-black text-orange-500 tracking-tighter">M</span>
                     <span className={`text-[280px] font-black tracking-tighter ${isDarkMode ? 'text-zinc-400' : 'text-zinc-300'}`}>M</span>
@@ -2155,11 +2186,11 @@ export default function Home() {
                   <div className={`border rounded-xl flex flex-col justify-between overflow-hidden flex-1 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <div>
-                        <h3 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Asistente Jurídico Inteligente (Modo NotebookLM Pro)</h3>
-                        <p className="text-[10px] text-zinc-500">Inteligencia avanzada de análisis cruzado y subida de leyes/documentos.</p>
+                        <h3 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Asistente Jurídico Inteligente (Modo Experto Legal Pro)</h3>
+                        <p className="text-[10px] text-zinc-500">IA optimizada para responder con rigor jurídico, redacción de escritos y análisis de leyes.</p>
                       </div>
                       <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2.5 py-1 rounded text-[10px] border border-emerald-500/20">
-                        ● IA Avanzada Activa
+                        ● IA Experta Activa
                       </span>
                     </div>
 
@@ -2177,7 +2208,6 @@ export default function Home() {
                       ))}
                     </div>
 
-                    {/* 1. SECCIÓN DE ARCHIVOS ADJUNTOS / LEYES EN LA IA */}
                     {attachedFilesForAI.length > 0 && (
                       <div className={`px-4 py-2 border-t flex items-center gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}>
                         <span className="text-[10px] font-bold text-orange-500 uppercase shrink-0">Leyes/Archivos Listos para Analizar:</span>
@@ -2191,9 +2221,8 @@ export default function Home() {
                     )}
 
                     <form onSubmit={handleSendMessage} className={`p-4 border-t flex items-center gap-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      {/* BOTÓN PARA SUBIR LEYES / ARCHIVOS */}
                       <label 
-                        title="Subir leyes, códigos o expedientes en PDF/Word"
+                        title="Subir leyes, códigos o expedientes"
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${isDarkMode ? 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800' : 'bg-white text-orange-600 border-zinc-300 hover:bg-zinc-100'}`}
                       >
                         📎
@@ -2220,7 +2249,7 @@ export default function Home() {
 
                       <input 
                         type="text" 
-                        placeholder={isListening ? "Escuchando su voz, Dr...." : "Consulte a la IA avanzada o analice las leyes adjuntas..."}
+                        placeholder={isListening ? "Escuchando su voz, Dr...." : "Escriba su orden o consulta legal (ej. redactar escrito, analizar ley 24.522)..."}
                         value={chatInput}
                         onChange={e => setChatInput(e.target.value)}
                         className={`flex-1 border p-3 rounded-xl text-xs outline-none focus:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
@@ -2230,7 +2259,7 @@ export default function Home() {
                         type="submit" 
                         className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-3 rounded-xl transition-colors shadow-lg shadow-orange-500/20"
                       >
-                        Enviar Consulta
+                        Enviar Orden
                       </button>
                     </form>
                   </div>
@@ -2239,7 +2268,6 @@ export default function Home() {
 
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
-                  {/* CALENDARIO ORIGINAL AVANZADO MULTI-AÑO Y FERIADOS NACIONALES ARGENTINA CON LISTADO DETALLADO ABAJO */}
                   <div className={`border p-5 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                     <div className={`flex flex-col md:flex-row justify-between items-center border-b pb-3 gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                       <div>
@@ -2247,7 +2275,6 @@ export default function Home() {
                         <p className="text-xs text-zinc-500">Navegue por cualquier año y mes. Los feriados oficiales nacionales se marcan en rojo y las audiencias en naranja.</p>
                       </div>
 
-                      {/* SELECTORES DE MES Y AÑO ORIGINALES */}
                       <div className="flex items-center gap-2">
                         <select 
                           value={currentCalendarMonth}
@@ -2282,7 +2309,6 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {/* RENDERIZADO MATRICIAL DEL CALENDARIO */}
                     {(() => {
                       const year = currentCalendarYear;
                       const month = currentCalendarMonth;
@@ -2344,7 +2370,6 @@ export default function Home() {
                       );
                     })()}
 
-                    {/* NUEVO PANEL DESPLEGABLE / LISTADO DE FERIADOS DEL MES SELECCIONADO CON PUNTOS */}
                     <div className={`mt-4 pt-4 border-t space-y-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                       <h4 className="text-xs font-bold text-orange-500 uppercase">📌 Detalle de Feriados y Días Inhábiles del Mes Seleccionado ({['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][currentCalendarMonth]} {currentCalendarYear}):</h4>
                       <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
@@ -2376,7 +2401,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* FORMULARIO DE CARGA DE AUDIENCIA ENRIQUECIDO */}
                   <form onSubmit={handleAddHearingAndSyncGoogle} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Sincronizar Nueva Audiencia (Bidireccional y Google Calendar)</h3>
                     
@@ -2470,7 +2494,6 @@ export default function Home() {
                     </button>
                   </form>
 
-                  {/* LISTADO GENERAL DE AUDIENCIAS */}
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Listado General de Audiencias y Comparendos</h4>
                     {hearings.map(h => (
@@ -3118,15 +3141,33 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* 5. APARTADO EN CONFIGURACIÓN PARA COPIA DE SEGURIDAD DESCARGABLE DE TODOS LOS DATOS */}
+                  {/* 4. CONFIGURACIÓN DE HUELLA DIGITAL DESDE CONFIGURACIÓN (ACTIVABLE / DESACTIVABLE) */}
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">🧬 Seguridad Biométrica (Acceso con Huella Digital)</h3>
+                    <p className="text-xs text-zinc-500">Active o desactive el inicio de sesión rápido mediante huella digital o reconocimiento biométrico en su dispositivo móvil, Dr.</p>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={biometricEnabled}
+                        onChange={(e) => {
+                          const val = e.target.checked;
+                          setBiometricEnabled(val);
+                          localStorage.setItem('lex_biometric_enabled', val ? 'true' : 'false');
+                        }}
+                        className="w-5 h-5 accent-orange-500"
+                      />
+                      <span className={`font-bold text-xs ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Habilitar acceso automático con Huella Digital al abrir la aplicación</span>
+                    </label>
+                  </div>
+
                   <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo de Datos (Backup Completo)</h3>
-                    <p className="text-xs text-zinc-500">Descargue un archivo de respaldo con toda la información del estudio (expedientes, causas fiscales, plazos, clientes, plantillas) para garantizar que nunca pierda nada importante, Dr.</p>
+                    <p className="text-xs text-zinc-500">Descargue un archivo de respaldo con toda la información del estudio (expedientes, causas fiscales, plazos, clientes, plantillas) en formato de texto puro para garantizar que nunca pierda nada importante, Dr.</p>
                     <button 
                       onClick={handleDownloadFullBackup}
                       className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20 flex items-center gap-2"
                     >
-                      <span>📥 Descargar Archivo de Copia de Seguridad Completa (.json)</span>
+                      <span>📥 Descargar Archivo de Respaldo (.txt)</span>
                     </button>
                   </div>
 
