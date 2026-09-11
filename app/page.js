@@ -376,7 +376,7 @@ export default function Home() {
       googleUrl.searchParams.append('text', `FISCAL LIQ ${targetCase?.nroLiquidacion}: ${newFiscalMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
       googleUrl.searchParams.append('details', `Actuación registrada en Estudio Jurídico MM. Contribuyente: ${targetCase?.contribuyente}`);
-      googleUrl.searchParams.append('reminder', '1440,180'); // Notificación 1 día antes (1440 min) y 3 horas antes (180 min)
+      googleUrl.searchParams.append('reminder', '1440,180');
       if (newFiscalMovement.googleMailsSeleccionados && newFiscalMovement.googleMailsSeleccionados.length > 0) {
         googleUrl.searchParams.append('add', newFiscalMovement.googleMailsSeleccionados.join(','));
       }
@@ -608,7 +608,6 @@ export default function Home() {
     updateClients(clients.filter(c => c.id !== clientId));
   };
 
-  // --- GUARDAR MOVIMIENTO CON RECORDATORIOS 1 DÍA ANTES Y 3 HORAS ANTES ---
   const handleAddMovementForCase = (e) => {
     e.preventDefault();
     if (!newMovement.title || !newMovement.date) return;
@@ -666,7 +665,7 @@ export default function Home() {
       googleUrl.searchParams.append('text', `EXP ${targetCase?.number}: ${newMovement.title}`);
       googleUrl.searchParams.append('dates', `${formatGDate(startDate)}/${formatGDate(endDate)}`);
       googleUrl.searchParams.append('details', `Actuación / Audiencia / Reunión registrada en Estudio MM. Carátula: ${targetCase?.caratula}\nDetalle: ${newMovement.text}`);
-      googleUrl.searchParams.append('reminder', '1440,180'); // 1 día antes (1440 min) y 3 horas antes (180 min)
+      googleUrl.searchParams.append('reminder', '1440,180');
       
       if (newMovement.googleMailsSeleccionados && newMovement.googleMailsSeleccionados.length > 0) {
         googleUrl.searchParams.append('add', newMovement.googleMailsSeleccionados.join(','));
@@ -751,7 +750,6 @@ export default function Home() {
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
-  // --- FILTRO DE ALERTAS URGENTES EN EL DASHBOARD ---
   const today = new Date();
   const urgentFiscalAlerts = fiscalCases.filter(fc => {
     if (fc.alertaExcepcionCumplida) return false;
@@ -762,7 +760,6 @@ export default function Home() {
     return diffDays <= 10;
   });
 
-  // --- LOGIN / PANTALLA DE ACCESO ---
   if (!isAuthenticated) {
     return (
       <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans items-center justify-center p-4">
@@ -855,11 +852,9 @@ export default function Home() {
     );
   }
 
-  // --- INTERFAZ PRINCIPAL COMPLETA ---
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
-      {/* MENÚ LATERAL CON SCROLL VERTICAL */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0 z-20 overflow-y-auto">
         <div>
           <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
@@ -916,7 +911,6 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* ÁREA DE CONTENIDO */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
         <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0 z-10">
@@ -937,7 +931,6 @@ export default function Home() {
 
         <main className="flex-1 overflow-y-auto p-6 bg-zinc-950 relative">
           
-          {/* DETALLE DE EXPEDIENTE JUDICIAL */}
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
@@ -961,7 +954,6 @@ export default function Home() {
                 )}
               </div>
 
-              {/* FORMULARIO DE REGISTRAR MOVIMIENTO CON OPCIONES DE AGENDAR Y MÚLTIPLES MAILS */}
               <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento / Actuación</h4>
                 
@@ -983,7 +975,6 @@ export default function Home() {
                   className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
                 />
 
-                {/* PANEL DE AUTOMATIZACIONES */}
                 <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-800 space-y-3 text-xs">
                   <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Automatizar desde este Movimiento:</p>
                   
@@ -1072,7 +1063,6 @@ export default function Home() {
                 </button>
               </form>
 
-              {/* HISTORIAL DE MOVIMIENTOS CON EDICIÓN Y ELIMINACIÓN */}
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos</h4>
                 <div className="space-y-3">
@@ -1126,7 +1116,6 @@ export default function Home() {
 
           ) : selectedFiscalId && selectedFiscalData ? (
 
-            /* DETALLE DE LIQUIDACIÓN FISCAL */
             <div className="space-y-6 relative z-10">
               <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
                 <div className="flex justify-between items-start">
@@ -1398,7 +1387,6 @@ export default function Home() {
 
           ) : (
             <>
-              {/* DASHBOARD GENERAL */}
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
@@ -1526,10 +1514,16 @@ export default function Home() {
                 </div>
               )}
 
-              {/* EXPEDIENTES / CAUSAS */}
               {activeTab === 'expedientes' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newCase.number || !newCase.caratula) return;
+                    const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
+                    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
+                    updateCases([...cases, created]);
+                    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
+                  }} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
@@ -1610,7 +1604,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* MOVIMIENTOS E HISTORIA */}
               {activeTab === 'movimientos' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1645,7 +1638,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* PLAZOS PROCESALES */}
               {activeTab === 'plazos' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1669,7 +1661,8 @@ export default function Home() {
                       />
                       <input 
                         type="number" placeholder="Días hábiles (ej. 5)" 
-                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
+                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)}
+                        )}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
@@ -1707,7 +1700,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* AUDIENCIAS */}
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
@@ -1800,7 +1792,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* TAREAS */}
               {activeTab === 'tareas' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1857,7 +1848,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* CLIENTES */}
               {activeTab === 'clientes' && (
                 <div className="space-y-6 relative z-10">
                   <form onSubmit={handleAddClient} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
@@ -1928,7 +1918,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* SECCIÓN PROCURACIÓN DE RENTAS (CBA) */}
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
@@ -2376,7 +2365,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* CONFIGURACIÓN */}
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
