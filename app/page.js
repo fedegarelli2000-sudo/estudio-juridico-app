@@ -21,6 +21,12 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
+  // --- MODO CLARO / OSCURO (ACTIVABLE / DESACTIVABLE) ---
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // --- ESTADO DEL BUSCADOR GLOBAL EN LA BARRA SUPERIOR ---
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+
   // --- CONTROL DE ACCESO Y CONTRASEÑA UNIVERSAL EN NUBE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -932,28 +938,28 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-2xl text-center space-y-6">
+      <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
+        <div className={`w-full max-w-sm border p-8 rounded-2xl shadow-2xl text-center space-y-6 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="flex justify-center items-center text-5xl font-black tracking-tighter">
             <span className="text-orange-500">M</span>
-            <span className="text-zinc-500">M</span>
+            <span className={isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}>M</span>
           </div>
 
           <div>
-            <h1 className="text-lg font-bold text-white uppercase tracking-wider">Estudio Jurídico MM</h1>
+            <h1 className={`text-lg font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Estudio Jurídico MM</h1>
             <p className="text-xs text-orange-500 font-semibold mt-1">Acceso Privado al Sistema Operativo</p>
           </div>
 
           {!isRecoveryMode ? (
             <form onSubmit={handleLogin} className="space-y-4 text-left">
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Contraseña de Clave Privada</label>
+                <label className={`text-[10px] font-bold uppercase block mb-1 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>Contraseña de Clave Privada</label>
                 <input 
                   type="password" 
                   placeholder="••••••••••••"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-white text-xs outline-none focus:border-orange-500 transition-colors"
+                  className={`w-full border p-3 rounded-lg text-xs outline-none focus:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                 />
               </div>
 
@@ -972,7 +978,7 @@ export default function Home() {
                 <button 
                   type="button" 
                   onClick={() => { setIsRecoveryMode(true); setRecoveryMessage(''); setRecoveryInputEmail(''); }}
-                  className="text-[11px] text-orange-400 hover:underline"
+                  className="text-[11px] text-orange-500 hover:underline font-semibold"
                 >
                   ¿Olvidó su contraseña? Recupérela aquí
                 </button>
@@ -981,18 +987,18 @@ export default function Home() {
           ) : (
             <form onSubmit={handleRecoverPassword} className="space-y-4 text-left">
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 uppercase block mb-1">Correo de Recuperación Registrado</label>
+                <label className={`text-[10px] font-bold uppercase block mb-1 ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>Correo de Recuperación Registrado</label>
                 <input 
                   type="email" 
                   placeholder="ejemplo@estudio.com"
                   value={recoveryInputEmail}
                   onChange={(e) => setRecoveryInputEmail(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-white text-xs outline-none focus:border-orange-500 transition-colors"
+                  className={`w-full border p-3 rounded-lg text-xs outline-none focus:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                 />
               </div>
 
               {recoveryMessage && (
-                <p className={`text-[11px] font-bold p-2 rounded border ${recoveryMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                <p className={`text-[11px] font-bold p-2 rounded border ${recoveryMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
                   {recoveryMessage}
                 </p>
               )}
@@ -1008,7 +1014,7 @@ export default function Home() {
                 <button 
                   type="button" 
                   onClick={() => setIsRecoveryMode(false)}
-                  className="text-[11px] text-zinc-400 hover:text-white"
+                  className={`text-[11px] ${isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}`}
                 >
                   ← Volver al login
                 </button>
@@ -1016,24 +1022,24 @@ export default function Home() {
             </form>
           )}
 
-          <p className="text-[10px] text-zinc-600">Sesión protegida por seguridad de sesión estricta.</p>
+          <p className={`text-[10px] ${isDarkMode ? 'text-zinc-600' : 'text-zinc-400'}`}>Sesión protegida por seguridad de sesión estricta.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
+    <div className={`flex h-screen font-sans overflow-hidden ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
       
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0 z-20 overflow-y-auto">
+      <aside className={`w-64 border-r flex flex-col justify-between shrink-0 z-20 overflow-y-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
         <div>
-          <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
+          <div className={`p-5 border-b flex items-center gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
             <div className="flex items-center text-3xl font-black tracking-tighter">
               <span className="text-orange-500">M</span>
-              <span className="text-zinc-500">M</span>
+              <span className={isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}>M</span>
             </div>
             <div>
-              <h1 className="font-bold text-white text-sm uppercase tracking-wider">LexStudio</h1>
+              <h1 className={`font-bold text-sm uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>LexStudio</h1>
               <p className="text-[10px] text-orange-500 font-semibold">GESTIÓN LEGAL MM</p>
             </div>
           </div>
@@ -1057,7 +1063,7 @@ export default function Home() {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === tab.id && !selectedCaseId && !selectedFiscalId
                     ? 'bg-orange-500 text-black font-bold shadow-lg shadow-orange-500/20'
-                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-orange-400'
+                    : isDarkMode ? 'text-zinc-400 hover:bg-zinc-800 hover:text-orange-400' : 'text-zinc-600 hover:bg-zinc-100 hover:text-orange-600'
                 }`}
               >
                 <span>{tab.icon}</span>
@@ -1067,15 +1073,15 @@ export default function Home() {
           </nav>
         </div>
 
-        <div className="p-4 border-t border-zinc-800 text-xs text-zinc-500 flex justify-between items-center bg-zinc-900 shrink-0">
+        <div className={`p-4 border-t text-xs flex justify-between items-center shrink-0 ${isDarkMode ? 'border-zinc-800 bg-zinc-900 text-zinc-500' : 'border-zinc-200 bg-white text-zinc-500'}`}>
           <div>
-            <p className="font-bold text-zinc-300">Estudio Jurídico MM</p>
+            <p className={`font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Estudio Jurídico MM</p>
             <p className="text-[10px] text-emerald-500 font-semibold">● Sincronizado en Nube</p>
           </div>
           <button 
             onClick={handleLogout}
             title="Cerrar Sesión"
-            className="p-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400 rounded transition-colors text-xs"
+            className={`p-1.5 rounded transition-colors text-xs ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-red-400' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-red-500'}`}
           >
             🔒
           </button>
@@ -1084,70 +1090,170 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        <header className="h-16 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between px-6 shrink-0 z-10">
-          <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase">
-            {selectedCaseId ? `FICHA DE EXPEDIENTE: ${selectedCaseData?.number}` :
-             selectedFiscalId ? `FICHA DE LIQUIDACIÓN FISCAL: ${selectedFiscalData?.nroLiquidacion}` :
-             activeTab.replace('_', ' ')}
-          </h2>
-          {(selectedCaseId || selectedFiscalId) && (
+        {/* HEADER CON BUSCADOR GLOBAL Y BOTÓN MODO CLARO / OSCURO */}
+        <header className={`h-16 border-flex flex items-center justify-between px-6 shrink-0 z-10 border-b ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+          <div className="flex items-center gap-4 flex-1 max-w-xl">
+            <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase shrink-0">
+              {selectedCaseId ? `FICHA DE EXPEDIENTE: ${selectedCaseData?.number}` :
+               selectedFiscalId ? `FICHA DE LIQUIDACIÓN FISCAL: ${selectedFiscalData?.nroLiquidacion}` :
+               activeTab.replace('_', ' ')}
+            </h2>
+
+            {/* BUSCADOR GLOBAL TIPEABLE (N° de expediente/liquidación y nombre de la causa) */}
+            <div className="relative flex-1 ml-4">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400 text-xs">
+                🔍
+              </span>
+              <input 
+                type="text"
+                placeholder="Buscar N° de expediente, liquidación o nombre de causa..."
+                value={globalSearchQuery}
+                onChange={(e) => setGlobalSearchQuery(e.target.value)}
+                className={`w-full pl-9 pr-4 py-1.5 rounded-lg text-xs border outline-none transition-colors ${
+                  isDarkMode 
+                    ? 'bg-zinc-950 border-zinc-800 text-white focus:border-orange-500 placeholder-zinc-500' 
+                    : 'bg-zinc-100 border-zinc-300 text-zinc-900 focus:border-orange-500 placeholder-zinc-400'
+                }`}
+              />
+              {globalSearchQuery && (
+                <button 
+                  onClick={() => setGlobalSearchQuery('')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-orange-500 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* BOTÓN MODO CLARO / OSCURO */}
             <button 
-              onClick={() => { setSelectedCaseId(null); setSelectedFiscalId(null); setIsEditingFiscal(false); }}
-              className="bg-orange-500 text-black hover:bg-orange-400 text-xs font-bold px-3 py-1.5 rounded transition-all"
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              title={isDarkMode ? "Cambiar a Modo Claro (Gris y Naranja)" : "Cambiar a Modo Oscuro"}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                isDarkMode 
+                  ? 'bg-zinc-800 text-orange-400 border-zinc-700 hover:bg-zinc-700' 
+                  : 'bg-zinc-100 text-orange-600 border-zinc-300 hover:bg-zinc-200'
+              }`}
             >
-              ← Volver al Listado Principal
+              <span>{isDarkMode ? '☀️ Modo Claro' : '🌙 Modo Oscuro'}</span>
             </button>
-          )}
+
+            {(selectedCaseId || selectedFiscalId) && (
+              <button 
+                onClick={() => { setSelectedCaseId(null); setSelectedFiscalId(null); setIsEditingFiscal(false); }}
+                className="bg-orange-500 text-black hover:bg-orange-400 text-xs font-bold px-3 py-1.5 rounded transition-all shadow"
+              >
+                ← Volver al Listado
+              </button>
+            )}
+          </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 bg-zinc-950 relative">
+        {/* RESULTADOS DE BÚSQUEDA GLOBAL (SI SE ESTÁ BUSCANDO ALGO) */}
+        {globalSearchQuery.trim() !== '' && (
+          <div className={`absolute top-16 left-0 right-0 z-30 max-h-96 overflow-y-auto border-b p-4 shadow-2xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-300'}`}>
+            <div className="max-w-4xl mx-auto space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-orange-500 uppercase">Resultados de Búsqueda para: "{globalSearchQuery}"</span>
+                <button onClick={() => setGlobalSearchQuery('')} className="text-xs text-zinc-400 hover:text-orange-500">Cerrar buscador ✕</button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2">
+                {/* Filtrar Expedientes */}
+                {cases
+                  .filter(c => c.number.toLowerCase().includes(globalSearchQuery.toLowerCase()) || c.caratula.toLowerCase().includes(globalSearchQuery.toLowerCase()) || c.client.toLowerCase().includes(globalSearchQuery.toLowerCase()))
+                  .map(c => (
+                    <div 
+                      key={c.id} 
+                      onClick={() => { setSelectedCaseId(c.id); setGlobalSearchQuery(''); setActiveTab('expedientes'); }}
+                      className={`p-3 rounded-lg border cursor-pointer flex justify-between items-center text-xs transition-all ${isDarkMode ? 'bg-zinc-950 border-zinc-800 hover:border-orange-500' : 'bg-zinc-50 border-zinc-200 hover:border-orange-500'}`}
+                    >
+                      <div>
+                        <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded mr-2">EXPEDIENTE</span>
+                        <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{c.number} - {c.caratula}</strong>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">Juzgado: {c.court} • Cliente: {c.client}</p>
+                      </div>
+                      <span className="text-orange-500 font-bold">Ver causa →</span>
+                    </div>
+                  ))}
+
+                {/* Filtrar Títulos Fiscales */}
+                {fiscalCases
+                  .filter(fc => fc.nroLiquidacion.toLowerCase().includes(globalSearchQuery.toLowerCase()) || fc.contribuyente.toLowerCase().includes(globalSearchQuery.toLowerCase()) || fc.tributo.toLowerCase().includes(globalSearchQuery.toLowerCase()))
+                  .map(fc => (
+                    <div 
+                      key={fc.id} 
+                      onClick={() => { setSelectedFiscalId(fc.id); setGlobalSearchQuery(''); setActiveTab('procuracion'); }}
+                      className={`p-3 rounded-lg border cursor-pointer flex justify-between items-center text-xs transition-all ${isDarkMode ? 'bg-zinc-950 border-zinc-800 hover:border-orange-500' : 'bg-zinc-50 border-zinc-200 hover:border-orange-500'}`}
+                    >
+                      <div>
+                        <span className="bg-purple-500/10 text-purple-500 font-bold px-2 py-0.5 rounded mr-2">TÍTULO FISCAL</span>
+                        <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</strong>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">Tributo: {fc.tributo} • Monto: {fc.monto}</p>
+                      </div>
+                      <span className="text-orange-500 font-bold">Ver fiscal →</span>
+                    </div>
+                  ))}
+
+                {cases.filter(c => c.number.toLowerCase().includes(globalSearchQuery.toLowerCase()) || c.caratula.toLowerCase().includes(globalSearchQuery.toLowerCase()) || c.client.toLowerCase().includes(globalSearchQuery.toLowerCase())).length === 0 &&
+                 fiscalCases.filter(fc => fc.nroLiquidacion.toLowerCase().includes(globalSearchQuery.toLowerCase()) || fc.contribuyente.toLowerCase().includes(globalSearchQuery.toLowerCase()) || fc.tributo.toLowerCase().includes(globalSearchQuery.toLowerCase())).length === 0 && (
+                  <p className="text-xs text-zinc-500 italic p-4 text-center">No se encontraron expedientes ni liquidaciones fiscales que coincidan con su búsqueda.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <main className={`flex-1 overflow-y-auto p-6 relative ${isDarkMode ? 'bg-zinc-950' : 'bg-zinc-100'}`}>
           
           {selectedCaseId && selectedCaseData ? (
             <div className="space-y-6 relative z-10">
-              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
+              <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-orange-500/10 text-orange-400 font-mono text-xs font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                    <span className="bg-orange-500/10 text-orange-500 font-mono text-xs font-bold px-2 py-0.5 rounded border border-orange-500/20">
                       {selectedCaseData.number}
                     </span>
-                    <span className="ml-2 text-xs font-bold bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded uppercase">
+                    <span className={`ml-2 text-xs font-bold px-2 py-0.5 rounded uppercase ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>
                       {selectedCaseData.processType || 'JUDICIAL'}
                     </span>
-                    <h3 className="text-lg font-bold text-white mt-1">{selectedCaseData.caratula}</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">{selectedCaseData.court} • Cliente: {selectedCaseData.client}</p>
+                    <h3 className={`text-lg font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{selectedCaseData.caratula}</h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">{selectedCaseData.court} • Cliente: {selectedCaseData.client}</p>
                   </div>
-                  <span className="bg-zinc-800 text-zinc-300 text-xs font-bold px-2.5 py-1 rounded">{selectedCaseData.status}</span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>{selectedCaseData.status}</span>
                 </div>
                 {selectedCaseData.notes && (
-                  <p className="text-xs bg-zinc-950 p-3 rounded border border-zinc-800 text-zinc-300">
+                  <p className={`text-xs p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>
                     💬 <strong>Observaciones:</strong> {selectedCaseData.notes}
                   </p>
                 )}
               </div>
 
-              <form onSubmit={handleAddMovementForCase} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4">
+              <form onSubmit={handleAddMovementForCase} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Movimiento / Actuación</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <input 
                     type="text" placeholder="Título de la actuación (Ej. Cédula / Decreto Audiencia)" 
                     value={newMovement.title} onChange={e => setNewMovement({...newMovement, title: e.target.value})}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                    className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                   />
                   <input 
                     type="date" value={newMovement.date} onChange={e => setNewMovement({...newMovement, date: e.target.value})}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                    className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                   />
                 </div>
 
                 <textarea 
                   placeholder="Detalle o texto de la actuación..."
                   value={newMovement.text} onChange={e => setNewMovement({...newMovement, text: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-20"
+                  className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 h-20 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                 />
 
-                <div className="bg-zinc-950 p-4 rounded-lg border border-zinc-800 space-y-3 text-xs">
-                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Automatizar desde este Movimiento:</p>
+                <div className={`p-4 rounded-lg border space-y-3 text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                  <p className="font-bold text-orange-500 uppercase text-[10px]">⚡ Automatizar desde este Movimiento:</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -1177,17 +1283,17 @@ export default function Home() {
                         onChange={e => setNewMovement({...newMovement, agendarEnGoogle: e.target.checked})}
                         className="w-4 h-4 accent-orange-500"
                       />
-                      <span className="text-orange-400 font-bold">📅 Agendar Audiencia / Reunión (Notif. 1 día y 3h antes)</span>
+                      <span className="text-orange-500 font-bold">📅 Agendar Audiencia / Reunión (Notif. 1 día y 3h antes)</span>
                     </label>
                   </div>
 
                   {newMovement.convertirATarea && (
-                    <div className="pt-2 border-t border-zinc-800 flex items-center gap-2">
-                      <span className="text-zinc-400">Prioridad de la Tarea:</span>
+                    <div className={`pt-2 border-t flex items-center gap-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <span className="text-zinc-500">Prioridad de la Tarea:</span>
                       <select 
                         value={newMovement.tareaPrioridad} 
                         onChange={e => setNewMovement({...newMovement, tareaPrioridad: e.target.value})}
-                        className="bg-zinc-900 border border-zinc-800 p-1.5 rounded text-white"
+                        className={`border p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="BAJA">BAJA</option>
                         <option value="MEDIA">MEDIA</option>
@@ -1197,12 +1303,12 @@ export default function Home() {
                   )}
 
                   {newMovement.agendarEnGoogle && (
-                    <div className="pt-3 border-t border-zinc-800 space-y-2">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo (Google Calendar):</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-900 p-3 rounded border border-zinc-800">
+                    <div className={`pt-3 border-t space-y-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <span className={`font-bold block ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Seleccionar Múltiples Mails del Equipo (Google Calendar):</span>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                         {teamEmails.filter(m => m !== '').length > 0 ? (
                           teamEmails.filter(m => m !== '').map((mail, idx) => (
-                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
+                            <label key={idx} className={`flex items-center gap-2 cursor-pointer ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-700 hover:text-zinc-900'}`}>
                               <input 
                                 type="checkbox" 
                                 checked={newMovement.googleMailsSeleccionados.includes(mail)}
@@ -1234,52 +1340,52 @@ export default function Home() {
                 </button>
               </form>
 
-              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
+              <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos</h4>
                 <div className="space-y-3">
                   {movements.filter(m => m.caseId === selectedCaseId).map(m => (
-                    <div key={m.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-2">
+                    <div key={m.id} className={`p-3 border rounded text-xs space-y-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       {editingMovementId === m.id ? (
                         <div className="space-y-2">
                           <input 
                             type="text" 
                             value={editMovementForm.title} 
                             onChange={e => setEditMovementForm({...editMovementForm, title: e.target.value})}
-                            className="w-full bg-zinc-900 border border-orange-500 p-2 rounded text-white"
+                            className={`w-full border border-orange-500 p-2 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
                           />
                           <input 
                             type="date" 
                             value={editMovementForm.date} 
                             onChange={e => setEditMovementForm({...editMovementForm, date: e.target.value})}
-                            className="w-full bg-zinc-900 border border-orange-500 p-2 rounded text-white"
+                            className={`w-full border border-orange-500 p-2 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
                           />
                           <textarea 
                             value={editMovementForm.text} 
                             onChange={e => setEditMovementForm({...editMovementForm, text: e.target.value})}
-                            className="w-full bg-zinc-900 border border-orange-500 p-2 rounded text-white h-16"
+                            className={`w-full border border-orange-500 p-2 rounded h-16 ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
                           />
                           <div className="flex gap-2">
                             <button onClick={() => handleSaveEditMovement(m.id)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded">Guardar Cambios</button>
-                            <button onClick={() => setEditingMovementId(null)} className="bg-zinc-800 text-zinc-300 px-3 py-1 rounded">Cancelar</button>
+                            <button onClick={() => setEditingMovementId(null)} className={`px-3 py-1 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>Cancelar</button>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <div className="flex justify-between items-center font-bold text-zinc-200">
-                            <span className="text-orange-400">{m.title}</span>
+                          <div className={`flex justify-between items-center font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                            <span className="text-orange-500">{m.title}</span>
                             <div className="flex items-center gap-3">
                               <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
-                              <button onClick={() => handleStartEditMovement(m)} className="text-zinc-400 hover:text-white px-2 py-0.5 bg-zinc-900 rounded border border-zinc-800" title="Editar Movimiento">✏️</button>
-                              <button onClick={() => handleDeleteMovement(m.id)} className="text-red-400 hover:text-red-300 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20" title="Eliminar Movimiento">🗑️</button>
+                              <button onClick={() => handleStartEditMovement(m)} className={`px-2 py-0.5 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-300 text-zinc-700'}`} title="Editar Movimiento">✏️</button>
+                              <button onClick={() => handleDeleteMovement(m.id)} className="text-red-500 hover:text-red-600 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20" title="Eliminar Movimiento">🗑️</button>
                             </div>
                           </div>
-                          {m.text && <p className="text-zinc-300 mt-1 whitespace-pre-wrap">{m.text}</p>}
+                          {m.text && <p className={`mt-1 whitespace-pre-wrap ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{m.text}</p>}
                         </>
                       )}
                     </div>
                   ))}
                   {movements.filter(m => m.caseId === selectedCaseId).length === 0 && (
-                    <p className="text-xs text-zinc-600">No hay actuaciones registradas.</p>
+                    <p className="text-xs text-zinc-500">No hay actuaciones registradas.</p>
                   )}
                 </div>
               </div>
@@ -1288,40 +1394,40 @@ export default function Home() {
           ) : selectedFiscalId && selectedFiscalData ? (
 
             <div className="space-y-6 relative z-10">
-              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
+              <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="bg-orange-500/10 text-orange-400 font-mono text-xs font-bold px-2.5 py-1 rounded border border-orange-500/20">
+                    <span className="bg-orange-500/10 text-orange-500 font-mono text-xs font-bold px-2.5 py-1 rounded border border-orange-500/20">
                       Nº Liquidación: {selectedFiscalData.nroLiquidacion}
                     </span>
-                    <span className="ml-2 text-xs font-bold bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded">
+                    <span className={`ml-2 text-xs font-bold px-2.5 py-1 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>
                       {selectedFiscalData.tributo}
                     </span>
-                    <h3 className="text-lg font-bold text-white mt-2">{selectedFiscalData.contribuyente}</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Juzgado: {selectedFiscalData.juzgado} • Estado: {selectedFiscalData.estadoFiscal}</p>
+                    <h3 className={`text-lg font-bold mt-2 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{selectedFiscalData.contribuyente}</h3>
+                    <p className="text-xs text-zinc-500 mt-0.5">Juzgado: {selectedFiscalData.juzgado} • Estado: {selectedFiscalData.estadoFiscal}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="bg-orange-500 text-black text-xs font-black px-3 py-1.5 rounded">{selectedFiscalData.monto}</span>
                     <button 
                       onClick={() => startEditingFiscal(selectedFiscalData)}
-                      className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700 transition-colors"
+                      className={`font-bold text-xs px-3 py-1.5 rounded border transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-orange-400 border-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200 text-orange-600 border-zinc-300'}`}
                     >
                       ✏️ Editar Fechas y Plazos
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-xs bg-zinc-950 p-3 rounded border border-zinc-800 mt-3">
+                <div className={`grid grid-cols-1 md:grid-cols-4 gap-2 text-xs p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                   <div>📅 <strong>Vto. Liquidación:</strong> {formatDateToArg(selectedFiscalData.fechaVencimientoLiquidacion) || 'No especificada'}</div>
-                  <div>⚠️ <strong className="text-amber-400">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
-                  <div>⏳ <strong className="text-red-400">Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
-                  <div>🔒 <strong className="text-purple-400">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
+                  <div>⚠️ <strong className="text-amber-500">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
+                  <div>⏳ <strong className="text-red-500">Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
+                  <div>🔒 <strong className="text-purple-500">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
                 </div>
 
-                <div className="pt-2 flex justify-between items-center bg-zinc-950 p-3 rounded border border-zinc-800 text-xs">
+                <div className={`pt-2 flex justify-between items-center p-3 rounded border text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                   <div>
-                    <span className="font-bold text-white">Estado de la Alerta Urgente:</span>
-                    <p className="text-[10px] text-zinc-400">Si ya contestó o controló la excepción, Dr., puede marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
+                    <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Estado de la Alerta Urgente:</span>
+                    <p className="text-[10px] text-zinc-500">Si ya contestó o controló la excepción, Dr., puede marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
                   </div>
                   <button 
                     onClick={() => {
@@ -1329,7 +1435,7 @@ export default function Home() {
                       setFiscalCases(updated);
                       updateFiscalCases(updated);
                     }}
-                    className={`px-3 py-1.5 rounded font-bold text-xs transition-colors ${selectedFiscalData.alertaExcepcionCumplida ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
+                    className={`px-3 py-1.5 rounded font-bold text-xs transition-colors ${selectedFiscalData.alertaExcepcionCumplida ? (isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700') : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
                   >
                     {selectedFiscalData.alertaExcepcionCumplida ? '✓ Alerta Cumplida (Hacer Visible)' : '✓ Marcar Alerta como Cumplida / Descartar'}
                   </button>
@@ -1337,41 +1443,41 @@ export default function Home() {
               </div>
 
               {isEditingFiscal && (
-                <form onSubmit={handleSaveEditFiscal} className="bg-zinc-900 border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl">
-                  <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
+                <form onSubmit={handleSaveEditFiscal} className={`border border-orange-500/50 p-5 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
+                  <div className={`flex justify-between items-center border-b pb-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Edición Completa de Datos y Plazos Fiscales</h4>
-                    <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-white text-xs">✕ Cancelar</button>
+                    <button type="button" onClick={() => setIsEditingFiscal(false)} className="text-zinc-400 hover:text-orange-500 text-xs">✕ Cancelar</button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
-                      <label className="text-zinc-400 block mb-1">Contribuyente:</label>
+                      <label className="text-zinc-500 block mb-1">Contribuyente:</label>
                       <input 
                         type="text" 
                         value={editFiscalForm.contribuyente || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, contribuyente: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Nº de Liquidación:</label>
+                      <label className="text-zinc-500 block mb-1">Nº de Liquidación:</label>
                       <input 
                         type="text" 
                         value={editFiscalForm.nroLiquidacion || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, nroLiquidacion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Monto ($):</label>
+                      <label className="text-zinc-500 block mb-1">Monto ($):</label>
                       <input 
                         type="text" 
                         value={editFiscalForm.monto || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, monto: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1 font-bold text-orange-400">Fecha Vto. Liquidación (Inicia Prescripción):</label>
+                      <label className="block mb-1 font-bold text-orange-500">Fecha Vto. Liquidación (Inicia Prescripción):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.fechaVencimientoLiquidacion || ''} 
@@ -1385,43 +1491,43 @@ export default function Home() {
                           }
                           setEditFiscalForm({...editFiscalForm, fechaVencimientoLiquidacion: val, plazoPrescripcion: newPresc});
                         }}
-                        className="w-full bg-zinc-950 border border-orange-500 p-2.5 rounded text-white outline-none"
+                        className={`w-full border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Fecha Notificación Demanda:</label>
+                      <label className="text-zinc-500 block mb-1">Fecha Notificación Demanda:</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.fechaNotificacion || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, fechaNotificacion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Vencimiento Excepción (3d):</label>
+                      <label className="text-zinc-500 block mb-1">Vencimiento Excepción (3d):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoExcepcionesFecha || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, plazoExcepcionesFecha: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Plazo Perención (Editable):</label>
+                      <label className="text-zinc-500 block mb-1">Plazo Perención (Editable):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoPerencion || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, plazoPerencion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <div>
-                      <label className="text-zinc-400 block mb-1">Plazo Prescripción (Editable):</label>
+                      <label className="text-zinc-500 block mb-1">Plazo Prescripción (Editable):</label>
                       <input 
                         type="date" 
                         value={editFiscalForm.plazoPrescripcion || ''} 
                         onChange={e => setEditFiscalForm({...editFiscalForm, plazoPrescripcion: e.target.value})}
-                        className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                   </div>
@@ -1431,7 +1537,7 @@ export default function Home() {
                 </form>
               )}
 
-              <form onSubmit={handleAddFiscalMovement} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-4">
+              <form onSubmit={handleAddFiscalMovement} className={`border p-4 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Nuevo Movimiento Procesal (Actualiza Perención)</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                   <select 
@@ -1440,7 +1546,7 @@ export default function Home() {
                       const val = e.target.value;
                       setNewFiscalMovement({...newFiscalMovement, estadoProcesal: val, title: val});
                     }}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                    className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                   >
                     <option value="NOTIFICACIÓN DE DEMANDA (3 días excepciones)">Cédula / CIDI: Notificación de Demanda (Corre plazo 3 días)</option>
                     <option value="CONTESTACIÓN DE EXCEPCIONES">Oposición / Contestación de Excepciones (Contestar traslado)</option>
@@ -1453,7 +1559,7 @@ export default function Home() {
                     type="date" 
                     value={newFiscalMovement.date} 
                     onChange={e => setNewFiscalMovement({...newFiscalMovement, date: e.target.value})}
-                    className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                    className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                   />
                 </div>
 
@@ -1461,11 +1567,11 @@ export default function Home() {
                   placeholder="Detalle o texto de la actuación procesal..."
                   value={newFiscalMovement.text} 
                   onChange={e => setNewFiscalMovement({...newFiscalMovement, text: e.target.value})}
-                  className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                  className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 h-16 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                 />
 
-                <div className="bg-zinc-950 p-3 rounded border border-zinc-800 space-y-3 text-xs">
-                  <p className="font-bold text-orange-400 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard y Calendario:</p>
+                <div className={`p-3 rounded border space-y-3 text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                  <p className="font-bold text-orange-500 uppercase text-[10px]">⚡ Opciones de Automatización para el Dashboard y Calendario:</p>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -1495,17 +1601,17 @@ export default function Home() {
                         onChange={e => setNewFiscalMovement({...newFiscalMovement, agendarEnGoogle: e.target.checked})}
                         className="w-4 h-4 accent-orange-500"
                       />
-                      <span className="text-orange-400 font-bold">📅 Agendar en Google Calendar</span>
+                      <span className="text-orange-500 font-bold">📅 Agendar en Google Calendar</span>
                     </label>
                   </div>
 
                   {newFiscalMovement.agendarEnGoogle && (
-                    <div className="pt-3 border-t border-zinc-800 space-y-2">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo:</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-900 p-3 rounded border border-zinc-800">
+                    <div className={`pt-3 border-t space-y-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <span className={`font-bold block ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Seleccionar Múltiples Mails del Equipo:</span>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                         {teamEmails.filter(m => m !== '').length > 0 ? (
                           teamEmails.filter(m => m !== '').map((mail, idx) => (
-                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
+                            <label key={idx} className={`flex items-center gap-2 cursor-pointer ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-700 hover:text-zinc-900'}`}>
                               <input 
                                 type="checkbox" 
                                 checked={newFiscalMovement.googleMailsSeleccionados.includes(mail)}
@@ -1537,20 +1643,20 @@ export default function Home() {
                 </button>
               </form>
 
-              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3">
+              <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Actuaciones</h4>
                 <div className="space-y-2">
                   {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).map(fm => (
-                    <div key={fm.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded text-xs space-y-1">
-                      <div className="flex justify-between font-bold text-zinc-200">
+                    <div key={fm.id} className={`p-3 border rounded text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <div className={`flex justify-between font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
                         <span>{fm.title}</span>
                         <span className="text-zinc-500">{formatDateToArg(fm.date)}</span>
                       </div>
-                      {fm.text && <p className="text-zinc-400">{fm.text}</p>}
+                      {fm.text && <p className="text-zinc-500">{fm.text}</p>}
                     </div>
                   ))}
                   {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).length === 0 && (
-                    <p className="text-xs text-zinc-600">No hay movimientos registrados para esta liquidación.</p>
+                    <p className="text-xs text-zinc-500">No hay movimientos registrados para esta liquidación.</p>
                   )}
                 </div>
               </div>
@@ -1562,61 +1668,61 @@ export default function Home() {
                 <div className="space-y-6 relative z-10">
                   <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none -z-10 select-none">
                     <span className="text-[280px] font-black text-orange-500 tracking-tighter">M</span>
-                    <span className="text-[280px] font-black text-zinc-400 tracking-tighter">M</span>
+                    <span className={`text-[280px] font-black tracking-tighter ${isDarkMode ? 'text-zinc-400' : 'text-zinc-300'}`}>M</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                    <div className={`border p-4 rounded-xl shadow-lg backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <span className="text-[10px] font-bold text-zinc-500 uppercase">Causas / Liquidaciones</span>
-                      <h3 className="text-3xl font-black text-white mt-1">{cases.length + fiscalCases.length}</h3>
+                      <h3 className={`text-3xl font-black mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{cases.length + fiscalCases.length}</h3>
                       <p className="text-[10px] text-orange-500 font-semibold mt-1">Expedientes y Títulos Fiscales</p>
                     </div>
 
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                    <div className={`border p-4 rounded-xl shadow-lg backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <span className="text-[10px] font-bold text-zinc-500 uppercase">Plazos Pendientes</span>
                       <h3 className="text-3xl font-black text-orange-500 mt-1">{deadlines.filter(d => d.status === 'PENDIENTE').length}</h3>
-                      <p className="text-[10px] text-zinc-400 mt-1">Con vencimiento procesal</p>
+                      <p className="text-[10px] text-zinc-500 mt-1">Con vencimiento procesal</p>
                     </div>
 
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                    <div className={`border p-4 rounded-xl shadow-lg backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <span className="text-[10px] font-bold text-zinc-500 uppercase">Tareas Pendientes</span>
-                      <h3 className="text-3xl font-black text-white mt-1">{tasks.filter(t => !t.completed).length}</h3>
+                      <h3 className={`text-3xl font-black mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{tasks.filter(t => !t.completed).length}</h3>
                       <div className="flex gap-2 mt-2 text-[10px] font-bold">
-                        <span className="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded border border-red-500/30">
+                        <span className="bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded border border-red-500/30">
                           {tasks.filter(t => !t.completed && t.priority === 'ALTA').length} Altas
                         </span>
-                        <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30">
+                        <span className="bg-amber-500/20 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/30">
                           {tasks.filter(t => !t.completed && t.priority === 'MEDIA').length} Med
                         </span>
-                        <span className="bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">
+                        <span className={`px-1.5 py-0.5 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600'}`}>
                           {tasks.filter(t => !t.completed && t.priority === 'BAJA').length} Bajas
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-4 rounded-xl shadow-lg">
+                    <div className={`border p-4 rounded-xl shadow-lg backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <span className="text-[10px] font-bold text-zinc-500 uppercase">Audiencias Agendadas</span>
-                      <h3 className="text-3xl font-black text-white mt-1">{hearings.filter(h => h.status === 'PENDIENTE').length}</h3>
-                      <p className="text-[10px] text-orange-400 font-semibold mt-1">Pendientes de celebración</p>
+                      <h3 className={`text-3xl font-black mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{hearings.filter(h => h.status === 'PENDIENTE').length}</h3>
+                      <p className="text-[10px] text-orange-500 font-semibold mt-1">Pendientes de celebración</p>
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl space-y-3">
+                  <div className={`border p-5 rounded-xl space-y-3 backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                     <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
                     {urgentFiscalAlerts.length > 0 ? (
                       <div className="space-y-2">
                         {urgentFiscalAlerts.map(fc => (
                           <div 
                             key={fc.id} 
-                            className="p-3 bg-zinc-950 border border-amber-500/40 rounded flex justify-between items-center text-xs"
+                            className={`p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950' : 'bg-amber-50/50'}`}
                           >
                             <div>
-                              <span className="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+                              <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
                                 VENCE PRONTO
                               </span>
-                              <span className="font-bold text-white text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
-                              <p className="text-[11px] text-zinc-400 mt-1">
-                                Vencimiento Excepción (Demandado): <strong className="text-amber-400">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong>
+                              <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+                              <p className="text-[11px] text-zinc-500 mt-1">
+                                Vencimiento Excepción (Demandado): <strong className="text-amber-500">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong>
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1632,7 +1738,7 @@ export default function Home() {
                                   setFiscalCases(updated);
                                   updateFiscalCases(updated);
                                 }}
-                                className="bg-zinc-800 hover:bg-zinc-700 text-emerald-400 font-bold text-xs px-3 py-1.5 rounded border border-zinc-700"
+                                className={`font-bold text-xs px-3 py-1.5 rounded border transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200 text-emerald-600 border-zinc-300'}`}
                                 title="Descartar o marcar alerta como cumplida"
                               >
                                 ✓ Cumplida
@@ -1642,23 +1748,23 @@ export default function Home() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-500 italic bg-zinc-950 p-3 rounded border border-zinc-800">
+                      <p className={`text-xs italic p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-500' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
                         No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días, Dr. Todo al día.
                       </p>
                     )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl">
+                    <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
                       <div className="space-y-2">
                         {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
-                          <div key={d.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
+                          <div key={d.id} className={`p-3 border rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                             <div>
-                              <p className="font-bold text-white">{d.title}</p>
+                              <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{d.title}</p>
                               <p className="text-[10px] text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
                             </div>
-                            <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">
+                            <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px]">
                               PENDIENTE
                             </span>
                           </div>
@@ -1666,14 +1772,14 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 p-5 rounded-xl">
+                    <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Tareas de Mayor Urgencia</h4>
                       <div className="space-y-2">
                         {tasks.filter(t => !t.completed).map(t => (
-                          <div key={t.id} className="p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs">
-                            <span className="font-bold text-zinc-200">{t.title}</span>
+                          <div key={t.id} className={`p-3 border rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            <span className={`font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>{t.title}</span>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                              t.priority === 'ALTA' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400'
+                              t.priority === 'ALTA' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-amber-500/20 text-amber-500'
                             }`}>
                               {t.priority}
                             </span>
@@ -1694,28 +1800,28 @@ export default function Home() {
                     const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
                     updateCases([...cases, created]);
                     setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
-                  }} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  }} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
                         type="text" placeholder="Nº de Expediente (ej. EXP-1002/2026)" 
                         value={newCase.number} onChange={e => setNewCase({...newCase, number: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="text" placeholder="Carátula completa" 
                         value={newCase.caratula} onChange={e => setNewCase({...newCase, caratula: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="text" placeholder="Juzgado / Tribunal" 
                         value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <select 
                         value={newCase.client} 
                         onChange={e => setNewCase({...newCase, client: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="">Seleccionar Cliente Asociado...</option>
                         {clients.map(c => (
@@ -1725,7 +1831,7 @@ export default function Home() {
                       <select 
                         value={newCase.processType} 
                         onChange={e => setNewCase({...newCase, processType: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="JUDICIAL">Tipo de Proceso: CAUSA JUDICIAL</option>
                         <option value="EXTRAJUDICIAL">Tipo de Proceso: TRÁMITE EXTRAJUDICIAL / MEDIACIÓN</option>
@@ -1734,7 +1840,7 @@ export default function Home() {
                     <textarea 
                       placeholder="Observaciones..."
                       value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 h-16 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                     />
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
                       Guardar Expediente
@@ -1742,21 +1848,21 @@ export default function Home() {
                   </form>
 
                   <div className="space-y-3">
-                    <p className="text-xs text-zinc-400 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar, Dr.:</p>
+                    <p className="text-xs text-zinc-500 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar, Dr.:</p>
                     {cases.map(c => (
                       <div 
                         key={c.id} 
-                        className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-2 transition-all flex justify-between items-center"
+                        className={`border p-4 rounded-xl space-y-2 transition-all flex justify-between items-center ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}
                       >
                         <div onClick={() => setSelectedCaseId(c.id)} className="cursor-pointer flex-1">
-                          <span className="bg-orange-500/10 text-orange-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                          <span className="bg-orange-500/10 text-orange-500 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
                             {c.number}
                           </span>
-                          <span className="ml-2 text-[10px] font-bold bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">
+                          <span className={`ml-2 text-[10px] font-bold px-2 py-0.5 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-700'}`}>
                             {c.processType || 'JUDICIAL'}
                           </span>
-                          <h4 className="font-bold text-white text-sm mt-1">{c.caratula}</h4>
-                          <p className="text-xs text-zinc-400">{c.court} • Cliente: {c.client}</p>
+                          <h4 className={`font-bold text-sm mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{c.caratula}</h4>
+                          <p className="text-xs text-zinc-500">{c.court} • Cliente: {c.client}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button onClick={() => setSelectedCaseId(c.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
@@ -1764,7 +1870,7 @@ export default function Home() {
                           </button>
                           <button 
                             onClick={() => deleteCase(c.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                           >
                             🗑️ Eliminar
                           </button>
@@ -1777,12 +1883,12 @@ export default function Home() {
 
               {activeTab === 'movimientos' && (
                 <div className="space-y-6 relative z-10">
-                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  <div className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Consultar Movimientos por Causa</h4>
                     <select 
                       value={selectedCaseId || ''} 
                       onChange={e => setSelectedCaseId(e.target.value || null)}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                     >
                       <option value="">Ver Todos los Movimientos</option>
                       {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
@@ -1794,13 +1900,13 @@ export default function Home() {
                         .map(m => {
                           const caseInfo = cases.find(c => c.id === m.caseId);
                           return (
-                            <div key={m.id} className="bg-zinc-950 border border-zinc-800 p-3 rounded-lg text-xs space-y-1">
+                            <div key={m.id} className={`border p-3 rounded-lg text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                               <div className="flex justify-between items-center">
-                                <span className="font-bold text-orange-400">{m.title}</span>
+                                <span className="font-bold text-orange-500">{m.title}</span>
                                 <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
                               </div>
                               {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number} - {caseInfo.caratula}</p>}
-                              {m.text && <p className="text-zinc-300 mt-1">{m.text}</p>}
+                              {m.text && <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{m.text}</p>}
                             </div>
                           );
                         })}
@@ -1811,12 +1917,12 @@ export default function Home() {
 
               {activeTab === 'plazos' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddDeadline} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  <form onSubmit={handleAddDeadline} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Plazo Procesal</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <select 
                         value={newDeadline.caseId} onChange={e => setNewDeadline({...newDeadline, caseId: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="">Seleccionar Expediente...</option>
                         {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
@@ -1824,16 +1930,16 @@ export default function Home() {
                       <input 
                         type="text" placeholder="Descripción del Plazo (ej. Traslado Demanda)" 
                         value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="date" value={newDeadline.dueDate} onChange={e => setNewDeadline({...newDeadline, dueDate: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="number" placeholder="Días hábiles (ej. 5)" 
                         value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
@@ -1844,22 +1950,22 @@ export default function Home() {
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Registrados</h4>
                     {deadlines.map(d => (
-                      <div key={d.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                      <div key={d.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <div>
-                          {d.isAI && <span className="bg-orange-500/20 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
-                          <h4 className="font-bold text-white">{d.title}</h4>
+                          {d.isAI && <span className="bg-orange-500/20 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
+                          <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{d.title}</h4>
                           <p className="text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <button 
                             onClick={() => updateDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: x.status === 'CUMPLIDO' ? 'PENDIENTE' : 'CUMPLIDO'} : x))}
-                            className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? 'bg-zinc-800 text-zinc-400' : 'bg-orange-500 text-black'}`}
+                            className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? (isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600') : 'bg-orange-500 text-black'}`}
                           >
                             {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
                           </button>
                           <button 
                             onClick={() => deleteDeadline(d.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                           >
                             🗑️ Eliminar
                           </button>
@@ -1872,8 +1978,8 @@ export default function Home() {
 
               {activeTab === 'ia_asistente' && (
                 <div className="flex h-[calc(100vh-100px)] gap-4 relative z-10">
-                  <div className="w-72 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col justify-between shrink-0 overflow-hidden">
-                    <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+                  <div className={`w-72 border rounded-xl flex flex-col justify-between shrink-0 overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                       <span className="text-xs font-bold text-orange-500 uppercase">Historial de Consultas IA</span>
                       <button 
                         onClick={createNewChat}
@@ -1890,14 +1996,14 @@ export default function Home() {
                           onClick={() => setActiveChatId(sess.id)}
                           className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all ${
                             activeChatId === sess.id 
-                              ? 'bg-zinc-800 text-white font-bold border-l-4 border-orange-500' 
-                              : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'
+                              ? (isDarkMode ? 'bg-zinc-800 text-white font-bold border-l-4 border-orange-500' : 'bg-orange-50 text-orange-900 font-bold border-l-4 border-orange-500')
+                              : (isDarkMode ? 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900')
                           }`}
                         >
                           <span className="truncate pr-2">{sess.title}</span>
                           <button 
                             onClick={(e) => deleteChatSession(sess.id, e)}
-                            className="text-zinc-500 hover:text-red-400 p-1"
+                            className="text-zinc-400 hover:text-red-500 p-1"
                             title="Borrar chat"
                           >
                             🗑️
@@ -1906,13 +2012,13 @@ export default function Home() {
                       ))}
                     </div>
 
-                    <div className="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
-                      <span className="text-[10px] font-bold text-orange-400 uppercase block">📚 Leyes y Fuentes Indexadas:</span>
+                    <div className={`p-4 border-t space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <span className="text-[10px] font-bold text-orange-500 uppercase block">📚 Leyes y Fuentes Indexadas:</span>
                       <div className="max-h-28 overflow-y-auto space-y-1">
                         {knowledgeSources.map(ks => (
-                          <div key={ks.id} className="flex justify-between items-center text-[11px] bg-zinc-900 p-1.5 rounded border border-zinc-800 text-zinc-300">
+                          <div key={ks.id} className={`flex justify-between items-center text-[11px] p-1.5 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700'}`}>
                             <span className="truncate pr-2">{ks.name}</span>
-                            <button onClick={() => deleteKnowledgeSource(ks.id)} className="text-zinc-500 hover:text-red-400">✕</button>
+                            <button onClick={() => deleteKnowledgeSource(ks.id)} className="text-zinc-400 hover:text-red-500">✕</button>
                           </div>
                         ))}
                       </div>
@@ -1923,22 +2029,22 @@ export default function Home() {
                           placeholder="Nueva Ley / Doctrina (ej. Ley 24.522)"
                           value={newSourceTitle}
                           onChange={e => setNewSourceTitle(e.target.value)}
-                          className="w-full bg-zinc-900 border border-zinc-800 p-2 rounded text-[11px] text-white outline-none focus:border-orange-500"
+                          className={`w-full border p-2 rounded text-[11px] outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
                         />
-                        <button type="submit" className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[10px] py-1.5 rounded transition-colors">
+                        <button type="submit" className={`w-full font-bold text-[10px] py-1.5 rounded transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' : 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'}`}>
                           + Agregar Fuente a la IA
                         </button>
                       </form>
                     </div>
                   </div>
 
-                  <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col justify-between overflow-hidden">
-                    <div className="p-4 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
+                  <div className={`border rounded-xl flex flex-col justify-between overflow-hidden flex-1 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <div>
-                        <h3 className="text-xs font-bold text-white uppercase tracking-wider">Asistente Jurídico Inteligente</h3>
-                        <p className="text-[10px] text-zinc-400">Entrenado con legislación argentina, doctrina concursal y procesal, Dr.</p>
+                        <h3 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Asistente Jurídico Inteligente</h3>
+                        <p className="text-[10px] text-zinc-500">Entrenado con legislación argentina, doctrina concursal y procesal, Dr.</p>
                       </div>
-                      <span className="bg-emerald-500/10 text-emerald-400 font-bold px-2.5 py-1 rounded text-[10px] border border-emerald-500/20">
+                      <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2.5 py-1 rounded text-[10px] border border-emerald-500/20">
                         ● IA Activa en Línea
                       </span>
                     </div>
@@ -1949,7 +2055,7 @@ export default function Home() {
                           <div className={`max-w-[80%] p-3.5 rounded-xl leading-relaxed ${
                             msg.role === 'user' 
                               ? 'bg-orange-500 text-black font-semibold shadow-md' 
-                              : 'bg-zinc-950 text-zinc-200 border border-zinc-800 shadow-inner'
+                              : (isDarkMode ? 'bg-zinc-950 text-zinc-200 border border-zinc-800 shadow-inner' : 'bg-zinc-100 text-zinc-800 border border-zinc-200 shadow-inner')
                           }`}>
                             <p className="whitespace-pre-wrap">{msg.content}</p>
                           </div>
@@ -1957,7 +2063,7 @@ export default function Home() {
                       ))}
                     </div>
 
-                    <form onSubmit={handleSendMessage} className="p-4 border-t border-zinc-800 bg-zinc-950 flex items-center gap-3">
+                    <form onSubmit={handleSendMessage} className={`p-4 border-t flex items-center gap-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <button 
                         type="button" 
                         onClick={startVoiceDictation}
@@ -1965,7 +2071,7 @@ export default function Home() {
                         className={`p-3 rounded-xl border transition-all ${
                           isListening 
                             ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-lg shadow-red-500/50' 
-                            : 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800'
+                            : (isDarkMode ? 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800' : 'bg-white text-orange-600 border-zinc-300 hover:bg-zinc-100')
                         }`}
                       >
                         🎙️
@@ -1976,7 +2082,7 @@ export default function Home() {
                         placeholder={isListening ? "Escuchando su voz, Dr...." : "Escriba su consulta jurídica o dictela por micrófono..."}
                         value={chatInput}
                         onChange={e => setChatInput(e.target.value)}
-                        className="flex-1 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-xs text-white outline-none focus:border-orange-500 transition-colors"
+                        className={`flex-1 border p-3 rounded-xl text-xs outline-none focus:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
                       />
 
                       <button 
@@ -1993,11 +2099,11 @@ export default function Home() {
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
                   {/* CALENDARIO ORIGINAL AVANZADO MULTI-AÑO Y FERIADOS NACIONALES ARGENTINA CON LISTADO DETALLADO ABAJO */}
-                  <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4 shadow-xl">
-                    <div className="flex flex-col md:flex-row justify-between items-center border-b border-zinc-800 pb-3 gap-3">
+                  <div className={`border p-5 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    <div className={`flex flex-col md:flex-row justify-between items-center border-b pb-3 gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                       <div>
                         <h3 className="text-sm font-bold text-orange-500 uppercase">📅 Calendario Institucional Interactivo (Feriados Argentina & Múltiples Años)</h3>
-                        <p className="text-xs text-zinc-400">Navegue por cualquier año y mes. Los feriados oficiales nacionales se marcan en rojo y las audiencias en naranja.</p>
+                        <p className="text-xs text-zinc-500">Navegue por cualquier año y mes. Los feriados oficiales nacionales se marcan en rojo y las audiencias en naranja.</p>
                       </div>
 
                       {/* SELECTORES DE MES Y AÑO ORIGINALES */}
@@ -2005,7 +2111,7 @@ export default function Home() {
                         <select 
                           value={currentCalendarMonth}
                           onChange={(e) => setCurrentCalendarMonth(parseInt(e.target.value))}
-                          className="bg-zinc-950 border border-zinc-800 text-white text-xs font-bold p-2 rounded outline-none focus:border-orange-500"
+                          className={`border text-xs font-bold p-2 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         >
                           {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((mName, mIdx) => (
                             <option key={mIdx} value={mIdx}>{mName}</option>
@@ -2015,7 +2121,7 @@ export default function Home() {
                         <select 
                           value={currentCalendarYear}
                           onChange={(e) => setCurrentCalendarYear(parseInt(e.target.value))}
-                          className="bg-zinc-950 border border-zinc-800 text-white text-xs font-bold p-2 rounded outline-none focus:border-orange-500"
+                          className={`border text-xs font-bold p-2 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         >
                           {Array.from({ length: 11 }, (_, i) => 2024 + i).map(yr => (
                             <option key={yr} value={yr}>{yr}</option>
@@ -2028,7 +2134,7 @@ export default function Home() {
                             setCurrentCalendarYear(now.getFullYear());
                             setCurrentCalendarMonth(now.getMonth());
                           }}
-                          className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-3 py-2 rounded border border-zinc-700 transition-colors"
+                          className={`font-bold text-xs px-3 py-2 rounded border transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-orange-400 border-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200 text-orange-600 border-zinc-300'}`}
                         >
                           Hoy
                         </button>
@@ -2045,7 +2151,7 @@ export default function Home() {
 
                       const daysGrid = [];
                       for (let i = 0; i < firstDayIndex; i++) {
-                        daysGrid.push(<div key={`empty-${i}`} className="min-h-[85px] bg-zinc-950/40 border border-zinc-900 rounded opacity-30"></div>);
+                        daysGrid.push(<div key={`empty-${i}`} className={`min-h-[85px] border rounded opacity-30 ${isDarkMode ? 'bg-zinc-950/40 border-zinc-900' : 'bg-zinc-100 border-zinc-200'}`}></div>);
                       }
 
                       for (let d = 1; d <= totalDaysInMonth; d++) {
@@ -2063,17 +2169,17 @@ export default function Home() {
                             className={`min-h-[90px] border p-2 rounded flex flex-col justify-between text-left transition-all ${
                               isToday ? 'border-orange-500 bg-orange-500/10' :
                               holidayName ? 'border-red-500/50 bg-red-500/5' :
-                              dayHearings.length > 0 ? 'border-amber-500 bg-amber-500/5' : 'border-zinc-800/80 bg-zinc-950 hover:border-zinc-700'
+                              dayHearings.length > 0 ? 'border-amber-500 bg-amber-500/5' : (isDarkMode ? 'border-zinc-800/80 bg-zinc-950 hover:border-zinc-700' : 'border-zinc-300 bg-zinc-50 hover:border-zinc-400')
                             }`}
                           >
                             <div className="flex justify-between items-center">
-                              <span className={`font-bold text-xs ${isToday ? 'text-orange-400 underline' : 'text-zinc-300'}`}>{d}</span>
+                              <span className={`font-bold text-xs ${isToday ? 'text-orange-500 underline' : (isDarkMode ? 'text-zinc-300' : 'text-zinc-800')}`}>{d}</span>
                               {holidayName && <span className="text-[8px] bg-red-500 text-white font-bold px-1 rounded uppercase tracking-tighter" title={holidayName}>Feriado</span>}
                             </div>
 
                             <div className="space-y-1 overflow-y-auto max-h-[55px]">
                               {holidayName && (
-                                <div className="text-[9px] text-red-400 font-bold truncate">🎉 {holidayName}</div>
+                                <div className="text-[9px] text-red-500 font-bold truncate">🎉 {holidayName}</div>
                               )}
                               {dayHearings.map(h => (
                                 <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded truncate shadow" title={`${h.title} (${h.tipoAudiencia})`}>
@@ -2088,7 +2194,7 @@ export default function Home() {
                       return (
                         <div className="grid grid-cols-7 gap-2 text-center text-xs">
                           {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-                            <div key={day} className="font-bold text-orange-400 bg-zinc-950 p-2 rounded border border-zinc-800 uppercase text-[10px]">
+                            <div key={day} className={`font-bold text-orange-500 p-2 rounded border uppercase text-[10px] ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}>
                               {day}
                             </div>
                           ))}
@@ -2098,9 +2204,9 @@ export default function Home() {
                     })()}
 
                     {/* NUEVO PANEL DESPLEGABLE / LISTADO DE FERIADOS DEL MES SELECCIONADO CON PUNTOS */}
-                    <div className="mt-4 pt-4 border-t border-zinc-800 space-y-2">
-                      <h4 className="text-xs font-bold text-orange-400 uppercase">📌 Detalle de Feriados y Días Inhábiles del Mes Seleccionado ({['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][currentCalendarMonth]} {currentCalendarYear}):</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                    <div className={`mt-4 pt-4 border-t space-y-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">📌 Detalle de Feriados y Días Inhábiles del Mes Seleccionado ({['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][currentCalendarMonth]} {currentCalendarYear}):</h4>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                         {(() => {
                           const holidays = getArgentineHolidays(currentCalendarYear);
                           const monthPrefix = `${currentCalendarYear}-${(currentCalendarMonth + 1) < 10 ? '0' + (currentCalendarMonth + 1) : (currentCalendarMonth + 1)}`;
@@ -2114,12 +2220,12 @@ export default function Home() {
                             const parts = dateStr.split('-');
                             const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
                             return (
-                              <div key={dateStr} className="flex items-start gap-2 text-xs bg-zinc-900 p-2 rounded border border-zinc-800/60">
+                              <div key={dateStr} className={`flex items-start gap-2 text-xs p-2 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800/60' : 'bg-white border-zinc-200'}`}>
                                 <span className="w-2 h-2 rounded-full bg-red-500 mt-1 shrink-0"></span>
                                 <div>
-                                  <span className="font-bold text-orange-300 font-mono">{formattedDate}:</span>{' '}
-                                  <strong className="text-white">{motivo}</strong>
-                                  <p className="text-[10px] text-zinc-400 mt-0.5">Asueto oficial / Inhábil procesal</p>
+                                  <span className={`font-bold font-mono ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>{formattedDate}:</span>{' '}
+                                  <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{motivo}</strong>
+                                  <p className="text-[10px] text-zinc-500 mt-0.5">Asueto oficial / Inhábil procesal</p>
                                 </div>
                               </div>
                             );
@@ -2130,25 +2236,25 @@ export default function Home() {
                   </div>
 
                   {/* FORMULARIO DE CARGA DE AUDIENCIA ENRIQUECIDO */}
-                  <form onSubmit={handleAddHearingAndSyncGoogle} className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4">
+                  <form onSubmit={handleAddHearingAndSyncGoogle} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Sincronizar Nueva Audiencia (Bidireccional y Google Calendar)</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <input 
                         type="text" placeholder="Título o Carátula de la Audiencia" 
                         value={newHearing.title} onChange={e => setNewHearing({...newHearing, title: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       
                       <input 
                         type="datetime-local" value={newHearing.date} onChange={e => setNewHearing({...newHearing, date: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
 
                       <select 
                         value={newHearing.tipoAudiencia} 
                         onChange={e => setNewHearing({...newHearing, tipoAudiencia: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="Preliminar">Tipo: Preliminar</option>
                         <option value="Vista de Causa">Tipo: Vista de Causa</option>
@@ -2161,7 +2267,7 @@ export default function Home() {
                       <select 
                         value={newHearing.modalidad} 
                         onChange={e => setNewHearing({...newHearing, modalidad: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="Presencial">Modalidad: Presencial</option>
                         <option value="Zoom">Modalidad: Zoom</option>
@@ -2172,28 +2278,28 @@ export default function Home() {
                       <input 
                         type="text" placeholder="Juzgado / Dependencia / Ubicación" 
                         value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
 
                       <input 
                         type="text" placeholder="Enlace de Videollamada (Zoom, Meet, etc.)" 
                         value={newHearing.enlaceVideo} onChange={e => setNewHearing({...newHearing, enlaceVideo: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-3"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
 
                     <textarea 
                       placeholder="Observaciones adicionales, instrucciones o documentación a llevar..."
                       value={newHearing.observaciones} onChange={e => setNewHearing({...newHearing, observaciones: e.target.value})}
-                      className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500 h-16"
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 h-16 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                     />
 
                     <div className="space-y-2 text-xs">
-                      <span className="text-zinc-300 font-bold block">Seleccionar Múltiples Mails del Equipo para Notificación:</span>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-950 p-3 rounded border border-zinc-800">
+                      <span className={`font-bold block ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Seleccionar Múltiples Mails del Equipo para Notificación:</span>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                         {teamEmails.filter(m => m !== '').length > 0 ? (
                           teamEmails.filter(m => m !== '').map((mail, idx) => (
-                            <label key={idx} className="flex items-center gap-2 cursor-pointer text-zinc-300 hover:text-white">
+                            <label key={idx} className={`flex items-center gap-2 cursor-pointer ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-700 hover:text-zinc-900'}`}>
                               <input 
                                 type="checkbox" 
                                 checked={newHearing.assignedMails.includes(mail)}
@@ -2227,43 +2333,43 @@ export default function Home() {
                   <div className="space-y-3">
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Listado General de Audiencias y Comparendos</h4>
                     {hearings.map(h => (
-                      <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2 shadow">
+                      <div key={h.id} className={`border p-4 rounded-xl text-xs space-y-2 shadow ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'}`}>
+                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${h.status === 'REALIZADA' ? (isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500') : 'bg-orange-500/20 text-orange-500 border border-orange-500/30'}`}>
                               {h.status === 'REALIZADA' ? '✓ REALIZADA / TOMADA' : 'PENDIENTE'}
                             </span>
-                            <span className="bg-zinc-800 text-zinc-300 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>
                               {h.tipoAudiencia || 'General'} • {h.modalidad || 'Presencial'}
                             </span>
                           </div>
-                          <span className="text-orange-400 font-bold font-mono">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                          <span className="text-orange-500 font-bold font-mono">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
                         </div>
 
-                        <h4 className={`font-bold text-sm ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : 'text-white'}`}>
+                        <h4 className={`font-bold text-sm ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : (isDarkMode ? 'text-white' : 'text-zinc-900')}`}>
                           {h.title}
                         </h4>
                         
-                        <p className="text-zinc-400">📍 <strong>Dependencia:</strong> {h.location}</p>
+                        <p className="text-zinc-500">📍 <strong>Dependencia:</strong> {h.location}</p>
                         {h.enlaceVideo && (
-                          <p className="text-orange-400">🔗 <strong>Enlace de Videollamada:</strong> <a href={h.enlaceVideo} target="_blank" rel="noreferrer" className="underline">{h.enlaceVideo}</a></p>
+                          <p className="text-orange-500">🔗 <strong>Enlace de Videollamada:</strong> <a href={h.enlaceVideo} target="_blank" rel="noreferrer" className="underline">{h.enlaceVideo}</a></p>
                         )}
                         {h.observaciones && (
-                          <p className="text-zinc-300 bg-zinc-950 p-2.5 rounded border border-zinc-800 mt-1">
+                          <p className={`p-2.5 rounded border mt-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>
                             💬 <strong>Observaciones:</strong> {h.observaciones}
                           </p>
                         )}
                         
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                        <div className={`flex items-center justify-between pt-2 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                           <button 
                             onClick={() => toggleHearingStatus(h.id)}
-                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-300' : 'bg-emerald-600 text-white hover:bg-emerald-500'}`}
+                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? (isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700') : 'bg-emerald-600 text-white hover:bg-emerald-500'}`}
                           >
                             {h.status === 'REALIZADA' ? 'Deshacer (Marcar Pendiente)' : '✓ Marcar como Tomada / Realizada'}
                           </button>
                           <button 
                             onClick={() => deleteHearing(h.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                           >
                             🗑️ Eliminar / Cancelar
                           </button>
@@ -2276,17 +2382,17 @@ export default function Home() {
 
               {activeTab === 'tareas' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddTask} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  <form onSubmit={handleAddTask} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Crear Nueva Tarea</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <input 
                         type="text" placeholder="Descripción de la tarea" 
                         value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <select 
                         value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="BAJA">Prioridad BAJA</option>
                         <option value="MEDIA">Prioridad MEDIA</option>
@@ -2300,7 +2406,7 @@ export default function Home() {
 
                   <div className="space-y-2">
                     {tasks.map(t => (
-                      <div key={t.id} className="flex items-center justify-between p-3 bg-zinc-900 border border-zinc-800 rounded-xl text-xs">
+                      <div key={t.id} className={`flex items-center justify-between p-3 border rounded-xl text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <div className="flex items-center gap-3">
                           <input 
                             type="checkbox" 
@@ -2308,17 +2414,17 @@ export default function Home() {
                             onChange={() => toggleTask(t.id)}
                             className="w-4 h-4 accent-orange-500 cursor-pointer"
                           />
-                          <span className={t.completed ? 'line-through text-zinc-500 font-medium' : 'text-zinc-100 font-bold'}>
+                          <span className={t.completed ? 'line-through text-zinc-500 font-medium' : (isDarkMode ? 'text-zinc-100 font-bold' : 'text-zinc-900 font-bold')}>
                             {t.title}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${t.completed ? 'bg-zinc-800 text-zinc-500' : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${t.completed ? (isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500') : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'}`}>
                             {t.completed ? 'CUMPLIDA' : t.priority}
                           </span>
                           <button 
                             onClick={() => deleteTask(t.id)}
-                            className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white p-1 rounded font-bold text-xs transition-all border border-red-500/20"
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1 rounded font-bold text-xs transition-all border border-red-500/20"
                             title="Eliminar tarea"
                           >
                             🗑️
@@ -2332,17 +2438,17 @@ export default function Home() {
 
               {activeTab === 'clientes' && (
                 <div className="space-y-6 relative z-10">
-                  <form onSubmit={handleAddClient} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                  <form onSubmit={handleAddClient} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cliente / Contacto</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <input 
                         type="text" placeholder="Nombre completo / Razón Social" 
                         value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <select 
                         value={newClient.role} onChange={e => setNewClient({...newClient, role: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       >
                         <option value="CLIENTE">ROL: CLIENTE</option>
                         <option value="CONTRAPARTE">ROL: CONTRAPARTE</option>
@@ -2351,22 +2457,22 @@ export default function Home() {
                       <input 
                         type="text" placeholder="CUIT / DNI" 
                         value={newClient.taxId} onChange={e => setNewClient({...newClient, taxId: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="email" placeholder="Correo Electrónico" 
                         value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="text" placeholder="Teléfono" 
                         value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                       <input 
                         type="text" placeholder="Domicilio / Localidad" 
                         value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})}
-                        className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
                     </div>
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
@@ -2376,13 +2482,13 @@ export default function Home() {
 
                   <div className="space-y-2">
                     {clients.map(c => (
-                      <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                      <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-white text-sm">{c.name}</h4>
-                            <span className="bg-zinc-800 text-orange-400 font-bold px-2 py-0.5 rounded text-[10px]">{c.role}</span>
+                            <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{c.name}</h4>
+                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${isDarkMode ? 'bg-zinc-800 text-orange-400' : 'bg-zinc-200 text-orange-600'}`}>{c.role}</span>
                           </div>
-                          <p className="text-zinc-400 mt-1">
+                          <p className="text-zinc-500 mt-1">
                             {c.taxId && `DNI/CUIT: ${c.taxId} • `}
                             {c.phone && `Tel: ${c.phone} • `}
                             {c.email && `Mail: ${c.email}`}
@@ -2390,7 +2496,7 @@ export default function Home() {
                         </div>
                         <button 
                           onClick={() => deleteClient(c.id)}
-                          className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20"
+                          className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20"
                         >
                           🗑️ Eliminar
                         </button>
@@ -2402,7 +2508,7 @@ export default function Home() {
 
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
-                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex gap-2 overflow-x-auto">
+                  <div className={`border p-4 rounded-xl flex gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     {[
                       { id: 'titulos', label: '1. Títulos y Vto. de Liquidación' },
                       { id: 'gestion', label: '2. Plazos y Perención' },
@@ -2417,7 +2523,7 @@ export default function Home() {
                         className={`px-3 py-2 rounded text-xs font-bold whitespace-nowrap transition-all ${
                           procuracionSubTab === sub.id 
                             ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' 
-                            : 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800'
+                            : (isDarkMode ? 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900 border border-zinc-300')
                         }`}
                       >
                         {sub.label}
@@ -2427,48 +2533,48 @@ export default function Home() {
 
                   {procuracionSubTab === 'titulos' && (
                     <div className="space-y-4">
-                      <form onSubmit={handleAddFiscalCase} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                      <form onSubmit={handleAddFiscalCase} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
-                        <p className="text-[10px] text-zinc-400">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong>, Dr., para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
+                        <p className="text-[10px] text-zinc-500">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong>, Dr., para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
                             type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
                             value={newFiscalCase.tributo} onChange={e => setNewFiscalCase({...newFiscalCase, tributo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                           <input 
                             type="text" placeholder="Contribuyente / Razón Social (ej. ZAMARBIDE)" 
                             value={newFiscalCase.contribuyente} onChange={e => setNewFiscalCase({...newFiscalCase, contribuyente: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                           <input 
                             type="text" placeholder="Nº de Liquidación (ej. 2468-1357)" 
                             value={newFiscalCase.nroLiquidacion} onChange={e => setNewFiscalCase({...newFiscalCase, nroLiquidacion: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                           <input 
                             type="text" placeholder="Período Fiscal (ej. 2026)" 
                             value={newFiscalCase.periodo} onChange={e => setNewFiscalCase({...newFiscalCase, periodo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                           <input 
                             type="text" placeholder="Monto Total Liquidado ($)" 
                             value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                           <div>
-                            <label className="text-[10px] text-orange-400 font-bold block mb-1">Fecha Vencimiento de la Liquidación:</label>
+                            <label className="text-[10px] text-orange-500 font-bold block mb-1">Fecha Vencimiento de la Liquidación:</label>
                             <input 
                               type="date" 
                               value={newFiscalCase.fechaVencimientoLiquidacion} 
                               onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
-                              className="w-full bg-zinc-950 border border-orange-500 p-2 rounded text-white outline-none"
+                              className={`w-full border border-orange-500 p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
                             />
                           </div>
                           <input 
                             type="text" placeholder="Juzgado Fiscal Asignado" 
                             value={newFiscalCase.juzgado} onChange={e => setNewFiscalCase({...newFiscalCase, juzgado: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
@@ -2479,31 +2585,31 @@ export default function Home() {
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados</h4>
                         {fiscalCases.map(fc => (
-                          <div key={fc.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl text-xs space-y-2">
-                            <div className="flex justify-between items-center font-bold text-white">
+                          <div key={fc.id} className={`border p-4 rounded-xl text-xs space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div className={`flex justify-between items-center font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                               <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer flex-1">
-                                <span className="bg-orange-500/10 text-orange-400 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">
+                                <span className="bg-orange-500/10 text-orange-500 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">
                                   Liq: {fc.nroLiquidacion}
                                 </span>
-                                <span className="text-white text-sm">{fc.tributo} - {fc.contribuyente}</span>
+                                <span className={isDarkMode ? 'text-white text-sm' : 'text-zinc-900 text-sm'}>{fc.tributo} - {fc.contribuyente}</span>
                               </div>
-                              <span className="text-orange-400 font-mono text-sm">{fc.monto}</span>
+                              <span className="text-orange-500 font-mono text-sm">{fc.monto}</span>
                             </div>
 
-                            <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] text-zinc-400 bg-zinc-950 p-2.5 rounded border border-zinc-800">
+                            <div onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] p-2.5 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
                               <div>📅 <strong>Vto. Liq:</strong> {formatDateToArg(fc.fechaVencimientoLiquidacion) || 'No cargado'}</div>
-                              <div>⚠️ <strong className="text-amber-400">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
-                              <div>⏳ <strong className="text-red-400">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
-                              <div>🔒 <strong className="text-purple-400">Prescripción (5a):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
+                              <div>⚠️ <strong className="text-amber-500">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
+                              <div>⏳ <strong className="text-red-500">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
+                              <div>🔒 <strong className="text-purple-500">Prescripción (5a):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
                             </div>
 
-                            <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
+                            <div className={`flex justify-between items-center pt-2 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
                               <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
                                 Ingresar a Ficha / Editar Plazos →
                               </button>
                               <button 
                                 onClick={() => deleteFiscalCase(fc.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                               >
                                 🗑️ Eliminar Título
                               </button>
@@ -2516,26 +2622,26 @@ export default function Home() {
 
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
-                      <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-3 text-xs text-zinc-300">
+                      <div className={`border p-5 rounded-xl space-y-2 text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
                         <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción Fiscal</h3>
                         <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registre un movimiento nuevo en la ficha del título fiscal, el sistema tomará esa fecha como base y renovará automáticamente el plazo de perención, Dr.</p>
                         <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha de vencimiento de la liquidación fiscal.</p>
                       </div>
 
-                      <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                      <div className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos</h4>
                         <div className="space-y-2">
                           {fiscalCases.map(fc => (
-                            <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer p-3 bg-zinc-950 border border-zinc-800 rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors">
+                            <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer p-3 border rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                               <div>
-                                <p className="font-bold text-white">Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
-                                <p className="text-[10px] text-zinc-400">
-                                  Vto. Liq: <span className="text-zinc-200">{formatDateToArg(fc.fechaVencimientoLiquidacion)}</span> | 
-                                  Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
-                                  Perención (Últ. Mov.): <span className="text-red-400 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
+                                <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
+                                <p className="text-[10px] text-zinc-500">
+                                  Vto. Liq: <span className={isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}>{formatDateToArg(fc.fechaVencimientoLiquidacion)}</span> | 
+                                  Prescripción: <span className="text-purple-500 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
+                                  Perención (Últ. Mov.): <span className="text-red-500 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
                                 </p>
                               </div>
-                              <span className="bg-red-500/10 text-red-400 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
+                              <span className="bg-red-500/10 text-red-500 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
                                 CONTROL ACTIVO
                               </span>
                             </div>
@@ -2547,13 +2653,13 @@ export default function Home() {
 
                   {procuracionSubTab === 'cautelares' && (
                     <div className="space-y-4">
-                      <form onSubmit={handleAddCautelar} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                      <form onSubmit={handleAddCautelar} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Traba de Medida Cautelar (SOJ / DNRPA / RGP)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newCautelar.fiscalId} 
                             onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="">Seleccionar Liquidación...</option>
                             {fiscalCases.map(fc => (
@@ -2564,7 +2670,7 @@ export default function Home() {
                           <select 
                             value={newCautelar.tipo} 
                             onChange={e => setNewCautelar({...newCautelar, tipo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="SOJ (Bancario)">SOJ (Sistema Oficios Judiciales)</option>
                             <option value="DNRPA (Automotor)">DNRPA (Registro Automotor)</option>
@@ -2576,7 +2682,7 @@ export default function Home() {
                             type="date" 
                             value={newCautelar.fecha} 
                             onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
 
                           <input 
@@ -2584,7 +2690,7 @@ export default function Home() {
                             placeholder="Monto Embargo ($)" 
                             value={newCautelar.montoEmbargo} 
                             onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
@@ -2595,19 +2701,19 @@ export default function Home() {
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Vigentes</h4>
                         {cautelares.map(c => (
-                          <div key={c.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                          <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20">
                                   {c.tipo}
                                 </span>
-                                <span className="text-white font-bold">Liq: {c.nroLiquidacion}</span>
+                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {c.nroLiquidacion}</span>
                               </div>
-                              <p className="text-zinc-400 mt-1">Deudor: {c.titular} • Fecha: {formatDateToArg(c.fecha)}</p>
+                              <p className="text-zinc-500 mt-1">Deudor: {c.titular} • Fecha: {formatDateToArg(c.fecha)}</p>
                             </div>
                             <button 
                               onClick={() => deleteCautelar(c.id)}
-                              className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                             >
                               🗑️ Levantar / Borrar
                             </button>
@@ -2619,13 +2725,13 @@ export default function Home() {
 
                   {procuracionSubTab === 'pagos' && (
                     <div className="space-y-4">
-                      <form onSubmit={handleAddHonorario} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                      <form onSubmit={handleAddHonorario} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newHonorario.fiscalId} 
                             onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="">Seleccionar Liquidación...</option>
                             {fiscalCases.map(fc => (
@@ -2636,7 +2742,7 @@ export default function Home() {
                           <select 
                             value={newHonorario.tipoIngreso} 
                             onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="HONORARIOS">Honorarios Procurador</option>
                             <option value="CEDULA_GASTOS">Gastos de Cédula</option>
@@ -2648,7 +2754,7 @@ export default function Home() {
                             type="date" 
                             value={newHonorario.fecha} 
                             onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
 
                           <input 
@@ -2656,7 +2762,7 @@ export default function Home() {
                             placeholder="Monto ($)" 
                             value={newHonorario.monto} 
                             onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
                         <input 
@@ -2664,7 +2770,7 @@ export default function Home() {
                           placeholder="Concepto detallado..." 
                           value={newHonorario.concepto} 
                           onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-xs text-white outline-none focus:border-orange-500"
+                          className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
                           Guardar Registro
@@ -2674,19 +2780,19 @@ export default function Home() {
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Cobros y Honorarios</h4>
                         {honorariosProcuracion.map(h => (
-                          <div key={h.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                          <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2">
+                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2">
                                 {h.tipoIngreso}
                               </span>
-                              <span className="text-white font-bold">Liq: {h.nroLiquidacion}</span>
-                              <p className="text-zinc-300 mt-1"><strong>{h.concepto}</strong></p>
+                              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
+                              <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}><strong>{h.concepto}</strong></p>
                             </div>
                             <div className="flex items-center gap-4">
-                              <span className="text-emerald-400 font-black font-mono text-sm">{h.monto}</span>
+                              <span className="text-emerald-500 font-black font-mono text-sm">{h.monto}</span>
                               <button 
                                 onClick={() => deleteHonorario(h.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                               >
                                 🗑️ Borrar
                               </button>
@@ -2699,55 +2805,55 @@ export default function Home() {
 
                   {procuracionSubTab === 'tabla_plazos' && (
                     <div className="space-y-4">
-                      <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-2">
+                      <div className={`border p-5 rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía Ampliada de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
-                        <p className="text-xs text-zinc-400">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales, Dr.</p>
+                        <p className="text-xs text-zinc-500">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales, Dr.</p>
                       </div>
 
-                      <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                      <div className={`border rounded-xl overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <table className="w-full text-left text-xs">
-                          <thead className="bg-zinc-950 text-orange-400 uppercase border-b border-zinc-800">
+                          <thead className={`uppercase border-b ${isDarkMode ? 'bg-zinc-950 text-orange-400 border-zinc-800' : 'bg-zinc-100 text-orange-600 border-zinc-200'}`}>
                             <tr>
                               <th className="p-3">Actuación / Trámite</th>
                               <th className="p-3">Plazo Legal</th>
                               <th className="p-3">Normativa / Observaciones</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-zinc-800 text-zinc-300">
+                          <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800 text-zinc-300' : 'divide-zinc-200 text-zinc-700'}`}>
                             <tr>
-                              <td className="p-3 font-bold text-white">Citación a estar a derecho / Oponer Excepciones</td>
-                              <td className="p-3 text-amber-400 font-bold">3 días hábiles</td>
-                              <td className="p-3 text-zinc-400">Desde la notificación fehaciente (Cédula / CIDI) al demandado.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Citación a estar a derecho / Oponer Excepciones</td>
+                              <td className="p-3 text-amber-500 font-bold">3 días hábiles</td>
+                              <td className="p-3 text-zinc-500">Desde la notificación fehaciente (Cédula / CIDI) al demandado.</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Contestación de Excepciones (Fisco)</td>
-                              <td className="p-3 text-amber-400 font-bold">3 a 5 días hábiles</td>
-                              <td className="p-3 text-zinc-400">Plazo para responder el traslado de las excepciones opuestas por el ejecutado.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Contestación de Excepciones (Fisco)</td>
+                              <td className="p-3 text-amber-500 font-bold">3 a 5 días hábiles</td>
+                              <td className="p-3 text-zinc-500">Plazo para responder el traslado de las excepciones opuestas por el ejecutado.</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Perención de Instancia (Ejecución Fiscal)</td>
-                              <td className="p-3 text-red-400 font-bold">6 meses</td>
-                              <td className="p-3 text-zinc-400">Se renueva automáticamente con cada movimiento o impulso procesal válido.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Perención de Instancia (Ejecución Fiscal)</td>
+                              <td className="p-3 text-red-500 font-bold">6 meses</td>
+                              <td className="p-3 text-zinc-500">Se renueva automáticamente con cada movimiento o impulso procesal válido.</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Prescripción de la Acción Fiscal</td>
-                              <td className="p-3 text-purple-400 font-bold">5 años</td>
-                              <td className="p-3 text-zinc-400">Computados desde el vencimiento de la obligación fiscal (Código Tributario).</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Prescripción de la Acción Fiscal</td>
+                              <td className="p-3 text-purple-500 font-bold">5 años</td>
+                              <td className="p-3 text-zinc-500">Computados desde el vencimiento de la obligación fiscal (Código Tributario).</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Apelación de Sentencia de Remate / Autos</td>
-                              <td className="p-3 text-amber-400 font-bold">3 a 5 días</td>
-                              <td className="p-3 text-zinc-400">Plazo para interponer recurso contra resoluciones de mérito o interlocutorias.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Apelación de Sentencia de Remate / Autos</td>
+                              <td className="p-3 text-amber-500 font-bold">3 a 5 días</td>
+                              <td className="p-3 text-zinc-500">Plazo para interponer recurso contra resoluciones de mérito o interlocutorias.</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
-                              <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Apertura a Prueba (si se abriera)</td>
+                              <td className="p-3 text-amber-500 font-bold">10 a 20 días</td>
+                              <td className="p-3 text-zinc-500">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
                             </tr>
                             <tr>
-                              <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
-                              <td className="p-3 text-amber-400 font-bold">3 días</td>
-                              <td className="p-3 text-zinc-400">Contra providencias de trámite dictadas sin sustanciación previa.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Oposiciones / Recurso de Reposición</td>
+                              <td className="p-3 text-amber-500 font-bold">3 días</td>
+                              <td className="p-3 text-zinc-500">Contra providencias de trámite dictadas sin sustanciación previa.</td>
                             </tr>
                           </tbody>
                         </table>
@@ -2757,9 +2863,9 @@ export default function Home() {
 
                   {procuracionSubTab === 'plantillas' && (
                     <div className="space-y-4">
-                      <form onSubmit={handleAddTemplate} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                      <form onSubmit={handleAddTemplate} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
-                        <p className="text-[10px] text-zinc-400">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora, Dr., para tenerlos siempre disponibles en la nube.</p>
+                        <p className="text-[10px] text-zinc-500">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora, Dr., para tenerlos siempre disponibles en la nube.</p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
@@ -2767,13 +2873,13 @@ export default function Home() {
                             placeholder="Nombre de la plantilla (ej. Cédula de Notificación)" 
                             value={newTemplateTitle} 
                             onChange={e => setNewTemplateTitle(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                           
                           <select 
                             value={newTemplateCategory} 
                             onChange={e => setNewTemplateCategory(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="Fiscal">Categoría: Fiscal</option>
                             <option value="Procesal">Categoría: Procesal / Civil</option>
@@ -2783,7 +2889,7 @@ export default function Home() {
                         </div>
 
                         <div className="flex items-center gap-3 pt-1 text-xs">
-                          <label className="bg-zinc-950 border border-zinc-800 hover:border-orange-500 px-4 py-2 rounded text-zinc-300 cursor-pointer transition-colors flex items-center gap-2">
+                          <label className={`border px-4 py-2 rounded cursor-pointer transition-colors flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 hover:border-orange-500 text-zinc-300' : 'bg-zinc-50 border-zinc-300 hover:border-orange-500 text-zinc-700'}`}>
                             <span>📁 Seleccionar Archivo (Word / PDF)</span>
                             <input 
                               type="file" 
@@ -2791,7 +2897,7 @@ export default function Home() {
                               className="hidden"
                             />
                           </label>
-                          <span className="text-orange-400 font-mono text-[11px]">
+                          <span className="text-orange-500 font-mono text-[11px]">
                             {newTemplateFile ? `Archivo seleccionado: ${newTemplateFile.name}` : 'Ningún archivo elegido'}
                           </span>
                         </div>
@@ -2804,15 +2910,15 @@ export default function Home() {
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Plantillas y Modelos Disponibles en el Estudio</h4>
                         {templates.map(tpl => (
-                          <div key={tpl.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                          <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20 text-[10px]">
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 text-[10px]">
                                   {tpl.category}
                                 </span>
-                                <h4 className="font-bold text-white text-sm">{tpl.title}</h4>
+                                <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{tpl.title}</h4>
                               </div>
-                              <p className="text-zinc-400 text-[11px]">📎 Archivo: <span className="text-zinc-200 font-mono">{tpl.fileName}</span></p>
+                              <p className="text-zinc-500 text-[11px]">📎 Archivo: <span className={`font-mono ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>{tpl.fileName}</span></p>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -2829,7 +2935,7 @@ export default function Home() {
                               )}
                               <button 
                                 onClick={() => deleteTemplate(tpl.id)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                               >
                                 🗑️ Eliminar
                               </button>
@@ -2837,7 +2943,7 @@ export default function Home() {
                           </div>
                         ))}
                         {templates.length === 0 && (
-                          <p className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded border border-zinc-800">
+                          <p className={`text-xs italic p-4 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-500' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
                             No hay plantillas cargadas todavía, Dr. Use el formulario de arriba para incorporar sus modelos.
                           </p>
                         )}
@@ -2849,7 +2955,7 @@ export default function Home() {
 
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
-                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -2864,49 +2970,49 @@ export default function Home() {
                               updated[index] = e.target.value;
                               updateTeamEmails(updated);
                             }}
-                            className="flex-1 bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                            className={`flex-1 border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Seguridad, Contraseña y Correo de Recuperación</h3>
                     <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
                       <div>
-                        <label className="text-zinc-400 block mb-1">Correo Electrónico de Recuperación:</label>
+                        <label className="text-zinc-500 block mb-1">Correo Electrónico de Recuperación:</label>
                         <input 
                           type="email" 
                           placeholder="tu-correo@estudio.com"
                           defaultValue={recoveryEmailConfig}
                           onChange={(e) => setNewRecoveryMail(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
                       </div>
                       <div>
-                        <label className="text-zinc-400 block mb-1">Nueva Contraseña (opcional):</label>
+                        <label className="text-zinc-500 block mb-1">Nueva Contraseña (opcional):</label>
                         <input 
                           type="password" 
                           placeholder="••••••••••••"
                           value={newPass}
                           onChange={(e) => setNewPass(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
                       </div>
                       <div>
-                        <label className="text-zinc-400 block mb-1">Confirmar Nueva Contraseña:</label>
+                        <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
                         <input 
                           type="password" 
                           placeholder="••••••••••••"
                           value={confirmPass}
                           onChange={(e) => setConfirmPass(e.target.value)}
-                          className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
                       </div>
 
                       {passMessage && (
-                        <p className="text-xs font-bold p-2 rounded bg-zinc-950 border border-zinc-800 text-zinc-300">{passMessage}</p>
+                        <p className={`text-xs font-bold p-2 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>{passMessage}</p>
                       )}
 
                       <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs transition-colors">
