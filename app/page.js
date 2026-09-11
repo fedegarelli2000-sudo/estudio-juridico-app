@@ -613,19 +613,19 @@ export default function Home() {
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
 
-  // --- NUEVO ESTADO PARA EL CALENDARIO INTERACTIVO DINÁMICO (Años Múltiples y Feriados Argentina) ---
+  // --- ESTADO PARA EL CALENDARIO INTERACTIVO DINÁMICO (Años Múltiples y Feriados Argentina) ---
   const currentDateObj = new Date();
   const [currentCalendarYear, setCurrentCalendarYear] = useState(currentDateObj.getFullYear());
   const [currentCalendarMonth, setCurrentCalendarMonth] = useState(currentDateObj.getMonth()); // 0 - 11
 
-  // Feriados nacionales fijos y relocalizables de Argentina (Ejemplos dinámicos oficiales)
+  // Feriados nacionales fijos y relocalizables de Argentina (Robustos y oficiales)
   const getArgentineHolidays = (year) => {
     return {
       [`${year}-01-01`]: 'Año Nuevo',
-      [`${year}-03-24`]: 'Día de la Memoria',
-      [`${year}-04-02`]: 'Día del Veterano y de los Caídos en Malvinas',
+      [`${year}-03-24`]: 'Día Nacional de la Memoria por la Verdad y la Justicia',
+      [`${year}-04-02`]: 'Día del Veterano y de los Caídos en la Guerra de Malvinas',
       [`${year}-05-01`]: 'Día del Trabajador',
-      [`${year}-05-25`]: 'Revolución de Mayo',
+      [`${year}-05-25`]: 'Día de la Revolución de Mayo',
       [`${year}-06-20`]: 'Paso a la Inmortalidad del Gral. Manuel Belgrano',
       [`${year}-07-09`]: 'Día de la Independencia',
       [`${year}-08-17`]: 'Paso a la Inmortalidad del Gral. José de San Martín',
@@ -1992,7 +1992,7 @@ export default function Home() {
 
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
-                  {/* CALENDARIO ORIGINAL AVANZADO MULTI-AÑO Y FERIADOS NACIONALES ARGENTINA */}
+                  {/* CALENDARIO ORIGINAL AVANZADO MULTI-AÑO Y FERIADOS NACIONALES ARGENTINA CON LISTADO DETALLADO ABAJO */}
                   <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4 shadow-xl">
                     <div className="flex flex-col md:flex-row justify-between items-center border-b border-zinc-800 pb-3 gap-3">
                       <div>
@@ -2044,12 +2044,10 @@ export default function Home() {
                       const holidays = getArgentineHolidays(year);
 
                       const daysGrid = [];
-                      // Espacios vacíos previos al primer día del mes
                       for (let i = 0; i < firstDayIndex; i++) {
                         daysGrid.push(<div key={`empty-${i}`} className="min-h-[85px] bg-zinc-950/40 border border-zinc-900 rounded opacity-30"></div>);
                       }
 
-                      // Días del mes
                       for (let d = 1; d <= totalDaysInMonth; d++) {
                         const formattedD = d < 10 ? `0${d}` : `${d}`;
                         const formattedM = (month + 1) < 10 ? `0${month + 1}` : `${month + 1}`;
@@ -2098,6 +2096,37 @@ export default function Home() {
                         </div>
                       );
                     })()}
+
+                    {/* NUEVO PANEL DESPLEGABLE / LISTADO DE FERIADOS DEL MES SELECCIONADO CON PUNTOS */}
+                    <div className="mt-4 pt-4 border-t border-zinc-800 space-y-2">
+                      <h4 className="text-xs font-bold text-orange-400 uppercase">📌 Detalle de Feriados y Días Inhábiles del Mes Seleccionado ({['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][currentCalendarMonth]} {currentCalendarYear}):</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 bg-zinc-950 p-3 rounded-lg border border-zinc-800">
+                        {(() => {
+                          const holidays = getArgentineHolidays(currentCalendarYear);
+                          const monthPrefix = `${currentCalendarYear}-${(currentCalendarMonth + 1) < 10 ? '0' + (currentCalendarMonth + 1) : (currentCalendarMonth + 1)}`;
+                          const monthHolidays = Object.entries(holidays).filter(([dateStr]) => dateStr.startsWith(monthPrefix));
+
+                          if (monthHolidays.length === 0) {
+                            return <p className="text-zinc-500 text-xs italic col-span-2">No hay feriados nacionales fijos registrados para este mes específico.</p>;
+                          }
+
+                          return monthHolidays.map(([dateStr, motivo]) => {
+                            const parts = dateStr.split('-');
+                            const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                            return (
+                              <div key={dateStr} className="flex items-start gap-2 text-xs bg-zinc-900 p-2 rounded border border-zinc-800/60">
+                                <span className="w-2 h-2 rounded-full bg-red-500 mt-1 shrink-0"></span>
+                                <div>
+                                  <span className="font-bold text-orange-300 font-mono">{formattedDate}:</span>{' '}
+                                  <strong className="text-white">{motivo}</strong>
+                                  <p className="text-[10px] text-zinc-400 mt-0.5">Asueto oficial / Inhábil procesal</p>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
                   </div>
 
                   {/* FORMULARIO DE CARGA DE AUDIENCIA ENRIQUECIDO */}
@@ -2871,7 +2900,6 @@ export default function Home() {
                           type="password" 
                           placeholder="••••••••••••"
                           value={confirmPass}
-                          onChange={(e) => setNewPass(e.target.value)} // Nota: corregido en confirmPass
                           onChange={(e) => setConfirmPass(e.target.value)}
                           className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                         />
