@@ -577,6 +577,20 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMails: [] });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
+  // FUNCIÓN CORREGIDA PARA AGREGAR CLIENTES
+  const handleAddClient = (e) => {
+    e.preventDefault();
+    if (!newClient.name) return;
+    const created = {
+      ...newClient,
+      id: 'cli_' + Date.now()
+    };
+    const updatedClients = [...clients, created];
+    setClients(updatedClients);
+    updateClients(updatedClients);
+    setNewClient({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
+  };
+
   const toggleHearingStatus = (hearingId) => {
     updateHearings(hearings.map(h => h.id === hearingId ? { ...h, status: h.status === 'REALIZADA' ? 'PENDIENTE' : 'REALIZADA' } : h));
   };
@@ -605,7 +619,9 @@ export default function Home() {
 
   const deleteClient = (clientId) => {
     if (!confirm('¿Está seguro de eliminar este contacto?')) return;
-    updateClients(clients.filter(c => c.id !== clientId));
+    const updated = clients.filter(c => c.id !== clientId);
+    setClients(updated);
+    updateClients(updated);
   };
 
   const handleAddMovementForCase = (e) => {
@@ -1661,8 +1677,7 @@ export default function Home() {
                       />
                       <input 
                         type="number" placeholder="Días hábiles (ej. 5)" 
-                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)}
-                        )}
+                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
                         className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                       />
                     </div>
@@ -2260,7 +2275,7 @@ export default function Home() {
                             <tr>
                               <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
                               <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className="p-3 text-zinc-400">In case of haber hechos controvertidos debatibles en las excepciones.</td>
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
