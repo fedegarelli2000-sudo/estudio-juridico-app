@@ -549,7 +549,6 @@ export default function Home() {
     const updatedSessions = chatSessions.map(sess => {
       if (sess.id === activeChatId) {
         const newMsgs = [...sess.messages, { role: 'user', content: userText }];
-        // Respuesta simulada inteligente o eco profesional del asistente
         let aiReply = `Estimado Dr., analizando su consulta sobre "${userText}" bajo la normativa vigente y las fuentes indexadas en el estudio: se sugiere verificar los plazos procesales aplicables en el fuero correspondiente y la jurisprudencia en la materia.`;
         if (userText.toLowerCase().includes('concurso') || userText.toLowerCase().includes('quiebra')) {
           aiReply = `Dr., respecto a su planteo concursal, cabe tener presente los recaudos de la Ley 24.522 y los efectos de la presentación en concurso preventivo sobre los contratos con prestación recíproca pendiente (Art. 147 y concordantes).`;
@@ -613,6 +612,29 @@ export default function Home() {
 
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
+
+  // --- NUEVO ESTADO PARA EL CALENDARIO INTERACTIVO DINÁMICO (Años Múltiples y Feriados Argentina) ---
+  const currentDateObj = new Date();
+  const [currentCalendarYear, setCurrentCalendarYear] = useState(currentDateObj.getFullYear());
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(currentDateObj.getMonth()); // 0 - 11
+
+  // Feriados nacionales fijos y relocalizables de Argentina (Ejemplos dinámicos oficiales)
+  const getArgentineHolidays = (year) => {
+    return {
+      [`${year}-01-01`]: 'Año Nuevo',
+      [`${year}-03-24`]: 'Día de la Memoria',
+      [`${year}-04-02`]: 'Día del Veterano y de los Caídos en Malvinas',
+      [`${year}-05-01`]: 'Día del Trabajador',
+      [`${year}-05-25`]: 'Revolución de Mayo',
+      [`${year}-06-20`]: 'Paso a la Inmortalidad del Gral. Manuel Belgrano',
+      [`${year}-07-09`]: 'Día de la Independencia',
+      [`${year}-08-17`]: 'Paso a la Inmortalidad del Gral. José de San Martín',
+      [`${year}-10-12`]: 'Día del Respeto a la Diversidad Cultural',
+      [`${year}-11-20`]: 'Día de la Soberanía Nacional',
+      [`${year}-12-08`]: 'Inmaculada Concepción de María',
+      [`${year}-12-25`]: 'Navidad'
+    };
+  };
 
   // --- SINCRONIZACIÓN NUBE ---
   const syncWithCloud = async (key, value) => {
@@ -678,7 +700,7 @@ export default function Home() {
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
   
-  // NUEVO ESTADO ENRIQUECIDO PARA AUDIENCIAS
+  // ESTADO ENRIQUECIDO PARA AUDIENCIAS
   const [newHearing, setNewHearing] = useState({ 
     caseId: '', 
     title: '', 
@@ -693,7 +715,6 @@ export default function Home() {
 
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // FUNCIÓN CORREGIDA PARA AGREGAR CLIENTES
   const handleAddClient = (e) => {
     e.preventDefault();
     if (!newClient.name) return;
@@ -757,7 +778,6 @@ export default function Home() {
 
     updateMovements([...movements, createdMov]);
 
-    // SINCRONIZACIÓN AUTOMÁTICA BIDIRECCIONAL SI EL TÍTULO ES DE AUDIENCIA
     if (newMovement.title.toLowerCase().includes('audiencia') || newMovement.text.toLowerCase().includes('audiencia')) {
       const autoHearing = {
         id: 'h_auto_' + Date.now(),
@@ -978,7 +998,7 @@ export default function Home() {
               )}
 
               <button 
-            type="submit" 
+                type="submit" 
                 className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20"
               >
                 Verificar Correo y Recuperar
@@ -1852,7 +1872,6 @@ export default function Home() {
 
               {activeTab === 'ia_asistente' && (
                 <div className="flex h-[calc(100vh-100px)] gap-4 relative z-10">
-                  {/* PANEL LATERAL DE HISTORIAL DE CHATS (Estilo Gemini) */}
                   <div className="w-72 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col justify-between shrink-0 overflow-hidden">
                     <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
                       <span className="text-xs font-bold text-orange-500 uppercase">Historial de Consultas IA</span>
@@ -1887,7 +1906,6 @@ export default function Home() {
                       ))}
                     </div>
 
-                    {/* GESTIÓN DE FUENTES Y LEYES PROPIAS INDEXADAS */}
                     <div className="p-4 border-t border-zinc-800 bg-zinc-950 space-y-3">
                       <span className="text-[10px] font-bold text-orange-400 uppercase block">📚 Leyes y Fuentes Indexadas:</span>
                       <div className="max-h-28 overflow-y-auto space-y-1">
@@ -1914,7 +1932,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* ÁREA PRINCIPAL DE CONVERSACIÓN CON EL ASISTENTE */}
                   <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col justify-between overflow-hidden">
                     <div className="p-4 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between">
                       <div>
@@ -1975,50 +1992,112 @@ export default function Home() {
 
               {activeTab === 'audiencias' && (
                 <div className="space-y-6 relative z-10">
-                  {/* CALENDARIO VISUAL INTERACTIVO DIRECTO EN PANTALLA */}
+                  {/* CALENDARIO ORIGINAL AVANZADO MULTI-AÑO Y FERIADOS NACIONALES ARGENTINA */}
                   <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl space-y-4 shadow-xl">
-                    <div className="flex justify-between items-center border-b border-zinc-800 pb-3">
+                    <div className="flex flex-col md:flex-row justify-between items-center border-b border-zinc-800 pb-3 gap-3">
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📅 Calendario Visual Interactivo - Septiembre 2026</h3>
-                        <p className="text-xs text-zinc-400">Visualización mensual de audiencias, comparendos y reuniones del estudio.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📅 Calendario Institucional Interactivo (Feriados Argentina & Múltiples Años)</h3>
+                        <p className="text-xs text-zinc-400">Navegue por cualquier año y mes. Los feriados oficiales nacionales se marcan en rojo y las audiencias en naranja.</p>
                       </div>
-                      <span className="bg-orange-500/10 text-orange-400 text-xs font-bold px-3 py-1 rounded border border-orange-500/20">
-                        {hearings.length} Audiencia(s) Registrada(s)
-                      </span>
+
+                      {/* SELECTORES DE MES Y AÑO ORIGINALES */}
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={currentCalendarMonth}
+                          onChange={(e) => setCurrentCalendarMonth(parseInt(e.target.value))}
+                          className="bg-zinc-950 border border-zinc-800 text-white text-xs font-bold p-2 rounded outline-none focus:border-orange-500"
+                        >
+                          {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((mName, mIdx) => (
+                            <option key={mIdx} value={mIdx}>{mName}</option>
+                          ))}
+                        </select>
+
+                        <select 
+                          value={currentCalendarYear}
+                          onChange={(e) => setCurrentCalendarYear(parseInt(e.target.value))}
+                          className="bg-zinc-950 border border-zinc-800 text-white text-xs font-bold p-2 rounded outline-none focus:border-orange-500"
+                        >
+                          {Array.from({ length: 11 }, (_, i) => 2024 + i).map(yr => (
+                            <option key={yr} value={yr}>{yr}</option>
+                          ))}
+                        </select>
+
+                        <button 
+                          onClick={() => {
+                            const now = new Date();
+                            setCurrentCalendarYear(now.getFullYear());
+                            setCurrentCalendarMonth(now.getMonth());
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-3 py-2 rounded border border-zinc-700 transition-colors"
+                        >
+                          Hoy
+                        </button>
+                      </div>
                     </div>
 
-                    {/* GRILLA DE CALENDARIO MENSUAL */}
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs">
-                      {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
-                        <div key={day} className="font-bold text-orange-400 bg-zinc-950 p-2 rounded border border-zinc-800 uppercase text-[10px]">
-                          {day}
-                        </div>
-                      ))}
-                      {Array.from({ length: 30 }, (_, i) => {
-                        const dayNum = i + 1;
-                        const formattedDay = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
-                        const dateStrMatch = `2026-09-${formattedDay}`;
-                        const dayHearings = hearings.filter(h => h.date.startsWith(dateStrMatch));
+                    {/* RENDERIZADO MATRICIAL DEL CALENDARIO */}
+                    {(() => {
+                      const year = currentCalendarYear;
+                      const month = currentCalendarMonth;
+                      const firstDayIndex = new Date(year, month, 1).getDay();
+                      const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+                      const holidays = getArgentineHolidays(year);
 
-                        return (
+                      const daysGrid = [];
+                      // Espacios vacíos previos al primer día del mes
+                      for (let i = 0; i < firstDayIndex; i++) {
+                        daysGrid.push(<div key={`empty-${i}`} className="min-h-[85px] bg-zinc-950/40 border border-zinc-900 rounded opacity-30"></div>);
+                      }
+
+                      // Días del mes
+                      for (let d = 1; d <= totalDaysInMonth; d++) {
+                        const formattedD = d < 10 ? `0${d}` : `${d}`;
+                        const formattedM = (month + 1) < 10 ? `0${month + 1}` : `${month + 1}`;
+                        const dateKey = `${year}-${formattedM}-${formattedD}`;
+                        
+                        const dayHearings = hearings.filter(h => h.date.startsWith(dateKey));
+                        const holidayName = holidays[dateKey];
+                        const isToday = new Date().toISOString().split('T')[0] === dateKey;
+
+                        daysGrid.push(
                           <div 
-                            key={dayNum} 
-                            className={`min-h-[85px] bg-zinc-950 border p-2 rounded flex flex-col justify-between text-left transition-colors ${
-                              dayHearings.length > 0 ? 'border-orange-500 bg-orange-500/5' : 'border-zinc-800/80 hover:border-zinc-700'
+                            key={dateKey} 
+                            className={`min-h-[90px] border p-2 rounded flex flex-col justify-between text-left transition-all ${
+                              isToday ? 'border-orange-500 bg-orange-500/10' :
+                              holidayName ? 'border-red-500/50 bg-red-500/5' :
+                              dayHearings.length > 0 ? 'border-amber-500 bg-amber-500/5' : 'border-zinc-800/80 bg-zinc-950 hover:border-zinc-700'
                             }`}
                           >
-                            <span className={`font-bold text-xs ${dayHearings.length > 0 ? 'text-orange-400' : 'text-zinc-500'}`}>{dayNum}</span>
-                            <div className="space-y-1 overflow-y-auto max-h-[50px]">
+                            <div className="flex justify-between items-center">
+                              <span className={`font-bold text-xs ${isToday ? 'text-orange-400 underline' : 'text-zinc-300'}`}>{d}</span>
+                              {holidayName && <span className="text-[8px] bg-red-500 text-white font-bold px-1 rounded uppercase tracking-tighter" title={holidayName}>Feriado</span>}
+                            </div>
+
+                            <div className="space-y-1 overflow-y-auto max-h-[55px]">
+                              {holidayName && (
+                                <div className="text-[9px] text-red-400 font-bold truncate">🎉 {holidayName}</div>
+                              )}
                               {dayHearings.map(h => (
                                 <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded truncate shadow" title={`${h.title} (${h.tipoAudiencia})`}>
-                                  {h.tipoAudiencia}: {h.title}
+                                  ⚖️ {h.tipoAudiencia}: {h.title}
                                 </div>
                               ))}
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
+                      }
+
+                      return (
+                        <div className="grid grid-cols-7 gap-2 text-center text-xs">
+                          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
+                            <div key={day} className="font-bold text-orange-400 bg-zinc-950 p-2 rounded border border-zinc-800 uppercase text-[10px]">
+                              {day}
+                            </div>
+                          ))}
+                          {daysGrid}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* FORMULARIO DE CARGA DE AUDIENCIA ENRIQUECIDO */}
@@ -2792,6 +2871,7 @@ export default function Home() {
                           type="password" 
                           placeholder="••••••••••••"
                           value={confirmPass}
+                          onChange={(e) => setNewPass(e.target.value)} // Nota: corregido en confirmPass
                           onChange={(e) => setConfirmPass(e.target.value)}
                           className="w-full bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
                         />
