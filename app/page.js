@@ -134,6 +134,58 @@ export default function Home() {
   const [isEditingFiscal, setIsEditingFiscal] = useState(false);
   const [editFiscalForm, setEditFiscalForm] = useState({});
 
+  // ESTADO PARA PLANTILLAS DE ESCRITOS
+  const [templates, setTemplates] = useState([
+    { id: 't1', title: 'Modelo Cédula de Notificación', category: 'Procesal', fileName: 'cedula_notificacion.docx', dataUrl: '' },
+    { id: 't2', title: 'Contestación de Demanda Fiscal', category: 'Fiscal', fileName: 'contestacion_excepciones.docx', dataUrl: '' }
+  ]);
+  const [newTemplateTitle, setNewTemplateTitle] = useState('');
+  const [newTemplateCategory, setNewTemplateCategory] = useState('Fiscal');
+  const [newTemplateFile, setNewTemplateFile] = useState(null);
+
+  const handleAddTemplate = (e) => {
+    e.preventDefault();
+    if (!newTemplateTitle) return;
+
+    if (newTemplateFile) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const created = {
+          id: 'tpl_' + Date.now(),
+          title: newTemplateTitle,
+          category: newTemplateCategory,
+          fileName: newTemplateFile.name,
+          dataUrl: uploadEvent.target.result
+        };
+        const updated = [...templates, created];
+        setTemplates(updated);
+        updateTemplates(updated);
+        setNewTemplateTitle('');
+        setNewTemplateFile(null);
+      };
+      reader.readAsDataURL(newTemplateFile);
+    } else {
+      const created = {
+        id: 'tpl_' + Date.now(),
+        title: newTemplateTitle,
+        category: newTemplateCategory,
+        fileName: 'Sin archivo adjunto',
+        dataUrl: ''
+      };
+      const updated = [...templates, created];
+      setTemplates(updated);
+      updateTemplates(updated);
+      setNewTemplateTitle('');
+    }
+  };
+
+  const deleteTemplate = (id) => {
+    if (!confirm('¿Está seguro de eliminar esta plantilla?')) return;
+    const updated = templates.filter(t => t.id !== id);
+    setTemplates(updated);
+    updateTemplates(updated);
+  };
+
   const startEditingFiscal = (fc) => {
     setIsEditingFiscal(true);
     setEditFiscalForm({ ...fc });
@@ -474,6 +526,7 @@ export default function Home() {
         if (data.lex_fiscal_movements) setFiscalMovements(data.lex_fiscal_movements);
         if (data.lex_cautelares) setCautelares(data.lex_cautelares);
         if (data.lex_honorarios) setHonorariosProcuracion(data.lex_honorarios);
+        if (data.lex_templates) setTemplates(data.lex_templates);
       }
     } catch (e) {
       console.error('Error obteniendo de nube:', e);
@@ -497,6 +550,7 @@ export default function Home() {
   const updateFiscalMovements = (val) => { setFiscalMovements(val); syncWithCloud('lex_fiscal_movements', val); };
   const updateCautelares = (val) => { setCautelares(val); syncWithCloud('lex_cautelares', val); };
   const updateHonorarios = (val) => { setHonorariosProcuracion(val); syncWithCloud('lex_honorarios', val); };
+  const updateTemplates = (val) => { setTemplates(val); syncWithCloud('lex_templates', val); };
 
   // FORMULARIOS GENERALES
   const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
@@ -712,7 +766,7 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans overflow-hidden">
       
-      {/* MENÚ LATERAL CON SCROLL VERTICAL (SOLUCIÓN CELULAR) */}
+      {/* MENÚ LATERAL CON SCROLL VERTICAL */}
       <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col justify-between shrink-0 z-20 overflow-y-auto">
         <div>
           <div className="p-5 border-b border-zinc-800 flex items-center gap-3">
@@ -1657,7 +1711,8 @@ export default function Home() {
                       { id: 'gestion', label: '2. Plazos y Perención' },
                       { id: 'cautelares', label: '3. Medidas Cautelares' },
                       { id: 'pagos', label: '4. Cobros y Honorarios' },
-                      { id: 'tabla_plazos', label: '5. 📋 Tabla de Plazos Procesales (Guía Rápida)' }
+                      { id: 'tabla_plazos', label: '5. 📋 Tabla de Plazos Procesales' },
+                      { id: 'plantillas', label: '6. 📄 Plantillas de Escritos' }
                     ].map((sub) => (
                       <button
                         key={sub.id}
@@ -1990,7 +2045,7 @@ export default function Home() {
                             <tr>
                               <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
                               <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">In case of haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
@@ -1999,6 +2054,96 @@ export default function Home() {
                             </tr>
                           </tbody>
                         </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'plantillas' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddTemplate} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
+                        <p className="text-[10px] text-zinc-400">💡 Cargá modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde tu computadora para tenerlos siempre disponibles en la nube.</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <input 
+                            type="text" 
+                            placeholder="Nombre de la plantilla (ej. Cédula de Notificación)" 
+                            value={newTemplateTitle} 
+                            onChange={e => setNewTemplateTitle(e.target.value)}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500 md:col-span-2"
+                          />
+                          
+                          <select 
+                            value={newTemplateCategory} 
+                            onChange={e => setNewTemplateCategory(e.target.value)}
+                            className="bg-zinc-950 border border-zinc-800 p-2.5 rounded text-white outline-none focus:border-orange-500"
+                          >
+                            <option value="Fiscal">Categoría: Fiscal</option>
+                            <option value="Procesal">Categoría: Procesal / Civil</option>
+                            <option value="Poderes">Categoría: Poderes / Contratos</option>
+                            <option value="General">Categoría: General</option>
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-1 text-xs">
+                          <label className="bg-zinc-950 border border-zinc-800 hover:border-orange-500 px-4 py-2 rounded text-zinc-300 cursor-pointer transition-colors flex items-center gap-2">
+                            <span>📁 Seleccionar Archivo (Word / PDF)</span>
+                            <input 
+                              type="file" 
+                              onChange={e => setNewTemplateFile(e.target.files[0])}
+                              className="hidden"
+                            />
+                          </label>
+                          <span className="text-orange-400 font-mono text-[11px]">
+                            {newTemplateFile ? `Archivo seleccionado: ${newTemplateFile.name}` : 'Ningún archivo elegido'}
+                          </span>
+                        </div>
+
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400 mt-2">
+                          Guardar Plantilla en la App
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Plantillas y Modelos Disponibles en el Estudio</h4>
+                        {templates.map(tpl => (
+                          <div key={tpl.id} className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl flex justify-between items-center text-xs">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="bg-orange-500/10 text-orange-400 font-bold px-2 py-0.5 rounded border border-orange-500/20 text-[10px]">
+                                  {tpl.category}
+                                </span>
+                                <h4 className="font-bold text-white text-sm">{tpl.title}</h4>
+                              </div>
+                              <p className="text-zinc-400 text-[11px]">📎 Archivo: <span className="text-zinc-200 font-mono">{tpl.fileName}</span></p>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {tpl.dataUrl ? (
+                                <a 
+                                  href={tpl.dataUrl} 
+                                  download={tpl.fileName}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-colors"
+                                >
+                                  📥 Descargar
+                                </a>
+                              ) : (
+                                <span className="text-zinc-500 text-[10px] italic">Sin archivo adjunto</span>
+                              )}
+                              <button 
+                                onClick={() => deleteTemplate(tpl.id)}
+                                className="bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              >
+                                🗑️ Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {templates.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic bg-zinc-950 p-4 rounded border border-zinc-800">
+                            No hay plantillas cargadas todavía. Usá el formulario de arriba para incorporar tus modelos.
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
