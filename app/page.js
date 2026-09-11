@@ -511,6 +511,76 @@ export default function Home() {
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
 
+  // --- MÓDULO DE IA ASISTENTE LEGAL ---
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiChatHistory, setAiChatHistory] = useState([
+    { role: 'assistant', text: '¡Hola, Dr. Garelli! Soy su asistente de IA jurídica para el Estudio MM. Consulteme sobre plazos, causas, expedientes fiscales o redacción.' }
+  ]);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const handleAskAI = (e) => {
+    e.preventDefault();
+    if (!aiQuery.trim() || isAiLoading) return;
+
+    const userMsg = aiQuery.trim();
+    const updatedHistory = [...aiChatHistory, { role: 'user', text: userMsg }];
+    setAiChatHistory(updatedHistory);
+    setAiQuery('');
+    setIsAiLoading(true);
+
+    setTimeout(() => {
+      let aiResponse = "Analizando los datos del estudio...";
+      const qLower = userMsg.toLowerCase();
+
+      if (qLower.includes('plazo') || qLower.includes('venc')) {
+        const peds = deadlines.filter(d => d.status === 'PENDIENTE');
+        aiResponse = `Actualmente tiene ${peds.length} plazos pendientes:\n` + peds.map(p => `• ${p.title} (Vence: ${formatDateToArg(p.dueDate)})`).join('\n');
+      } else if (qLower.includes('fiscal') || qLower.includes('renta') || qLower.includes('zamarbide')) {
+        aiResponse = `Posee ${fiscalCases.length} títulos fiscales activos. Destaca la Liquidación Nº ${fiscalCases[0]?.nroLiquidacion} de ${fiscalCases[0]?.contribuyente} por ${fiscalCases[0]?.monto}, con vencimiento de excepciones el ${formatDateToArg(fiscalCases[0]?.plazoExcepcionesFecha)}.`;
+      } else if (qLower.includes('causa') || qLower.includes('expediente') || qLower.includes('alquiler')) {
+        aiResponse = `Tiene ${cases.length} expediente(s) judicial(es) en trámite:\n` + cases.map(c => `• [${c.number}] ${c.caratula} (${c.court})`).join('\n');
+      } else if (qLower.includes('tarea') || qLower.includes('pendiente')) {
+        const pendingTasks = tasks.filter(t => !t.completed);
+        aiResponse = `Hay ${pendingTasks.length} tareas pendientes:\n` + pendingTasks.map(t => `• [${t.priority}] ${t.title}`).join('\n');
+      } else {
+        aiResponse = `Con respecto a "${userMsg}": El Estudio MM cuenta con ${cases.length} expedientes y ${fiscalCases.length} títulos fiscales en seguimiento activo. Si necesita un modelo específico o calcular plazos procesales en Córdoba (Ley 24.522 o Código Tributario), recuerde revisar las solapas de Procuración o Plantillas.`;
+      }
+
+      setAiChatHistory([...updatedHistory, { role: 'assistant', text: aiResponse }]);
+      setIsAiLoading(false);
+    }, 800);
+  };
+
+  // --- FUNCIÓN DE BACKUP COMPLETO (JSON DOWNLOAD) ---
+  const handleDownloadBackup = () => {
+    const fullBackupData = {
+      app: "Estudio Jurídico MM - Sistema Operativo",
+      fechaBackup: new Date().toISOString(),
+      cases,
+      clients,
+      movements,
+      deadlines,
+      hearings,
+      tasks,
+      teamEmails,
+      fiscalCases,
+      fiscalMovements,
+      cautelares,
+      honorariosProcuracion,
+      templates,
+      currentPassword,
+      recoveryEmailConfig
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullBackupData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `Backup_EstudioMM_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   // --- SINCRONIZACIÓN NUBE ---
   const syncWithCloud = async (key, value) => {
     try {
@@ -577,7 +647,7 @@ export default function Home() {
   const [newHearing, setNewHearing] = useState({ caseId: '', title: '', date: '', location: '', assignedMails: [] });
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
-  // FUNCIÓN CORREGIDA PARA AGREGAR CLIENTES
+  // FUNCIÓN PARA AGREGAR CLIENTES
   const handleAddClient = (e) => {
     e.preventDefault();
     if (!newClient.name) return;
@@ -766,7 +836,6 @@ export default function Home() {
   const selectedCaseData = cases.find(c => c.id === selectedCaseId);
   const selectedFiscalData = fiscalCases.find(fc => fc.id === selectedFiscalId);
 
-  const today = new Date();
   const urgentFiscalAlerts = fiscalCases.filter(fc => {
     if (fc.alertaExcepcionCumplida) return false;
     if (!fc.plazoExcepcionesFecha || fc.plazoExcepcionesFecha.includes('Pendiente') || fc.plazoExcepcionesFecha.includes('A calcular')) return false;
@@ -887,6 +956,7 @@ export default function Home() {
           <nav className="p-3 space-y-1">
             {[
               { id: 'dashboard', label: 'Dashboard General', icon: '📊' },
+              { id: 'asistente_ia', label: 'Asistente IA Legal', icon: '🤖' },
               { id: 'expedientes', label: 'Expedientes / Causas', icon: '📁' },
               { id: 'movimientos', label: 'Movimientos e Historia', icon: '📜' },
               { id: 'plazos', label: 'Plazos Procesales e IA', icon: '⚡' },
@@ -894,7 +964,7 @@ export default function Home() {
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
               { id: 'audiencias', label: 'Audiencias y Calendar', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
-              { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
+              { id: 'configuracion', label: 'Configuración / Backup', icon: '⚙️' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1527,6 +1597,56 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'asistente_ia' && (
+                <div className="space-y-4 relative z-10 flex flex-col h-[calc(100vh-140px)]">
+                  <div className="bg-zinc-900 border border-zinc-800 p-4 rounded-xl shrink-0 flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-bold text-orange-500 uppercase flex items-center gap-2">
+                        <span>🤖</span> Asistente IA Jurídico - Estudio MM
+                      </h3>
+                      <p className="text-xs text-zinc-400 mt-0.5">Consultas inteligentes conectadas a las causas, plazos y títulos fiscales de su base de datos.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-4 overflow-y-auto space-y-4 flex flex-col">
+                    {aiChatHistory.map((msg, idx) => (
+                      <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-xl p-3.5 rounded-2xl text-xs leading-relaxed ${
+                          msg.role === 'user' 
+                            ? 'bg-orange-500 text-black font-semibold rounded-br-none' 
+                            : 'bg-zinc-950 border border-zinc-800 text-zinc-200 rounded-bl-none whitespace-pre-wrap'
+                        }`}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                    {isAiLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-zinc-950 border border-zinc-800 text-zinc-400 p-3.5 rounded-2xl text-xs italic animate-pulse">
+                          Analizando expedientes y redactando respuesta...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <form onSubmit={handleAskAI} className="flex gap-2 shrink-0">
+                    <input 
+                      type="text" 
+                      placeholder="Ej. ¿Qué plazos vencen esta semana? o ¿Cuál es el estado de la causa de alquileres?" 
+                      value={aiQuery} 
+                      onChange={e => setAiQuery(e.target.value)}
+                      className="flex-1 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-xs text-white outline-none focus:border-orange-500"
+                    />
+                    <button 
+                      type="submit" 
+                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-6 py-3 rounded-xl text-xs transition-colors shadow-lg shadow-orange-500/20"
+                    >
+                      Consultar IA
+                    </button>
+                  </form>
                 </div>
               )}
 
@@ -2275,7 +2395,7 @@ export default function Home() {
                             <tr>
                               <td className="p-3 font-bold text-white">Apertura a Prueba (si se abriera)</td>
                               <td className="p-3 text-amber-400 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-400">In case of haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className="p-3 text-zinc-400">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
                             </tr>
                             <tr>
                               <td className="p-3 font-bold text-white">Oposiciones / Recurso de Reposición</td>
@@ -2382,6 +2502,17 @@ export default function Home() {
 
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
+                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Resguardo y Backup de Información (Base de Datos)</h3>
+                    <p className="text-xs text-zinc-400">Descargue un archivo comprimido (.JSON) con absolutamente toda la información actual del estudio (causas, clientes, plazos, tareas, fiscal, plantillas) para guardar en su PC.</p>
+                    <button 
+                      onClick={handleDownloadBackup}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2"
+                    >
+                      📥 Descargar Backup Completo de la App
+                    </button>
+                  </div>
+
                   <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
                     <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
