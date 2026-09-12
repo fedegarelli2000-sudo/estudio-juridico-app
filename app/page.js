@@ -1789,23 +1789,23 @@ export default function Home() {
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
-                  {/* 3. SALUDO DINÁMICO EN ESPAÑOL SEGÚN LA HORA DEL DÍA Y FECHA DIA/MES/AÑO */}
-                  <div className={`border p-5 rounded-xl shadow-lg backdrop-blur-sm flex justify-between items-center ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
+                  {/* 3. SALUDO DINÁMICO EN ESPAÑOL SEGÚN LA HORA DEL DÍA Y FECHA DIA/MES/AÑO (CON TIPOGRAFÍA ELEGANTE Y SIN NOMBRE) */}
+                  <div className={`border p-6 rounded-2xl shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${isDarkMode ? 'bg-gradient-to-r from-zinc-900 to-zinc-950 border-zinc-800/80' : 'bg-gradient-to-r from-white to-zinc-50 border-zinc-200'}`}>
                     <div>
-                      <h3 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
+                      <h3 className={`text-2xl md:text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                         {(() => {
                           const hour = new Date().getHours();
-                          if (hour < 12) return '¡Buenos Días, Dr. Federico Garelli!';
-                          if (hour < 20) return '¡Buenas Tardes, Dr. Federico Garelli!';
-                          return '¡Buenas Noches, Dr. Federico Garelli!';
+                          if (hour < 12) return '¡Buenos días!';
+                          if (hour < 20) return '¡Buenas tardes!';
+                          return '¡Buenas noches!';
                         })()}
                       </h3>
-                      <p className="text-xs text-orange-500 font-semibold mt-1">
+                      <p className="text-xs text-orange-500 font-bold uppercase tracking-widest mt-1">
                         Estudio Jurídico MM • Sistema Operativo Legal Activo
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-300 text-zinc-700'}`}>
+                    <div className="self-end md:self-auto">
+                      <span className={`text-xs font-mono font-bold px-3.5 py-2 rounded-xl border shadow-inner flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
                         📅 {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                       </span>
                     </div>
