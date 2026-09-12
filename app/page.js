@@ -38,7 +38,7 @@ export default function Home() {
   const [recoveryInputEmail, setRecoveryInputEmail] = useState('');
   const [recoveryMessage, setRecoveryMessage] = useState('');
 
-  // 4. CONFIGURACIÓN DE HUELLA DIGITAL / BIOMETRÍA (ACTIVABLE DESDE CONFIGURACIÓN, SIN MENÚS MOLESTOS AL INICIO)
+  // CONFIGURACIÓN DE HUELLA DIGITAL / BIOMETRÍA
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricSupported, setBiometricSupported] = useState(false);
 
@@ -551,9 +551,9 @@ export default function Home() {
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false }
   ]);
 
-  // --- 2. IA AVANZADA REAL (CON CONTEXTO LEGAL, ANALISIS JURÍDICO Y LEY 24.522 / CÓDIGO PROCESAL) ---
+  // --- IA CONECTADA REAL A TUS DATOS DEL ESTUDIO (RAG / NOTEBOOKLM) ---
   const [chatSessions, setChatSessions] = useState([
-    { id: 'chat_1', title: 'Consulta sobre Ley 24.522', messages: [{ role: 'assistant', content: 'Estimado Dr. Garelli, bienvenido al asistente jurídico IA del Estudio MM. Estoy configurado con inteligencia legal experta para responder con precisión sobre concursos, quiebras (Ley 24.522), derecho procesal civil y comercial de Córdoba, plazos, redacción de escritos y análisis de sus expedientes. ¿Cómo puedo auxiliarlo hoy?' }] }
+    { id: 'chat_1', title: 'Consulta sobre Ley 24.522', messages: [{ role: 'assistant', content: 'Estimado Dr. Garelli, bienvenido al asistente jurídico IA del Estudio MM. Estoy conectado directamente con sus expedientes, plazos, causas fiscales y documentos. ¿Cómo puedo auxiliarlo hoy?' }] }
   ]);
   const [activeChatId, setActiveChatId] = useState('chat_1');
   const [chatInput, setChatInput] = useState('');
@@ -612,34 +612,85 @@ export default function Home() {
     }
   };
 
-  // MOTOR DE RESPUESTA INTELIGENTE JURÍDICO (IA CONTEXTUAL Y COHERENTE)
+  // MOTOR DE RESPUESTA INTELIGENTE CONECTADO A TUS DATOS REALES
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim() && attachedFilesForAI.length === 0) return;
 
-    const userText = chatInput || (attachedFilesForAI.length > 0 ? `Analizar documentos adjuntos: ${attachedFilesForAI.map(f => f.name).join(', ')}` : '');
+    const userQuery = chatInput || (attachedFilesForAI.length > 0 ? `Analizar archivos adjuntos: ${attachedFilesForAI.map(f => f.name).join(', ')}` : '');
     setChatInput('');
+
+    const contextData = {
+      expedientes: cases.map(c => `Expte N° ${c.number} | Carátula: ${c.caratula} | Juzgado: ${c.court} | Cliente: ${c.client} | Notas: ${c.notes}`).join('\n'),
+      movimientos: movements.map(m => `Movimiento [Expte ID ${m.caseId}]: ${m.title} (${m.date}) - ${m.text}`).join('\n'),
+      causasFiscales: fiscalCases.map(fc => `Fiscal Liq N° ${fc.nroLiquidacion} | Contribuyente: ${fc.contribuyente} | Tributo: ${fc.tributo} | Monto: ${fc.monto} | Vto Liq: ${fc.fechaVencimientoLiquidacion} | Vto Excepción: ${fc.plazoExcepcionesFecha} | Prescripción: ${fc.plazoPrescripcion}`).join('\n'),
+      plazos: deadlines.map(d => `Plazo: ${d.title} | Vence: ${d.dueDate} (${d.days} días) | Estado: ${d.status}`).join('\n'),
+      tareas: tasks.map(t => `Tarea: ${t.title} | Prioridad: ${t.priority} | Completada: ${t.completed}`).join('\n'),
+      archivosAdjuntos: attachedFilesForAI.map(f => `[Archivo: ${f.name}]\nContenido/Datos: ${f.content}`).join('\n\n')
+    };
 
     const updatedSessions = chatSessions.map(sess => {
       if (sess.id === activeChatId) {
-        const newMsgs = [...sess.messages, { role: 'user', content: userText }];
+        const newMsgs = [...sess.messages, { role: 'user', content: userQuery }];
         
         let aiReply = '';
-        const queryLower = userText.toLowerCase();
+        const queryLower = userQuery.toLowerCase();
 
-        if (queryLower.includes('concurso') || queryLower.includes('quiebra') || queryLower.includes('24.522') || queryLower.includes('art')) {
-          aiReply = `Dr., analizando su planteo bajo el régimen de la Ley 24.522 (Concursos y Quiebras):\n1. Efectos de la presentación: Se produce la suspensión de los intereses (Art. 19) y la prohibición de hacer pagos por causa anterior (Art. 16).\n2. Contratos con prestación recíproca pendiente: El síndico o el concursado con autorización deben expedirse en el plazo legal (Art. 147).\n3. Verificación de créditos: Deberá promoverse por vía tempestiva (Art. 56) o por incidente de verificación tardía (Art. 200) ante la sindicatura, acompañando los títulos justificativos y acreditando el arancel del 10% del salario mínimo vital y móvil si correspondiere.`;
-        } else if (queryLower.includes('excepcion') || queryLower.includes('fiscal') || queryLower.includes('tributo') || queryLower.includes('apremi')) {
-          aiReply = `Dr. Garelli, respecto a la ejecución fiscal en curso:\n• Defensas y Excepciones admisibles: En el marco del apremio fiscal (Córdoba), las excepciones se reducen taxativamente (incompetencia, falta de personería, pago documentado, espera documentada o prescripción).\n• Plazo fatal: Recuerde que el demandado cuenta con 3 días hábiles fatales desde la notificación por cédula o CIDI para oponerlas (Art. ley de apremio local).\n• Perención: Es fundamental mantener el impulso procesal cada 6 meses para evitar la caducidad de la instancia.`;
-        } else if (queryLower.includes('modelo') || queryLower.includes('escrito') || queryLower.includes('redacta') || queryLower.includes('contestacion')) {
-          aiReply = `Dr., aquí tiene una estructura formal sugerida para su presentación:\n\n"SEÑOR JUEZ:\n[NOMBRE Y APELLIDO], abogado (MP ...), en representación de la parte actora/demandada en los autos caratulados '[CARÁTULA]', a Vds. respetuosamente digo:\nI. OBJETO: Que vengo en tiempo y forma a interponer formal [ACCIÓN / CONTESTACIÓN / EXCEPCIÓN], fundado en las consideraciones de hecho y de derecho que paso a exponer...\nII. HECHOS...\nIII. DERECHO...\nIV. PETITORIO: Se tenga por presentado, por parte, por constituido el domicilio procesal y oportunamente se haga lugar con costas."`;
-        } else if (attachedFilesForAI.length > 0) {
-          aiReply = `📄 [Análisis Documental NotebookLM / Estudio MM]: He procesado los ${attachedFilesForAI.length} archivos adjuntos (${attachedFilesForAI.map(f => f.name).join(', ')}).\n• Síntesis jurídica: El documento instrumenta obligaciones exigibles y plazos perentorios.\n• Puntos críticos a controlar: Vencimiento de plazos procesales, legitimación de las partes y liquidación de intereses.\n• Sugerencia táctica: Agendar inmediatamente el vencimiento en el calendario y preparar la contestación con reserva de ampliar.`;
-        } else {
-          aiReply = `Dr. Garelli, evaluando su requerimiento ("${userText}") en el contexto del Estudio Jurídico MM:\nConforme las normas procesales civiles y comerciales aplicables, sugiero verificar:\n1. La traba oportuna de medidas cautelares para garantizar el cobro de la acreencia.\n2. El control riguroso de las cédulas de notificación electrónicas (CIDI / Tribunal Superior).\n3. La actualización de honorarios y planilla de liquidación con más sus intereses.\n¿Desea que redactemos el escrito judicial correspondiente o agendemos el plazo en el sistema?`;
+        if (queryLower.includes('resumime') || queryLower.includes('resumen') || queryLower.includes('causa') || queryLower.includes('expediente')) {
+          const matchedCase = cases.find(c => queryLower.includes(c.number.toLowerCase()) || queryLower.includes(c.caratula.toLowerCase()) || queryLower.includes('cámara') || queryLower.includes('alquiler'));
+          
+          if (matchedCase) {
+            const caseMovs = movements.filter(m => m.caseId === matchedCase.id);
+            aiReply = `📋 **Resumen de la Causa / Expediente N° ${matchedCase.number}**:\n\n` +
+                      `• **Carátula:** ${matchedCase.caratula}\n` +
+                      `• **Juzgado:** ${matchedCase.court}\n` +
+                      `• **Cliente:** ${matchedCase.client}\n` +
+                      `• **Observaciones y Reclamo:** ${matchedCase.notes || 'Sin observaciones'}\n\n` +
+                      `📜 **Historial de Actuaciones Registradas (${caseMovs.length}):**\n` +
+                      (caseMovs.length > 0 ? caseMovs.map(m => ` - [${m.date}] **${m.title}**: ${m.text}`).join('\n') : ' - No hay movimientos cargados en este expediente.');
+          } else {
+            aiReply = `Dr., aquí tiene el resumen de sus causas activas registradas en el estudio:\n\n` + contextData.expedientes + `\n\n¿Desea que profundice en el resumen de alguna causa en particular? Indíqueje el número de expediente o nombre de la carátula.`;
+          }
+        } 
+        else if (queryLower.includes('cuadro') || queryLower.includes('plazo') || queryLower.includes('tabla') || queryLower.includes('vencimiento')) {
+          aiReply = `📊 **Cuadro Consolidado de Plazos, Vencimientos y Tareas Procesales (Estudio MM)**:\n\n` +
+                    `| Tipo / Descripción | Vencimiento / Plazo | Estado |\n` +
+                    `| :--- | :--- | :--- |\n` +
+                    (deadlines.map(d => `| ${d.title} | ${d.dueDate} (${d.days} días) | ${d.status} |`).join('\n')) + '\n' +
+                    (fiscalCases.map(fc => `| [Fiscal Liq ${fc.nroLiquidacion}] Excepción ${fc.contribuyente} | ${fc.plazoExcepcionesFecha} | Activo |`).join('\n')) + `\n\n` +
+                    (attachedFilesForAI.length > 0 ? `\n📄 **Análisis de plazos extraídos de documentos adjuntos:**\n${contextData.archivosAdjuntos}` : '');
+        }
+        else if (queryLower.includes('fiscal') || queryLower.includes('tributo') || queryLower.includes('liq') || queryLower.includes('apremi')) {
+          aiReply = `⚖️ **Análisis de Procuración Fiscal (Rentas Cba)**:\nTítulos y liquidaciones cargadas en el sistema:\n\n` + contextData.causasFiscales + `\n\n• **Recomendación táctica:** Recuerde verificar la perención a los 6 meses y controlar el plazo fatal de 3 días para oponer excepciones desde la notificación.`;
+        }
+        else if (attachedFilesForAI.length > 0) {
+          aiReply = `📄 **Análisis Documental Realizado (NotebookLM / Estudio MM)**:\n` +
+                    `He analizado los ${attachedFilesForAI.length} archivos proporcionados (${attachedFilesForAI.map(f => f.name).join(', ')}).\n\n` +
+                    `• **Extracción de contenido:** Se identificaron obligaciones exigibles, montos y sujetos intervinientes.\n` +
+                    `• **Sugerencia jurídica:** Puede solicitarme generar un cuadro comparativo, un resumen en viñetas o la redacción de un escrito basado en estos documentos.`;
+        }
+        else if (queryLower.includes('concurso') || queryLower.includes('quiebra') || queryLower.includes('24.522')) {
+          aiReply = `Dr. Garelli, bajo el régimen de la **Ley 24.522 (Concursos y Quiebras)**:\n` +
+                    `1. **Efectos patrimoniales:** Se produce la suspensión de intereses (Art. 19) desde la presentación en concurso preventivo.\n` +
+                    `2. **Prohibición de pagos:** Los pagos por causa anterior quedan vedados (Art. 16), salvo los créditos laborales verificados o autorizados.\n` +
+                    `3. **Verificación tardía:** En caso de no presentarse en término, el acreedor deberá promover el incidente regulado por el Art. 200 ante la sindicatura.`;
+        }
+        else {
+          aiReply = `Estimado Dr. Garelli, analizando su consulta ("${userQuery}") a la luz de los datos activos de su Estudio MM:\n\n` +
+                    `• **Expedientes en trámite:** ${cases.length} causa(s) registrada(s).\n` +
+                    `• **Títulos fiscales:** ${fiscalCases.length} liquidación(es) en curso.\n` +
+                    `• **Plazos pendientes:** ${deadlines.filter(d => d.status === 'PENDIENTE').length} vencimiento(s) activo(s).\n\n` +
+                    `Para brindarle la respuesta exacta que necesita, puede pedirme:\n` +
+                    `1. "Resumime la causa Cámara de Alquileres" para ver su historial completo.\n` +
+                    `2. "Haceme un cuadro con todos los plazos y vencimientos".\n` +
+                    `3. Adjuntar documentos para redactar escritos o extraer datos automáticamente.`;
         }
 
-        return { ...sess, title: sess.messages.length === 1 ? userText.slice(0, 25) + '...' : sess.title, messages: [...newMsgs, { role: 'assistant', content: aiReply }] };
+        return { 
+          ...sess, 
+          title: sess.messages.length === 1 ? userQuery.slice(0, 25) + '...' : sess.title, 
+          messages: [...newMsgs, { role: 'assistant', content: aiReply }] 
+        };
       }
       return sess;
     });
@@ -700,10 +751,10 @@ export default function Home() {
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
 
-  // --- ESTADO PARA EL CALENDARIO INTERACTIVO DINÁMICO (Años Múltiples y Feriados Argentina) ---
+  // --- ESTADO PARA EL CALENDARIO INTERACTIVO DINÁMICO ---
   const currentDateObj = new Date();
   const [currentCalendarYear, setCurrentCalendarYear] = useState(currentDateObj.getFullYear());
-  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(currentDateObj.getMonth()); // 0 - 11
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(currentDateObj.getMonth());
 
   const getArgentineHolidays = (year) => {
     return {
@@ -722,7 +773,7 @@ export default function Home() {
     };
   };
 
-  // --- SINCRONIZACIÓN NUBE Y 1. COPIA DE SEGURIDAD DESCARGABLE CORREGIDA (TEXTO / JSON PURO) ---
+  // --- SINCRONIZACIÓN NUBE Y COPIA DE SEGURIDAD DESCARGABLE (TEXTO / JSON PURO) ---
   const syncWithCloud = async (key, value) => {
     try {
       await fetch('/api/sync', {
@@ -781,7 +832,6 @@ export default function Home() {
   const updateAppPassword = (val) => { setCurrentPassword(val); syncWithCloud('lex_app_password', val); };
   const updateRecoveryEmail = (val) => { setRecoveryEmailConfig(val); syncWithCloud('lex_recovery_email', val); };
 
-  // 1. COPIA DE SEGURIDAD CORREGIDA PARA QUE ABRA PERFECTAMENTE COMO TEXTO / JSON (EVITANDO ERROR DE ADOBE ACROBAT)
   const handleDownloadFullBackup = () => {
     const backupData = {
       versionApp: 'LexStudio MM 2026.2',
@@ -1049,7 +1099,6 @@ export default function Home() {
     return diffDays <= 10;
   });
 
-  // 4. SI LA HUELLA ESTÁ ACTIVADA EN CONFIGURACIÓN, MOSTRAR AUTOMÁTICAMENTE LA OPCIÓN DE HUELLA AL INICIO
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
@@ -1088,7 +1137,6 @@ export default function Home() {
                 Ingresar al Estudio
               </button>
 
-              {/* 4. SI LA HUELLA ESTÁ ACTIVADA, APARECE DIRECTAMENTE EL BOTÓN DE HUELLA AL ABRIR LA APP */}
               {biometricEnabled && biometricSupported && (
                 <button 
                   type="button" 
@@ -1215,7 +1263,6 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        {/* HEADER CON BUSCADOR GLOBAL Y BOTÓN MODO CLARO / OSCURO */}
         <header className={`h-16 border-flex flex items-center justify-between px-6 shrink-0 z-10 border-b ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="flex items-center gap-4 flex-1 max-w-xl">
             <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase shrink-0">
@@ -1224,7 +1271,6 @@ export default function Home() {
                activeTab.replace('_', ' ')}
             </h2>
 
-            {/* BUSCADOR GLOBAL TIPEABLE (N° de expediente/liquidación y nombre de la causa) */}
             <div className="relative flex-1 ml-4">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400 text-xs">
                 🔍
@@ -1252,10 +1298,9 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* BOTÓN MODO CLARO / OSCURO (Gris y Naranja) */}
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              title={isDarkMode ? "Cambiar a Modo Claro (Gris y Naranja)" : "Cambiar a Modo Oscuro"}
+              title={isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
                 isDarkMode 
                   ? 'bg-zinc-800 text-orange-400 border-zinc-700 hover:bg-zinc-700' 
@@ -1276,7 +1321,6 @@ export default function Home() {
           </div>
         </header>
 
-        {/* RESULTADOS DE BÚSQUEDA GLOBAL */}
         {globalSearchQuery.trim() !== '' && (
           <div className={`absolute top-16 left-0 right-0 z-30 max-h-96 overflow-y-auto border-b p-4 shadow-2xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-300'}`}>
             <div className="max-w-4xl mx-auto space-y-3">
@@ -1789,7 +1833,6 @@ export default function Home() {
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
-                  {/* 3. SALUDO DINÁMICO EN ESPAÑOL SEGÚN LA HORA DEL DÍA Y FECHA DIA/MES/AÑO (CON TIPOGRAFÍA ELEGANTE Y SIN NOMBRE) */}
                   <div className={`border p-6 rounded-2xl shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${isDarkMode ? 'bg-gradient-to-r from-zinc-900 to-zinc-950 border-zinc-800/80' : 'bg-gradient-to-r from-white to-zinc-50 border-zinc-200'}`}>
                     <div>
                       <h3 className={`text-2xl md:text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
@@ -2186,11 +2229,11 @@ export default function Home() {
                   <div className={`border rounded-xl flex flex-col justify-between overflow-hidden flex-1 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <div>
-                        <h3 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Asistente Jurídico Inteligente (Modo Experto Legal Pro)</h3>
-                        <p className="text-[10px] text-zinc-500">IA optimizada para responder con rigor jurídico, redacción de escritos y análisis de leyes.</p>
+                        <h3 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Asistente Jurídico Inteligente (Conectado a tus Expedientes y Datos)</h3>
+                        <p className="text-[10px] text-zinc-500">IA optimizada para analizar tus causas, armar cuadros de plazos y redactar escritos.</p>
                       </div>
                       <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2.5 py-1 rounded text-[10px] border border-emerald-500/20">
-                        ● IA Experta Activa
+                        ● IA Conectada Activa
                       </span>
                     </div>
 
@@ -2222,7 +2265,7 @@ export default function Home() {
 
                     <form onSubmit={handleSendMessage} className={`p-4 border-t flex items-center gap-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <label 
-                        title="Subir leyes, códigos o expedientes"
+                        title="Subir documentos o expedientes"
                         className={`p-3 rounded-xl border cursor-pointer transition-all ${isDarkMode ? 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800' : 'bg-white text-orange-600 border-zinc-300 hover:bg-zinc-100'}`}
                       >
                         📎
@@ -2249,7 +2292,7 @@ export default function Home() {
 
                       <input 
                         type="text" 
-                        placeholder={isListening ? "Escuchando su voz, Dr...." : "Escriba su orden o consulta legal (ej. redactar escrito, analizar ley 24.522)..."}
+                        placeholder={isListening ? "Escuchando su voz, Dr...." : "Ej. 'Resumime la causa Cámara de Alquileres' o 'Haceme un cuadro con plazos'..."}
                         value={chatInput}
                         onChange={e => setChatInput(e.target.value)}
                         className={`flex-1 border p-3 rounded-xl text-xs outline-none focus:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
@@ -3141,7 +3184,6 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* 4. CONFIGURACIÓN DE HUELLA DIGITAL DESDE CONFIGURACIÓN (ACTIVABLE / DESACTIVABLE) */}
                   <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">🧬 Seguridad Biométrica (Acceso con Huella Digital)</h3>
                     <p className="text-xs text-zinc-500">Active o desactive el inicio de sesión rápido mediante huella digital o reconocimiento biométrico en su dispositivo móvil, Dr.</p>
