@@ -612,7 +612,7 @@ export default function Home() {
     }
   };
 
-  // MOTOR DE RESPUESTA INTELIGENTE CONECTADO A TUS DATOS REALES
+  // MOTOR DE RESPUESTA INTELIGENTE CORREGIDO Y CONECTADO A TUS DATOS REALES
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim() && attachedFilesForAI.length === 0) return;
@@ -647,43 +647,43 @@ export default function Home() {
                       `• **Cliente:** ${matchedCase.client}\n` +
                       `• **Observaciones y Reclamo:** ${matchedCase.notes || 'Sin observaciones'}\n\n` +
                       `📜 **Historial de Actuaciones Registradas (${caseMovs.length}):**\n` +
-                      (caseMovs.length > 0 ? caseMovs.map(m => ` - [${m.date}] **${m.title}**: ${m.text}`).join('\n') : ' - No hay movimientos cargados en este expediente.');
+                      (caseMovs.length > 0 ? caseMovs.map(m => ` - [${formatDateToArg(m.date)}] **${m.title}**: ${m.text}`).join('\n') : ' - No hay movimientos cargados en este expediente.');
           } else {
-            aiReply = `Dr., aquí tiene el resumen de sus causas activas registradas en el estudio:\n\n` + contextData.expedientes + `\n\n¿Desea que profundice en el resumen de alguna causa en particular? Indíqueje el número de expediente o nombre de la carátula.`;
+            aiReply = `Dr. Garelli, aquí tiene el resumen de sus causas activas registradas en el estudio:\n\n` + contextData.expedientes + `\n\n¿Desea que profundice en el resumen de alguna causa en particular? Indíquemelo con el número de expediente o carátula.`;
           }
         } 
         else if (queryLower.includes('cuadro') || queryLower.includes('plazo') || queryLower.includes('tabla') || queryLower.includes('vencimiento')) {
           aiReply = `📊 **Cuadro Consolidado de Plazos, Vencimientos y Tareas Procesales (Estudio MM)**:\n\n` +
                     `| Tipo / Descripción | Vencimiento / Plazo | Estado |\n` +
                     `| :--- | :--- | :--- |\n` +
-                    (deadlines.map(d => `| ${d.title} | ${d.dueDate} (${d.days} días) | ${d.status} |`).join('\n')) + '\n' +
-                    (fiscalCases.map(fc => `| [Fiscal Liq ${fc.nroLiquidacion}] Excepción ${fc.contribuyente} | ${fc.plazoExcepcionesFecha} | Activo |`).join('\n')) + `\n\n` +
+                    (deadlines.map(d => `| ${d.title} | ${formatDateToArg(d.dueDate)} (${d.days} días hábiles) | ${d.status} |`).join('\n')) + '\n' +
+                    (fiscalCases.map(fc => `| [Fiscal Liq ${fc.nroLiquidacion}] Excepción ${fc.contribuyente} | ${formatDateToArg(fc.plazoExcepcionesFecha)} | Activo |`).join('\n')) + `\n\n` +
                     (attachedFilesForAI.length > 0 ? `\n📄 **Análisis de plazos extraídos de documentos adjuntos:**\n${contextData.archivosAdjuntos}` : '');
         }
-        else if (queryLower.includes('fiscal') || queryLower.includes('tributo') || queryLower.includes('liq') || queryLower.includes('apremi')) {
-          aiReply = `⚖️ **Análisis de Procuración Fiscal (Rentas Cba)**:\nTítulos y liquidaciones cargadas en el sistema:\n\n` + contextData.causasFiscales + `\n\n• **Recomendación táctica:** Recuerde verificar la perención a los 6 meses y controlar el plazo fatal de 3 días para oponer excepciones desde la notificación.`;
+        else if (queryLower.includes('fiscal') || queryLower.includes('tributo') || queryLower.includes('liq') || queryLower.includes('apremi') || queryLower.includes('rentas')) {
+          aiReply = `⚖️ **Análisis de Procuración Fiscal (Rentas Cba)**:\nTítulos y liquidaciones cargadas en el sistema:\n\n` + contextData.causasFiscales + `\n\n• **Recomendación táctica, Dr.:** Recuerde vigilar la perención a los 6 meses y controlar el plazo perentorio fatal de 3 días para oponer excepciones desde la notificación fehaciente.`;
         }
         else if (attachedFilesForAI.length > 0) {
           aiReply = `📄 **Análisis Documental Realizado (NotebookLM / Estudio MM)**:\n` +
                     `He analizado los ${attachedFilesForAI.length} archivos proporcionados (${attachedFilesForAI.map(f => f.name).join(', ')}).\n\n` +
                     `• **Extracción de contenido:** Se identificaron obligaciones exigibles, montos y sujetos intervinientes.\n` +
-                    `• **Sugerencia jurídica:** Puede solicitarme generar un cuadro comparativo, un resumen en viñetas o la redacción de un escrito basado en estos documentos.`;
+                    `• **Sugerencia jurídica:** Puede solicitarme generar un cuadro comparativo, un resumen en viñetas o la redacción de un escrito judicial basado en estos documentos.`;
         }
-        else if (queryLower.includes('concurso') || queryLower.includes('quiebra') || queryLower.includes('24.522')) {
-          aiReply = `Dr. Garelli, bajo el régimen de la **Ley 24.522 (Concursos y Quiebras)**:\n` +
+        else if (queryLower.includes('concurso') || queryLower.includes('quiebra') || queryLower.includes('24.522') || queryLower.includes('ley')) {
+          aiReply = `Dr. Garelli, a la luz de la **Ley 24.522 (Concursos y Quiebras)** y los antecedentes normativos:\n` +
                     `1. **Efectos patrimoniales:** Se produce la suspensión de intereses (Art. 19) desde la presentación en concurso preventivo.\n` +
                     `2. **Prohibición de pagos:** Los pagos por causa anterior quedan vedados (Art. 16), salvo los créditos laborales verificados o autorizados.\n` +
-                    `3. **Verificación tardía:** En caso de no presentarse en término, el acreedor deberá promover el incidente regulado por el Art. 200 ante la sindicatura.`;
+                    `3. **Verificación tardía:** En caso de no presentarse en término, el acreedor deberá promover el incidente regulado por el Art. 200 ante la sindicatura y el tribunal concursal.`;
         }
         else {
-          aiReply = `Estimado Dr. Garelli, analizando su consulta ("${userQuery}") a la luz de los datos activos de su Estudio MM:\n\n` +
+          aiReply = `Estimado Dr. Garelli, analizando su consulta ("${userQuery}") frente a los datos activos de su Estudio MM:\n\n` +
                     `• **Expedientes en trámite:** ${cases.length} causa(s) registrada(s).\n` +
                     `• **Títulos fiscales:** ${fiscalCases.length} liquidación(es) en curso.\n` +
                     `• **Plazos pendientes:** ${deadlines.filter(d => d.status === 'PENDIENTE').length} vencimiento(s) activo(s).\n\n` +
                     `Para brindarle la respuesta exacta que necesita, puede pedirme:\n` +
                     `1. "Resumime la causa Cámara de Alquileres" para ver su historial completo.\n` +
                     `2. "Haceme un cuadro con todos los plazos y vencimientos".\n` +
-                    `3. Adjuntar documentos para redactar escritos o extraer datos automáticamente.`;
+                    `3. Adjuntar documentos/leyes para redactar escritos o extraer datos automáticamente.`;
         }
 
         return { 
