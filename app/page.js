@@ -510,7 +510,7 @@ export default function Home() {
       client: 'Cámara',
       processType: 'JUDICIAL',
       status: 'EN TRAMITE',
-      notes: 'Desc. con exactitud qué reclama: Alquileres adeudados, meses julio y agosto del corriente año: $1.044.800, con más servicios de Agua, Luz, Gas e impuestos adeudados correspondientes a los periodos de locación: $: $634,422.33. Lo que hace la suma total de PESOS UN MILLÓN SEISCIENTOS SETENTA Y NUEVE MIL DOSCIENTOS VEINTIDÓS CON TREINTA Y TRES CENTAVOS ($1.679.222,33). Bajo expresa reserva de ampliar.'
+      notes: 'Desc. con exactitud qué reclama: Alquileres adeudados, meses julio y agosto del corriente año: $1.044.800, con más servicios de Agua, Luz, Gas e impuestos adeudados correspondientes a los periodos de locación: $: $634,422.33. Lo que hace la suma total de PESOS UN MILLÓN SEISCIENTO SETENTA Y NUEVE MIL DOSCIENTOS VEINTIDÓS CON TREINTA Y TRES CENTAVOS ($1.679.222,33). Bajo expresa reserva de ampliar.'
     }
   ]);
   
@@ -3013,54 +3013,123 @@ export default function Home() {
                   {procuracionSubTab === 'tabla_plazos' && (
                     <div className="space-y-4">
                       <div className={`border p-5 rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Guía Ampliada de Plazos Procesales - Procuración Fiscal (Córdoba)</h3>
-                        <p className="text-xs text-zinc-500">Tabla de consulta rápida con todos los plazos esenciales y específicos para el control en ejecuciones fiscales, Dr.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Cuadro Único Integral: Proceso, Plazos y Citas Numéricas (Ejecución Fiscal Córdoba)</h3>
+                        <p className="text-xs text-zinc-500">Todo el proceso de ejecución fiscal integrado, abarcando plazos procesales principales, operativos, administrativos y particulares (Ley N° 9024, Decreto N° 2445/2023 y materiales FTA), Dr.</p>
                       </div>
 
                       <div className={`border rounded-xl overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <table className="w-full text-left text-xs">
                           <thead className={`uppercase border-b ${isDarkMode ? 'bg-zinc-950 text-orange-400 border-zinc-800' : 'bg-zinc-100 text-orange-600 border-zinc-200'}`}>
                             <tr>
-                              <th className="p-3">Actuación / Trámite</th>
-                              <th className="p-3">Plazo Legal</th>
-                              <th className="p-3">Normativa / Observaciones</th>
+                              <th className="p-3">Etapa / Ámbito</th>
+                              <th className="p-3">Acciones y Plazos del Procurador Fiscal</th>
+                              <th className="p-3">Acciones y Plazos de la Contraparte (Demandado)</th>
+                              <th className="p-3">Base Legal y Artículos</th>
                             </tr>
                           </thead>
                           <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800 text-zinc-300' : 'divide-zinc-200 text-zinc-700'}`}>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Citación a estar a derecho / Oponer Excepciones</td>
-                              <td className="p-3 text-amber-500 font-bold">3 días hábiles</td>
-                              <td className="p-3 text-zinc-500">Desde la notificación fehaciente (Cédula / CIDI) al demandado.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>1. Gestión Extrajudicial (Previa)</td>
+                              <td className="p-3">
+                                • Enviar intimación fehaciente dentro de los 30 días corridos de recibidos los títulos.<br/>
+                                • Cargar novedades en FTAGo! a más tardar el día hábil inmediato siguiente de producidas.<br/>
+                                • Mantener vigente la fianza (renovación 48 horas antes de vencer) y cumplir obligaciones de respaldo.
+                              </td>
+                              <td className="p-3 text-amber-500">
+                                Abonar la deuda en el término perentorio de 10 días corridos desde recibida la intimación fehaciente.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Decreto N° 2445/2023:<br/>Art. 116, 118 (inc. f), 119 (inc. a)
+                              </td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Contestación de Excepciones (Fisco)</td>
-                              <td className="p-3 text-amber-500 font-bold">3 a 5 días hábiles</td>
-                              <td className="p-3 text-zinc-500">Plazo para responder el traslado de las excepciones opuestas por el ejecutado.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>2. Inicio de Demanda</td>
+                              <td className="p-3">
+                                • Si la gestión previa es infructuosa, iniciar el cobro judicial dentro de las 48 horas de vencido el plazo anterior.<br/>
+                                • Presentar la demanda (genera despacho automático).
+                              </td>
+                              <td className="p-3 text-zinc-400 italic">
+                                Sin actuaciones en esta fase inicial de interposición y despacho automático.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2<br/>
+                                Decreto N° 2445/2023: Art. 119 (inc. b)<br/>
+                                CPCC (Ley N° 8465): Art. 526
+                              </td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Perención de Instancia (Ejecución Fiscal)</td>
-                              <td className="p-3 text-red-500 font-bold">6 meses</td>
-                              <td className="p-3 text-zinc-500">Se renueva automáticamente con cada movimiento o impulso procesal válido.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>3. Notificación y Citación</td>
+                              <td className="p-3">
+                                Notificar al demandado en un plazo máximo de 90 días corridos desde la iniciación del juicio (si es infructuosa, comunicarlo expresamente a la FTA).
+                              </td>
+                              <td className="p-3 text-amber-500 font-bold">
+                                Ser notificado y citado a estar a derecho por el término de 3 días.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2, 4<br/>
+                                Decreto N° 2445/2023: Art. 119 (inc. c)
+                              </td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Prescripción de la Acción Fiscal</td>
-                              <td className="p-3 text-purple-500 font-bold">5 años</td>
-                              <td className="p-3 text-zinc-500">Computados desde el vencimiento de la obligación fiscal (Código Tributario).</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>4. Oposición de Excepciones</td>
+                              <td className="p-3">
+                                • Litigar y responder defensas.<br/>
+                                • Producir la prueba ofrecida (informes o testimonios) en el plazo fatal de 15 días hábiles.<br/>
+                                • Si no hay oposición, requerir la certificación de tal circunstancia.
+                              </td>
+                              <td className="p-3 text-amber-500">
+                                • Oponer excepciones admisibles (pago total documentado, espera documentada, prescripción o inhabilidad de título) dentro de los 3 días siguientes al vencimiento del plazo para estar a derecho.<br/>
+                                • Producir la prueba documental ofrecida en el plazo fatal de 15 días hábiles.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2, 6, 7<br/>
+                                CPCC (Ley N° 8465): Art. 547
+                              </td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Apelación de Sentencia de Remate / Autos</td>
-                              <td className="p-3 text-amber-500 font-bold">3 a 5 días</td>
-                              <td className="p-3 text-zinc-500">Plazo para interponer recurso contra resoluciones de mérito o interlocutorias.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>5. Sentencia y Liquidación</td>
+                              <td className="p-3">
+                                • Si hubo oposición y prueba, el tribunal resolverá dentro de los 20 días de llamados autos para sentencia.<br/>
+                                • Llevar el juicio a estado de ejecución de sentencia dentro de los 150 días corridos siguientes a su iniciación.<br/>
+                                • Notificar la planilla de liquidación de capital, intereses y costas.
+                              </td>
+                              <td className="p-3 text-amber-500">
+                                Impugnar la liquidación o requerir regulación judicial de honorarios en el término perentorio de 3 días.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2, 7<br/>
+                                Decreto N° 2445/2023: Art. 119 (inc. d)
+                              </td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Apertura a Prueba (si se abriera)</td>
-                              <td className="p-3 text-amber-500 font-bold">10 a 20 días</td>
-                              <td className="p-3 text-zinc-500">En caso de haber hechos controvertidos debatibles en las excepciones.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>6. Medidas Cautelares y Pagos</td>
+                              <td className="p-3">
+                                • Solicitar medidas cautelares (SOJ, embargos, etc.).<br/>
+                                • Si se cancela la deuda o se paga la primera cuota de un plan mediante SOJ, solicitar el levantamiento del embargo en el plazo de 48 horas.
+                              </td>
+                              <td className="p-3">
+                                Solicitar la aplicación de fondos a dación en pago o adherirse a planes de pago (lo que suspende los plazos de pleno derecho).
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 7 bis, 10 (7 bis)<br/>
+                                Decreto N° 2445/2023: Art. 94, 95, 96, 97
+                              </td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Oposiciones / Recurso de Reposición</td>
-                              <td className="p-3 text-amber-500 font-bold">3 días</td>
-                              <td className="p-3 text-zinc-500">Contra providencias de trámite dictadas sin sustanciación previa.</td>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>7. Suspensión, Caducidad y Renuncia</td>
+                              <td className="p-3">
+                                • En caso de renuncia al cargo, producir informe general y rendir cuentas en el plazo de 15 días.<br/>
+                                • Instar el proceso regularmente para evitar la perención.
+                              </td>
+                              <td className="p-3">
+                                • Solicitar la suspensión del proceso por un plazo máximo de 1 año (por acuerdo o petición fundada).<br/>
+                                • Si hay acuerdo de suspensión y se pide reanudación anticipada, se da vista por 3 días y el juez resuelve en 5 días.<br/>
+                                • Solicitar la perención de instancia si el proceso no se impulsa en 2 años (en 1ª instancia) o 1 año (en incidentes o 2ª instancia).
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 5 quinquies, 8 bis<br/>
+                                Decreto N° 2445/2023: Art. 120
+                              </td>
                             </tr>
                           </tbody>
                         </table>
