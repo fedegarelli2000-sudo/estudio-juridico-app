@@ -67,8 +67,8 @@ export default function Home() {
         rp: { name: "Estudio Jurídico MM" },
         user: {
           id: new Uint8Array([1, 2, 3, 4]),
-          name: "dr.garelli@estudio.com",
-          displayName: "Dr. Federico Garelli"
+          name: "garelli@estudio.com",
+          displayName: "Federico Garelli"
         },
         pubKeyCredParams: [{ alg: -7, type: "public-key" }],
         timeout: 60000,
@@ -102,7 +102,7 @@ export default function Home() {
   const handleRecoverPassword = (e) => {
     e.preventDefault();
     if (recoveryInputEmail.trim().toLowerCase() === recoveryEmailConfig.toLowerCase()) {
-      setRecoveryMessage(`✅ ¡Correo verificado, Dr.! Su contraseña actual universal es: "${currentPassword}". Anótela en un lugar seguro.`);
+      setRecoveryMessage(`✅ ¡Correo verificado! Su contraseña actual universal es: "${currentPassword}". Anótela en un lugar seguro.`);
     } else {
       setRecoveryMessage('❌ El correo ingresado no coincide con el mail de recuperación configurado.');
     }
@@ -127,7 +127,7 @@ export default function Home() {
       setRecoveryEmailConfig(newRecoveryMail);
       updateRecoveryEmail(newRecoveryMail);
     }
-    setPassMessage('✅ ¡Credenciales universales actualizadas en la nube para todos los dispositivos, Dr.!');
+    setPassMessage('✅ ¡Credenciales universales actualizadas en la nube para todos los dispositivos!');
     setNewPass('');
     setConfirmPass('');
     setNewRecoveryMail('');
@@ -220,7 +220,7 @@ export default function Home() {
   };
 
   const deleteTemplate = (id) => {
-    if (!confirm('¿Está seguro de eliminar esta plantilla, Dr.?')) return;
+    if (!confirm('¿Está seguro de eliminar esta plantilla?')) return;
     const updated = templates.filter(t => t.id !== id);
     setTemplates(updated);
     updateTemplates(updated);
@@ -316,7 +316,7 @@ export default function Home() {
   };
 
   const deleteFiscalCase = (id) => {
-    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal, Dr.?')) return;
+    if (!confirm('¿Está seguro de eliminar este título ejecutivo fiscal?')) return;
     const upFC = fiscalCases.filter(fc => fc.id !== id);
     setFiscalCases(upFC);
     updateFiscalCases(upFC);
@@ -467,7 +467,7 @@ export default function Home() {
   };
 
   const deleteCautelar = (id) => {
-    if (!confirm('¿Está seguro de eliminar o levantar esta medida cautelar, Dr.?')) return;
+    if (!confirm('¿Está seguro de eliminar o levantar esta medida cautelar?')) return;
     const updated = cautelares.filter(c => c.id !== id);
     setCautelares(updated);
     updateCautelares(updated);
@@ -494,7 +494,7 @@ export default function Home() {
   };
 
   const deleteHonorario = (id) => {
-    if (!confirm('¿Eliminar registro de cobro/honorario, Dr.?')) return;
+    if (!confirm('¿Eliminar registro de cobro/honorario?')) return;
     const updated = honorariosProcuracion.filter(h => h.id !== id);
     setHonorariosProcuracion(updated);
     updateHonorarios(updated);
@@ -526,7 +526,7 @@ export default function Home() {
   ]);
 
   const [deadlines, setDeadlines] = useState([
-    { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: true },
+    { id: '1', caseId: '1', title: 'Contestar Traslado', dueDate: '2026-09-16', days: 5, status: 'PENDIENTE', isAI: false },
     { id: 'd2', caseId: 'f1', title: '[Liq 8763587] CONTESTACIÓN DE EXCEPCIONES', dueDate: '2026-09-13', days: 3, status: 'PENDIENTE', isAI: false }
   ]);
 
@@ -550,188 +550,6 @@ export default function Home() {
     { id: '1', caseId: '1', title: 'Revisar liquidación de tasa de justicia', priority: 'ALTA', completed: false },
     { id: '2', caseId: '1', title: 'Enviar pliego de preguntas al cliente', priority: 'MEDIA', completed: false }
   ]);
-
-  // --- IA CONECTADA REAL A TUS DATOS DEL ESTUDIO (RAG / NOTEBOOKLM) ---
-  const [chatSessions, setChatSessions] = useState([
-    { id: 'chat_1', title: 'Consulta sobre Ley 24.522', messages: [{ role: 'assistant', content: 'Estimado Dr. Garelli, bienvenido al asistente jurídico IA del Estudio MM. Estoy conectado directamente con sus expedientes, plazos, causas fiscales y documentos. ¿Cómo puedo auxiliarlo hoy?' }] }
-  ]);
-  const [activeChatId, setActiveChatId] = useState('chat_1');
-  const [chatInput, setChatInput] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [attachedFilesForAI, setAttachedFilesForAI] = useState([]);
-  
-  const [knowledgeSources, setKnowledgeSources] = useState([
-    { id: 'ks_1', name: 'Ley 24.522 - Concursos y Quiebras (Arg)', type: 'Ley' },
-    { id: 'ks_2', name: 'Código Procesal Civil y Comercial Córdoba', type: 'Código' }
-  ]);
-  const [newSourceTitle, setNewSourceTitle] = useState('');
-  const [newSourceType, setNewSourceType] = useState('Ley');
-
-  const handleFileUploadForAI = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const fileContent = uploadEvent.target.result;
-        const newDoc = {
-          id: 'doc_' + Date.now() + Math.random(),
-          name: file.name,
-          size: file.size,
-          content: fileContent
-        };
-        setAttachedFilesForAI(prev => [...prev, newDoc]);
-        setKnowledgeSources(prev => [...prev, { id: 'ks_' + Date.now(), name: file.name, type: 'Documento / Ley' }]);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const removeAttachedFile = (fileId) => {
-    setAttachedFilesForAI(prev => prev.filter(f => f.id !== fileId));
-  };
-
-  const createNewChat = () => {
-    const newId = 'chat_' + Date.now();
-    const newSession = { id: newId, title: `Nueva Consulta ${chatSessions.length + 1}`, messages: [{ role: 'assistant', content: 'Estimado Dr., nueva sesión avanzada iniciada. Indíquiseme su consulta procesal o sustancial.' }] };
-    setChatSessions([...chatSessions, newSession]);
-    setActiveChatId(newId);
-  };
-
-  const deleteChatSession = (id, e) => {
-    e.stopPropagation();
-    if (chatSessions.length <= 1) {
-      alert('Debe conservar al menos una sesión de chat activa, Dr.');
-      return;
-    }
-    const filtered = chatSessions.filter(c => c.id !== id);
-    setChatSessions(filtered);
-    if (activeChatId === id) {
-      setActiveChatId(filtered[0].id);
-    }
-  };
-
-  // MOTOR DE RESPUESTA INTELIGENTE CORREGIDO Y CONECTADO A TUS DATOS REALES
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!chatInput.trim() && attachedFilesForAI.length === 0) return;
-
-    const userQuery = chatInput || (attachedFilesForAI.length > 0 ? `Analizar archivos adjuntos: ${attachedFilesForAI.map(f => f.name).join(', ')}` : '');
-    setChatInput('');
-
-    const contextData = {
-      expedientes: cases.map(c => `Expte N° ${c.number} | Carátula: ${c.caratula} | Juzgado: ${c.court} | Cliente: ${c.client} | Notas: ${c.notes}`).join('\n'),
-      movimientos: movements.map(m => `Movimiento [Expte ID ${m.caseId}]: ${m.title} (${m.date}) - ${m.text}`).join('\n'),
-      causasFiscales: fiscalCases.map(fc => `Fiscal Liq N° ${fc.nroLiquidacion} | Contribuyente: ${fc.contribuyente} | Tributo: ${fc.tributo} | Monto: ${fc.monto} | Vto Liq: ${fc.fechaVencimientoLiquidacion} | Vto Excepción: ${fc.plazoExcepcionesFecha} | Prescripción: ${fc.plazoPrescripcion}`).join('\n'),
-      plazos: deadlines.map(d => `Plazo: ${d.title} | Vence: ${d.dueDate} (${d.days} días) | Estado: ${d.status}`).join('\n'),
-      tareas: tasks.map(t => `Tarea: ${t.title} | Prioridad: ${t.priority} | Completada: ${t.completed}`).join('\n'),
-      archivosAdjuntos: attachedFilesForAI.map(f => `[Archivo: ${f.name}]\nContenido/Datos: ${f.content}`).join('\n\n')
-    };
-
-    const updatedSessions = chatSessions.map(sess => {
-      if (sess.id === activeChatId) {
-        const newMsgs = [...sess.messages, { role: 'user', content: userQuery }];
-        
-        let aiReply = '';
-        const queryLower = userQuery.toLowerCase();
-
-        if (queryLower.includes('resumime') || queryLower.includes('resumen') || queryLower.includes('causa') || queryLower.includes('expediente')) {
-          const matchedCase = cases.find(c => queryLower.includes(c.number.toLowerCase()) || queryLower.includes(c.caratula.toLowerCase()) || queryLower.includes('cámara') || queryLower.includes('alquiler'));
-          
-          if (matchedCase) {
-            const caseMovs = movements.filter(m => m.caseId === matchedCase.id);
-            aiReply = `📋 **Resumen de la Causa / Expediente N° ${matchedCase.number}**:\n\n` +
-                      `• **Carátula:** ${matchedCase.caratula}\n` +
-                      `• **Juzgado:** ${matchedCase.court}\n` +
-                      `• **Cliente:** ${matchedCase.client}\n` +
-                      `• **Observaciones y Reclamo:** ${matchedCase.notes || 'Sin observaciones'}\n\n` +
-                      `📜 **Historial de Actuaciones Registradas (${caseMovs.length}):**\n` +
-                      (caseMovs.length > 0 ? caseMovs.map(m => ` - [${formatDateToArg(m.date)}] **${m.title}**: ${m.text}`).join('\n') : ' - No hay movimientos cargados en este expediente.');
-          } else {
-            aiReply = `Dr. Garelli, aquí tiene el resumen de sus causas activas registradas en el estudio:\n\n` + contextData.expedientes + `\n\n¿Desea que profundice en el resumen de alguna causa en particular? Indíquemelo con el número de expediente o carátula.`;
-          }
-        } 
-        else if (queryLower.includes('cuadro') || queryLower.includes('plazo') || queryLower.includes('tabla') || queryLower.includes('vencimiento')) {
-          aiReply = `📊 **Cuadro Consolidado de Plazos, Vencimientos y Tareas Procesales (Estudio MM)**:\n\n` +
-                    `| Tipo / Descripción | Vencimiento / Plazo | Estado |\n` +
-                    `| :--- | :--- | :--- |\n` +
-                    (deadlines.map(d => `| ${d.title} | ${formatDateToArg(d.dueDate)} (${d.days} días hábiles) | ${d.status} |`).join('\n')) + '\n' +
-                    (fiscalCases.map(fc => `| [Fiscal Liq ${fc.nroLiquidacion}] Excepción ${fc.contribuyente} | ${formatDateToArg(fc.plazoExcepcionesFecha)} | Activo |`).join('\n')) + `\n\n` +
-                    (attachedFilesForAI.length > 0 ? `\n📄 **Análisis de plazos extraídos de documentos adjuntos:**\n${contextData.archivosAdjuntos}` : '');
-        }
-        else if (queryLower.includes('fiscal') || queryLower.includes('tributo') || queryLower.includes('liq') || queryLower.includes('apremi') || queryLower.includes('rentas')) {
-          aiReply = `⚖️ **Análisis de Procuración Fiscal (Rentas Cba)**:\nTítulos y liquidaciones cargadas en el sistema:\n\n` + contextData.causasFiscales + `\n\n• **Recomendación táctica, Dr.:** Recuerde vigilar la perención a los 6 meses y controlar el plazo perentorio fatal de 3 días para oponer excepciones desde la notificación fehaciente.`;
-        }
-        else if (attachedFilesForAI.length > 0) {
-          aiReply = `📄 **Análisis Documental Realizado (NotebookLM / Estudio MM)**:\n` +
-                    `He analizado los ${attachedFilesForAI.length} archivos proporcionados (${attachedFilesForAI.map(f => f.name).join(', ')}).\n\n` +
-                    `• **Extracción de contenido:** Se identificaron obligaciones exigibles, montos y sujetos intervinientes.\n` +
-                    `• **Sugerencia jurídica:** Puede solicitarme generar un cuadro comparativo, un resumen en viñetas o la redacción de un escrito judicial basado en estos documentos.`;
-        }
-        else if (queryLower.includes('concurso') || queryLower.includes('quiebra') || queryLower.includes('24.522') || queryLower.includes('ley')) {
-          aiReply = `Dr. Garelli, a la luz de la **Ley 24.522 (Concursos y Quiebras)** y los antecedentes normativos:\n` +
-                    `1. **Efectos patrimoniales:** Se produce la suspensión de intereses (Art. 19) desde la presentación en concurso preventivo.\n` +
-                    `2. **Prohibición de pagos:** Los pagos por causa anterior quedan vedados (Art. 16), salvo los créditos laborales verificados o autorizados.\n` +
-                    `3. **Verificación tardía:** En caso de no presentarse en término, el acreedor deberá promover el incidente regulado por el Art. 200 ante la sindicatura y el tribunal concursal.`;
-        }
-        else {
-          aiReply = `Estimado Dr. Garelli, analizando su consulta ("${userQuery}") frente a los datos activos de su Estudio MM:\n\n` +
-                    `• **Expedientes en trámite:** ${cases.length} causa(s) registrada(s).\n` +
-                    `• **Títulos fiscales:** ${fiscalCases.length} liquidación(es) en curso.\n` +
-                    `• **Plazos pendientes:** ${deadlines.filter(d => d.status === 'PENDIENTE').length} vencimiento(s) activo(s).\n\n` +
-                    `Para brindarle la respuesta exacta que necesita, puede pedirme:\n` +
-                    `1. "Resumime la causa Cámara de Alquileres" para ver su historial completo.\n` +
-                    `2. "Haceme un cuadro con todos los plazos y vencimientos".\n` +
-                    `3. Adjuntar documentos/leyes para redactar escritos o extraer datos automáticamente.`;
-        }
-
-        return { 
-          ...sess, 
-          title: sess.messages.length === 1 ? userQuery.slice(0, 25) + '...' : sess.title, 
-          messages: [...newMsgs, { role: 'assistant', content: aiReply }] 
-        };
-      }
-      return sess;
-    });
-
-    setChatSessions(updatedSessions);
-    setAttachedFilesForAI([]);
-  };
-
-  const startVoiceDictation = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert('Su navegador no soporta el reconocimiento de voz nativo, Dr.');
-      return;
-    }
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'es-AR';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
-    recognition.onresult = (event) => {
-      const speechToText = event.results[0][0].transcript;
-      setChatInput(prev => (prev ? prev + ' ' : '') + speechToText);
-    };
-
-    recognition.start();
-  };
-
-  const handleAddKnowledgeSource = (e) => {
-    e.preventDefault();
-    if (!newSourceTitle.trim()) return;
-    const created = { id: 'ks_' + Date.now(), name: newSourceTitle, type: newSourceType };
-    setKnowledgeSources([...knowledgeSources, created]);
-    setNewSourceTitle('');
-  };
-
-  const deleteKnowledgeSource = (id) => {
-    setKnowledgeSources(knowledgeSources.filter(ks => ks.id !== id));
-  };
 
   // --- ESTADO PARA NUEVO MOVIMIENTO Y EDICIÓN ---
   const [newMovement, setNewMovement] = useState({ 
@@ -836,7 +654,6 @@ export default function Home() {
     const backupData = {
       versionApp: 'LexStudio MM 2026.2',
       fechaBackup: new Date().toISOString(),
-      doctor: 'Federico Nahuel Garelli',
       cases,
       clients,
       movements,
@@ -848,8 +665,7 @@ export default function Home() {
       fiscalMovements,
       cautelares,
       honorariosProcuracion,
-      templates,
-      knowledgeSources
+      templates
     };
 
     const jsonString = JSON.stringify(backupData, null, 2);
@@ -918,13 +734,13 @@ export default function Home() {
   };
 
   const deleteCase = (caseId) => {
-    if (!confirm('¿Está seguro de eliminar este expediente, Dr.?')) return;
+    if (!confirm('¿Está seguro de eliminar este expediente?')) return;
     updateCases(cases.filter(c => c.id !== caseId));
     if (selectedCaseId === caseId) setSelectedCaseId(null);
   };
 
   const deleteClient = (clientId) => {
-    if (!confirm('¿Está seguro de eliminar este contacto, Dr.?')) return;
+    if (!confirm('¿Está seguro de eliminar este contacto?')) return;
     const updated = clients.filter(c => c.id !== clientId);
     setClients(updated);
     updateClients(updated);
@@ -1028,7 +844,7 @@ export default function Home() {
   };
 
   const handleDeleteMovement = (movId) => {
-    if (!confirm('¿Está seguro de eliminar este movimiento, Dr.?')) return;
+    if (!confirm('¿Está seguro de eliminar este movimiento?')) return;
     updateMovements(movements.filter(m => m.id !== movId));
   };
 
@@ -1222,8 +1038,7 @@ export default function Home() {
               { id: 'dashboard', label: 'Dashboard General', icon: '📊' },
               { id: 'expedientes', label: 'Expedientes / Causas', icon: '📁' },
               { id: 'movimientos', label: 'Movimientos e Historia', icon: '📜' },
-              { id: 'plazos', label: 'Plazos Procesales e IA', icon: '⚡' },
-              { id: 'ia_asistente', label: 'Asistente IA Jurídico', icon: '🤖' },
+              { id: 'plazos', label: 'Plazos Procesales', icon: '⚡' },
               { id: 'tareas', label: 'Tareas y Pendientes', icon: '✅' },
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
@@ -1495,7 +1310,7 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración, Dr.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
                         )}
                       </div>
                     </div>
@@ -1594,7 +1409,7 @@ export default function Home() {
                 <div className={`pt-2 flex justify-between items-center p-3 rounded border text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                   <div>
                     <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Estado de la Alerta Urgente:</span>
-                    <p className="text-[10px] text-zinc-500">Si ya contestó o controló la excepción, Dr., puede marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
+                    <p className="text-[10px] text-zinc-500">Si ya contestó o controló la excepción, puede marcar la alerta como cumplida para que desaparezca del Dashboard.</p>
                   </div>
                   <button 
                     onClick={() => {
@@ -1798,7 +1613,7 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración, Dr.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
                         )}
                       </div>
                     </div>
@@ -1937,7 +1752,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <p className={`text-xs italic p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-500' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
-                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días, Dr. Todo al día.
+                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días. Todo al día.
                       </p>
                     )}
                   </div>
@@ -2036,7 +1851,7 @@ export default function Home() {
                   </form>
 
                   <div className="space-y-3">
-                    <p className="text-xs text-zinc-500 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar, Dr.:</p>
+                    <p className="text-xs text-zinc-500 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar:</p>
                     {cases.map(c => (
                       <div 
                         key={c.id} 
@@ -2140,7 +1955,6 @@ export default function Home() {
                     {deadlines.map(d => (
                       <div key={d.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <div>
-                          {d.isAI && <span className="bg-orange-500/20 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mb-1 inline-block">Sugerido por IA</span>}
                           <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{d.title}</h4>
                           <p className="text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
                         </div>
@@ -2160,151 +1974,6 @@ export default function Home() {
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'ia_asistente' && (
-                <div className="flex h-[calc(100vh-100px)] gap-4 relative z-10">
-                  <div className={`w-72 border rounded-xl flex flex-col justify-between shrink-0 overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                      <span className="text-xs font-bold text-orange-500 uppercase">Historial de Consultas IA</span>
-                      <button 
-                        onClick={createNewChat}
-                        className="bg-orange-500 text-black font-bold text-[11px] px-2.5 py-1 rounded hover:bg-orange-400 transition-colors"
-                      >
-                        + Nuevo Chat
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-                      {chatSessions.map((sess) => (
-                        <div 
-                          key={sess.id}
-                          onClick={() => setActiveChatId(sess.id)}
-                          className={`flex items-center justify-between p-2.5 rounded-lg text-xs cursor-pointer transition-all ${
-                            activeChatId === sess.id 
-                              ? (isDarkMode ? 'bg-zinc-800 text-white font-bold border-l-4 border-orange-500' : 'bg-orange-50 text-orange-900 font-bold border-l-4 border-orange-500')
-                              : (isDarkMode ? 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900')
-                          }`}
-                        >
-                          <span className="truncate pr-2">{sess.title}</span>
-                          <button 
-                            onClick={(e) => deleteChatSession(sess.id, e)}
-                            className="text-zinc-400 hover:text-red-500 p-1"
-                            title="Borrar chat"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className={`p-4 border-t space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <span className="text-[10px] font-bold text-orange-500 uppercase block">📚 Leyes y Fuentes Indexadas:</span>
-                      <div className="max-h-28 overflow-y-auto space-y-1">
-                        {knowledgeSources.map(ks => (
-                          <div key={ks.id} className={`flex justify-between items-center text-[11px] p-1.5 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700'}`}>
-                            <span className="truncate pr-2">{ks.name}</span>
-                            <button onClick={() => deleteKnowledgeSource(ks.id)} className="text-zinc-400 hover:text-red-500">✕</button>
-                          </div>
-                        ))}
-                      </div>
-
-                      <form onSubmit={handleAddKnowledgeSource} className="space-y-2 pt-1">
-                        <input 
-                          type="text" 
-                          placeholder="Nueva Ley / Doctrina (ej. Ley 24.522)"
-                          value={newSourceTitle}
-                          onChange={e => setNewSourceTitle(e.target.value)}
-                          className={`w-full border p-2 rounded text-[11px] outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                        />
-                        <button type="submit" className={`w-full font-bold text-[10px] py-1.5 rounded transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' : 'bg-zinc-200 hover:bg-zinc-300 text-zinc-700'}`}>
-                          + Agregar Fuente a la IA
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-
-                  <div className={`border rounded-xl flex flex-col justify-between overflow-hidden flex-1 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className={`p-4 border-b flex items-center justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <div>
-                        <h3 className={`text-xs font-bold uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Asistente Jurídico Inteligente (Conectado a tus Expedientes y Datos)</h3>
-                        <p className="text-[10px] text-zinc-500">IA optimizada para analizar tus causas, armar cuadros de plazos y redactar escritos.</p>
-                      </div>
-                      <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2.5 py-1 rounded text-[10px] border border-emerald-500/20">
-                        ● IA Conectada Activa
-                      </span>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs">
-                      {chatSessions.find(s => s.id === activeChatId)?.messages.map((msg, idx) => (
-                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] p-3.5 rounded-xl leading-relaxed ${
-                            msg.role === 'user' 
-                              ? 'bg-orange-500 text-black font-semibold shadow-md' 
-                              : (isDarkMode ? 'bg-zinc-950 text-zinc-200 border border-zinc-800 shadow-inner' : 'bg-zinc-100 text-zinc-800 border border-zinc-200 shadow-inner')
-                          }`}>
-                            <p className="whitespace-pre-wrap">{msg.content}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {attachedFilesForAI.length > 0 && (
-                      <div className={`px-4 py-2 border-t flex items-center gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}>
-                        <span className="text-[10px] font-bold text-orange-500 uppercase shrink-0">Leyes/Archivos Listos para Analizar:</span>
-                        {attachedFilesForAI.map(file => (
-                          <div key={file.id} className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] border shrink-0 ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}>
-                            <span>📄 {file.name}</span>
-                            <button onClick={() => removeAttachedFile(file.id)} className="text-zinc-400 hover:text-red-500 font-bold ml-1">✕</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <form onSubmit={handleSendMessage} className={`p-4 border-t flex items-center gap-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <label 
-                        title="Subir documentos o expedientes"
-                        className={`p-3 rounded-xl border cursor-pointer transition-all ${isDarkMode ? 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800' : 'bg-white text-orange-600 border-zinc-300 hover:bg-zinc-100'}`}
-                      >
-                        📎
-                        <input 
-                          type="file" 
-                          multiple
-                          onChange={handleFileUploadForAI}
-                          className="hidden"
-                        />
-                      </label>
-
-                      <button 
-                        type="button" 
-                        onClick={startVoiceDictation}
-                        title="Dictar consulta por micrófono"
-                        className={`p-3 rounded-xl border transition-all ${
-                          isListening 
-                            ? 'bg-red-500 text-white border-red-600 animate-pulse shadow-lg shadow-red-500/50' 
-                            : (isDarkMode ? 'bg-zinc-900 text-orange-400 border-zinc-800 hover:bg-zinc-800' : 'bg-white text-orange-600 border-zinc-300 hover:bg-zinc-100')
-                        }`}
-                      >
-                        🎙️
-                      </button>
-
-                      <input 
-                        type="text" 
-                        placeholder={isListening ? "Escuchando su voz, Dr...." : "Ej. 'Resumime la causa Cámara de Alquileres' o 'Haceme un cuadro con plazos'..."}
-                        value={chatInput}
-                        onChange={e => setChatInput(e.target.value)}
-                        className={`flex-1 border p-3 rounded-xl text-xs outline-none focus:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                      />
-
-                      <button 
-                        type="submit" 
-                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-3 rounded-xl transition-colors shadow-lg shadow-orange-500/20"
-                      >
-                        Enviar Orden
-                      </button>
-                    </form>
                   </div>
                 </div>
               )}
@@ -2527,7 +2196,7 @@ export default function Home() {
                             </label>
                           ))
                         ) : (
-                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración, Dr.</p>
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
                         )}
                       </div>
                     </div>
@@ -2742,7 +2411,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <form onSubmit={handleAddFiscalCase} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
-                        <p className="text-[10px] text-zinc-500">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong>, Dr., para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
+                        <p className="text-[10px] text-zinc-500">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong> para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
                             type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
@@ -2831,7 +2500,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className={`border p-5 rounded-xl space-y-2 text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
                         <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción Fiscal</h3>
-                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registre un movimiento nuevo en la ficha del título fiscal, el sistema tomará esa fecha como base y renovará automáticamente el plazo de perención, Dr.</p>
+                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registre un movimiento nuevo en la ficha del título fiscal, el sistema tomará esa fecha como base y renovará automáticamente el plazo de perención.</p>
                         <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha de vencimiento de la liquidación fiscal.</p>
                       </div>
 
@@ -3014,7 +2683,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <div className={`border p-5 rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Cuadro Único Integral: Proceso, Plazos y Citas Numéricas (Ejecución Fiscal Córdoba)</h3>
-                        <p className="text-xs text-zinc-500">Todo el proceso de ejecución fiscal integrado, abarcando plazos procesales principales, operativos, administrativos y particulares (Ley N° 9024, Decreto N° 2445/2023 y materiales FTA), Dr.</p>
+                        <p className="text-xs text-zinc-500">Todo el proceso de ejecución fiscal integrado, abarcando plazos procesales principales, operativos, administrativos y particulares (Ley N° 9024, Decreto N° 2445/2023 y materiales FTA).</p>
                       </div>
 
                       <div className={`border rounded-xl overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
@@ -3141,7 +2810,7 @@ export default function Home() {
                     <div className="space-y-4">
                       <form onSubmit={handleAddTemplate} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                         <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
-                        <p className="text-[10px] text-zinc-500">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora, Dr., para tenerlos siempre disponibles en la nube.</p>
+                        <p className="text-[10px] text-zinc-500">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora para tenerlos siempre disponibles en la nube.</p>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
@@ -3220,7 +2889,7 @@ export default function Home() {
                         ))}
                         {templates.length === 0 && (
                           <p className={`text-xs italic p-4 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-500' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
-                            No hay plantillas cargadas todavía, Dr. Use el formulario de arriba para incorporar sus modelos.
+                            No hay plantillas cargadas todavía. Use el formulario de arriba para incorporar sus modelos.
                           </p>
                         )}
                       </div>
@@ -3255,7 +2924,7 @@ export default function Home() {
 
                   <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">🧬 Seguridad Biométrica (Acceso con Huella Digital)</h3>
-                    <p className="text-xs text-zinc-500">Active o desactive el inicio de sesión rápido mediante huella digital o reconocimiento biométrico en su dispositivo móvil, Dr.</p>
+                    <p className="text-xs text-zinc-500">Active o desactive el inicio de sesión rápido mediante huella digital o reconocimiento biométrico en su dispositivo móvil.</p>
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input 
                         type="checkbox" 
@@ -3273,7 +2942,7 @@ export default function Home() {
 
                   <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo de Datos (Backup Completo)</h3>
-                    <p className="text-xs text-zinc-500">Descargue un archivo de respaldo con toda la información del estudio (expedientes, causas fiscales, plazos, clientes, plantillas) en formato de texto puro para garantizar que nunca pierda nada importante, Dr.</p>
+                    <p className="text-xs text-zinc-500">Descargue un archivo de respaldo con toda la información del estudio (expedientes, causas fiscales, plazos, clientes, plantillas) en formato de texto puro para garantizar que nunca pierda nada importante.</p>
                     <button 
                       onClick={handleDownloadFullBackup}
                       className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20 flex items-center gap-2"
