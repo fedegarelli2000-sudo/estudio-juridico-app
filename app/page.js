@@ -250,32 +250,6 @@ export default function Home() {
   const [cautelares, setCautelares] = useState([]);
   const [honorariosProcuracion, setHonorariosProcuracion] = useState([]);
 
-  // ESTADOS NUEVOS REQUERIDOS:
-  // 1. Generador Automático de Escritos (Nº 1)
-  const [escritorForm, setEscritorForm] = useState({
-    tipoEscrito: 'Contestación de Demanda',
-    expedienteId: '',
-    juzgado: 'Juzgado Civil y Comercial Nº 12 - Río Cuarto',
-    actor: '',
-    demandado: '',
-    hechos: '',
-    petitorio: ''
-  });
-  const [escritorGenerado, setEscritorGenerado] = useState('');
-
-  // 4. Control de Gastos y Anticipos por Expediente (Nº 4)
-  const [caseExpenses, setCaseExpenses] = useState([
-    { id: 'exp_1', caseId: '1', fecha: '2026-08-15', concepto: 'Anticipo de gastos - Tasa de justicia', monto: '25000', tipo: 'ANTICIPO' },
-    { id: 'exp_2', caseId: '1', fecha: '2026-08-20', concepto: 'Gasto de cédula ley', monto: '4500', tipo: 'GASTO' }
-  ]);
-  const [newExpense, setNewExpense] = useState({
-    caseId: '1',
-    fecha: new Date().toISOString().split('T')[0],
-    concepto: '',
-    monto: '',
-    tipo: 'GASTO'
-  });
-
   // Estados para selección múltiple y autosuma en Finanzas
   const [selectedFinanceIds, setSelectedFinanceIds] = useState([]);
 
@@ -1138,10 +1112,7 @@ export default function Home() {
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
-              { id: 'generador', label: '1. Generador Automático Escritos', icon: '📝' },
-              { id: 'gastos_exp', label: '4. Gastos y Anticipos por Exp.', icon: '📋' },
-              { id: 'contactos_juzgados', label: 'Contactos Juzgados Río Cuarto', icon: '🏛️' },
-              { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📑' },
+              { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
               <button
@@ -1747,6 +1718,7 @@ export default function Home() {
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
+                  {/* --- NUEVO DISEÑO PREMIUM PARA LA CABECERA / FECHA --- */}
                   <div className={`border p-6 rounded-2xl shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${isDarkMode ? 'bg-gradient-to-r from-zinc-900 to-zinc-950 border-zinc-800/80' : 'bg-gradient-to-r from-white to-zinc-50 border-zinc-200'}`}>
                     <div>
                       <div className="flex items-center gap-2">
@@ -1766,6 +1738,7 @@ export default function Home() {
                       </p>
                     </div>
 
+                    {/* Tarjeta de Fecha Estilizada tipo Widget de Alta Gama */}
                     <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-inner ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
                       <div className="text-2xl">📅</div>
                       <div>
@@ -2696,325 +2669,694 @@ export default function Home() {
                 </div>
               )}
 
-              {/* NUEVA PESTAÑA: 1. Generador Automático de Escritos */}
-              {activeTab === 'generador' && (
+              {activeTab === 'reporte' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">📝 Generador Automático de Escritos (Nº 1)</h3>
-                    <p className="text-xs text-zinc-500">Complete los datos clave para generar modelos de escritos judiciales adaptados al fuero civil, comercial o fiscal de Córdoba.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-center border-b pb-3">
                       <div>
-                        <label className="block text-zinc-400 mb-1">Tipo de Escrito:</label>
-                        <select 
-                          value={escritorForm.tipoEscrito}
-                          onChange={e => setEscritorForm({...escritorForm, tipoEscrito: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        >
-                          <option value="Contestación de Demanda">Contestación de Demanda</option>
-                          <option value="Oposición de Excepciones Fiscales">Oposición de Excepciones Fiscales</option>
-                          <option value="Solicitud de Medida Cautelar (SOJ)">Solicitud de Medida Cautelar (SOJ)</option>
-                          <option value="Presentación de Alegato / Prueba">Presentación de Alegato / Prueba</option>
-                        </select>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria del Estudio</h3>
+                        <p className="text-xs text-zinc-500">Resumen consolidado para imprimir, revisar por la mañana o reenviar al equipo.</p>
                       </div>
-
-                      <div>
-                        <label className="block text-zinc-400 mb-1">Juzgado Interviniente:</label>
-                        <input 
-                          type="text" 
-                          value={escritorForm.juzgado}
-                          onChange={e => setEscritorForm({...escritorForm, juzgado: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-zinc-400 mb-1">Actor / Fisco / Demandante:</label>
-                        <input 
-                          type="text" 
-5                          placeholder="Ej. Provincia de Córdoba / Juan Pérez" 
-                          value={escritorForm.actor}
-                          onChange={e => setEscritorForm({...escritorForm, actor: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-zinc-400 mb-1">Demandado / Contribuyente:</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ej. Zamarbide Federico" 
-                          value={escritorForm.demandado}
-                          onChange={e => setEscritorForm({...escritorForm, demandado: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
+                      <button 
+                        onClick={() => window.print()}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2 rounded shadow"
+                      >
+                        🖨️ Imprimir / Guardar PDF
+                      </button>
                     </div>
 
-                    <div>
-                      <label className="block text-zinc-400 mb-1 text-xs">Hechos / Argumentos Principales:</label>
-                      <textarea 
-                        placeholder="Describa brevemente los fundamentos u objeto del escrito..." 
-                        value={escritorForm.hechos}
-                        onChange={e => setEscritorForm({...escritorForm, hechos: e.target.value})}
-                        className={`w-full border p-2.5 rounded text-xs outline-none h-20 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                      />
-                    </div>
-
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const generated = `SEÑOR JUEZ:\n\n${escritorForm.actor}, por derecho propio / con patrocinio letrado, constituyendo domicilio digital en CIDI, en los autos caratulados c/ ${escritorForm.demandado} - EXPTE. Nº [...] a V.S. respetuosamente digo:\n\nI. OBJETO\nQue vengo en tiempo y forma legal a interponer ${escritorForm.tipoEscrito}, fundado en las consideraciones de hecho y de derecho que paso a exponer:\n\nII. HECHOS\n${escritorForm.hechos || 'Se niegan todos y cada uno de los hechos invocados de contrario que no fueren de expreso reconocimiento...'}\n\nIII. PETITORIO\nPor todo lo expuesto a V.S. solicito:\n1) Me tenga por presentado, por parte y por constituido el domicilio procesal.\n2) Se tenga por contestada en tiempo y forma la demanda / traslado.\n3) Oportunamente, se haga lugar a las defensas opuestas, con costas.\n\nPROVEER DE CONFORMIDAD,\nSERÁ JUSTICIA.`;
-                        setEscritorGenerado(generated);
-                      }}
-                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-2.5 rounded shadow"
-                    >
-                      Generar Borrador de Escrito
-                    </button>
-
-                    {escritorGenerado && (
-                      <div className="space-y-3 pt-4 border-t border-zinc-800">
-                        <h4 className="text-xs font-bold text-emerald-500 uppercase">✅ Borrador Generado con Éxito:</h4>
-                        <textarea 
-                          readOnly
-                          value={escritorGenerado}
-                          className={`w-full border p-3 rounded text-xs font-mono h-48 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => {
-                              navigator.clipboard.writeText(escritorGenerado);
-                              alert('¡Borrador copiado al portapapeles!');
-                            }}
-                            className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-4 py-2 rounded border border-zinc-700"
-                          >
-                            📋 Copiar al Portapapeles
-                          </button>
+                    <div className="space-y-4 text-xs">
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">📅 Audiencias Agendadas ({hearings.filter(h => h.status === 'PENDIENTE').length} pendientes)</h4>
+                        <div className="space-y-2">
+                          {hearings.filter(h => h.status === 'PENDIENTE').map(h => (
+                            <div key={h.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <div>
+                                <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.title}</strong>
+                                <p className="text-[10px] text-zinc-500">Lugar: {h.location} • Modalidad: {h.modalidad}</p>
+                              </div>
+                              <span className="font-mono text-orange-500 font-bold">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    )}
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚡ Plazos Procesales Activos ({deadlines.filter(d => d.status === 'PENDIENTE').length})</h4>
+                        <div className="space-y-2">
+                          {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                            <div key={d.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <span className={isDarkMode ? 'text-white font-bold' : 'text-zinc-900 font-bold'}>{d.title}</span>
+                              <span className="font-mono text-amber-500 font-bold">Vence: {formatDateToArg(d.dueDate)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">🚨 Alertas Fiscales Urgentes ({urgentFiscalAlerts.length})</h4>
+                        <div className="space-y-2">
+                          {urgentFiscalAlerts.map(fc => (
+                            <div key={fc.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <span className={isDarkMode ? 'text-white font-bold' : 'text-zinc-900 font-bold'}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+                              <span className="font-mono text-red-500 font-bold">Vto. Excepción: {formatDateToArg(fc.plazoExcepcionesFecha)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* NUEVA PESTAÑA: 4. Control de Gastos y Anticipos por Expediente */}
-              {activeTab === 'gastos_exp' && (
+              {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Control de Gastos y Anticipos por Expediente (Nº 4)</h3>
-                    <p className="text-xs text-zinc-500">Administre los fondos recibidos en concepto de anticipos de clientes y los gastos efectivamente realizados en cada causa judicial o administrativa.</p>
-
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      if (!newExpense.concepto || !newExpense.monto) return;
-                      const created = { ...newExpense, id: 'exp_' + Date.now() };
-                      setCaseExpenses([...caseExpenses, created]);
-                      setNewExpense({
-                        caseId: cases[0]?.id || '1',
-                        fecha: new Date().toISOString().split('T')[0],
-                        concepto: '',
-                        monto: '',
-                        tipo: 'GASTO'
-                      });
-                    }} className={`p-4 rounded-xl border space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Anticipo o Gasto</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                        <select 
-                          value={newExpense.caseId}
-                          onChange={e => setNewExpense({...newExpense, caseId: e.target.value})}
-                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                        >
-                          {cases.map(c => (
-                            <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>
-                          ))}
-                        </select>
-
-                        <select 
-                          value={newExpense.tipo}
-                          onChange={e => setNewExpense({...newExpense, tipo: e.target.value})}
-                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                        >
-                          <option value="ANTICIPO">Anticipo Recibido (Ingreso)</option>
-                          <option value="GASTO">Gasto Efectuado (Egreso)</option>
-                        </select>
-
-                        <input 
-                          type="date" 
-                          value={newExpense.fecha}
-                          onChange={e => setNewExpense({...newExpense, fecha: e.target.value})}
-                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                        />
-
-                        <input 
-                          type="text" 
-                          placeholder="Monto ($)" 
-                          value={newExpense.monto}
-                          onChange={e => setNewExpense({...newExpense, monto: e.target.value})}
-                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <input 
-                        type="text" 
-                        placeholder="Concepto detallado (ej. Compra de bonos de ley, fotocopias, tasa de justicia)..." 
-                        value={newExpense.concepto}
-                        onChange={e => setNewExpense({...newExpense, concepto: e.target.value})}
-                        className={`w-full border p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                      />
-                      <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                        Guardar Registro de Gasto/Anticipo
+                  <div className={`border p-4 rounded-xl flex gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    {[
+                      { id: 'titulos', label: '1. Títulos y Vto. de Liquidación' },
+                      { id: 'gestion', label: '2. Plazos y Perención (Semáforo)' },
+                      { id: 'cautelares', label: '3. Medidas Cautelares' },
+                      { id: 'pagos', label: '4. Cobros y Honorarios' },
+                      { id: 'tabla_plazos', label: '5. 📋 Tabla de Plazos Procesales' },
+                      { id: 'plantillas', label: '6. 📄 Plantillas de Escritos' }
+                    ].map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setProcuracionSubTab(sub.id)}
+                        className={`px-3 py-2 rounded text-xs font-bold whitespace-nowrap transition-all ${
+                          procuracionSubTab === sub.id 
+                            ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' 
+                            : (isDarkMode ? 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900 border border-zinc-300')
+                        }`}
+                      >
+                        {sub.label}
                       </button>
-                    </form>
+                    ))}
+                  </div>
 
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">Listado de Anticipos y Gastos por Expediente</h4>
-                      {caseExpenses.map(ex => {
-                        const parentCase = cases.find(c => c.id === ex.caseId);
-                        return (
-                          <div key={ex.id} className={`p-3 border rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <div>
-                              <span className={`font-bold px-2 py-0.5 rounded text-[10px] mr-2 ${ex.tipo === 'ANTICIPO' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-amber-500/20 text-amber-500'}`}>
-                                {ex.tipo}
-                              </span>
-                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Exp: {parentCase?.number || 'General'}</strong>
-                              <p className="text-zinc-400 mt-0.5">{ex.concepto} • Fecha: {formatDateToArg(ex.fecha)}</p>
+                  {procuracionSubTab === 'titulos' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddFiscalCase} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
+                        <p className="text-[10px] text-zinc-500">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong> para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <input 
+                            type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
+                            value={newFiscalCase.tributo} onChange={e => setNewFiscalCase({...newFiscalCase, tributo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Contribuyente / Razón Social (ej. ZAMARBIDE)" 
+                            value={newFiscalCase.contribuyente} onChange={e => setNewFiscalCase({...newFiscalCase, contribuyente: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Nº de Liquidación (ej. 2468-1357)" 
+                            value={newFiscalCase.nroLiquidacion} onChange={e => setNewFiscalCase({...newFiscalCase, nroLiquidacion: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Período Fiscal (ej. 2026)" 
+                            value={newFiscalCase.periodo} onChange={e => setNewFiscalCase({...newFiscalCase, periodo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Monto Total Liquidado ($)" 
+                            value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <div>
+                            <label className="text-[10px] text-orange-500 font-bold block mb-1">Fecha Vencimiento de la Liquidación:</label>
+                            <input 
+                              type="date" 
+                              value={newFiscalCase.fechaVencimientoLiquidacion} 
+                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
+                              className={`w-full border border-orange-500 p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                            />
+                          </div>
+                          <input 
+                            type="text" placeholder="Juzgado Fiscal Asignado" 
+                            value={newFiscalCase.juzgado} onChange={e => setNewFiscalCase({...newFiscalCase, juzgado: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar Título y Calcular Prescripción
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados</h4>
+                        {fiscalCases.map(fc => (
+                          <div key={fc.id} className={`border p-4 rounded-xl text-xs space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div className={`flex justify-between items-center font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
+                              <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer flex-1">
+                                <span className="bg-orange-500/10 text-orange-500 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">
+                                  Liq: {fc.nroLiquidacion}
+                                </span>
+                                <span className={isDarkMode ? 'text-white text-sm' : 'text-zinc-900 text-sm'}>{fc.tributo} - {fc.contribuyente}</span>
+                              </div>
+                              <span className="text-orange-500 font-mono text-sm">{fc.monto}</span>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className={`font-mono font-black ${ex.tipo === 'ANTICIPO' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                                ${ex.monto}
-                              </span>
+
+                            <div onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] p-2.5 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
+                              <div>📅 <strong>Vto. Liq:</strong> {formatDateToArg(fc.fechaVencimientoLiquidacion) || 'No cargado'}</div>
+                              <div>⚠️ <strong className="text-amber-500">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
+                              <div>⏳ <strong className="text-red-500">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
+                              <div>🔒 <strong className="text-purple-500">Prescripción (5a):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
+                            </div>
+
+                            <div className={`flex justify-between items-center pt-2 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                              <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                                Ingresar a Ficha / Editar Plazos →
+                              </button>
                               <button 
-                                onClick={() => setCaseExpenses(caseExpenses.filter(item => item.id !== ex.id))}
-                                className="text-red-500 hover:text-red-600 px-2 py-1 bg-red-500/10 rounded"
+                                onClick={() => deleteFiscalCase(fc.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                               >
-                                🗑️
+                                🗑️ Eliminar Título
                               </button>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* NUEVA PESTAÑA: Contactos de Juzgados y Dependencias de Río Cuarto */}
-              {activeTab === 'contactos_juzgados' && (
-                <div className="space-y-6 relative z-10">
-                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">🏛️ Directorio de Juzgados y Dependencias de Río Cuarto</h3>
-                    <p className="text-xs text-zinc-500">Información de contacto oficial, domicilios, correos institucionales y teléfonos de los tribunales y dependencias de la Primera Circunscripción Judicial (Sede Río Cuarto).</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        { name: 'Fuero Civil y Comercial (Tribunales Río Cuarto)', dir: 'Pje. Concejal E. Conci 660', tel: '0358-4678000', email: 'camcivcom1-rc@justiciacordoba.gob.ar', hor: '08:00 a 14:00 hs' },
-                        { name: 'Juzgados de Conciliación y Trabajo', dir: 'Pje. Concejal E. Conci 660', tel: '0358-4678100', email: 'camtrabajo-rc@justiciacordoba.gob.ar', hor: '08:00 a 14:00 hs' },
-                        { name: 'Cámara Criminal y Correccional / Tribunales Penales', dir: 'Pje. Concejal E. Conci 660', tel: '0358-4678200', email: 'campen-rc@justiciacordoba.gob.ar', hor: '08:00 a 14:00 hs' },
-                        { name: 'Juzgados de Familia', dir: 'Pje. Concejal E. Conci 660', tel: '0358-4678300', email: 'fam-rc@justiciacordoba.gob.ar', hor: '08:00 a 14:00 hs' },
-                        { name: 'Juzgado de Ejecución Fiscal (Provincia)', dir: 'Bv. Alvear y Maipú', tel: '0358-4678400', email: 'fiscal-rc@justiciacordoba.gob.ar', hor: '08:00 a 13:30 hs' },
-                        { name: 'Registro General de la Propiedad (Delegación Río Cuarto)', dir: 'Sobremonte 35', tel: '0358-4671200', email: 'rgprciocar@cba.gov.ar', hor: '08:00 a 13:00 hs' },
-                        { name: 'DNRPA - Seccionales Registro Automotor', dir: 'Varios (Río Cuarto centro)', tel: '0358-4621111', email: 'dnrpa-rc@jus.gov.ar', hor: '08:00 a 12:30 hs' },
-                        { name: 'Policía Judicial / Morgue Judicial', dir: 'Pje. Concejal E. Conci 660', tel: '0358-4678900', email: 'policialjudicial-rc@justiciacordoba.gob.ar', hor: 'Atención 24 hs' }
-                      ].map((item, idx) => (
-                        <div key={idx} className={`p-4 border rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{item.name}</h4>
-                          <p className="text-xs text-zinc-400">📍 <strong>Domicilio:</strong> {item.dir}</p>
-                          <p className="text-xs text-zinc-400">📞 <strong>Teléfono:</strong> {item.tel}</p>
-                          <p className="text-xs text-orange-500 truncate">✉️ <strong>Correo:</strong> <a href={`mailto:${item.email}`} className="underline">{item.email}</a></p>
-                          <p className="text-[10px] text-zinc-500">⏰ <strong>Horario:</strong> {item.hor}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'configuracion' && (
-                <div className="space-y-6 relative z-10">
-                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Gestión de Correos del Equipo</h3>
-                    <p className="text-xs text-zinc-500">Agregue los correos electrónicos de los integrantes del estudio para seleccionarlos al agendar audiencias o eventos en Google Calendar.</p>
-
-                    <div className="space-y-3 pt-2">
-                      <h4 className="text-xs font-bold text-zinc-400 uppercase">Correos Electrónicos Registrados para Sincronización:</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {teamEmails.map((mail, idx) => (
-                          <div key={idx} className="flex gap-2">
-                            <input 
-                              type="email" 
-                              value={mail}
-                              placeholder={`Correo integrante ${idx + 1}`}
-                              onChange={(e) => {
-                                const updated = [...teamEmails];
-                                updated[idx] = e.target.value;
-                                updateTeamEmails(updated);
-                              }}
-                              className={`w-full border p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            />
                           </div>
                         ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">🔒 Cambiar Contraseña y Correo de Recuperación Universal</h3>
-                    <p className="text-xs text-zinc-500">Modifique la clave de acceso privada o el correo de recuperación para todos los dispositivos del estudio sincronizados en la nube.</p>
-
-                    <form onSubmit={handleChangePassword} className="space-y-3 text-xs">
-                      <div>
-                        <label className="block text-zinc-400 mb-1">Nueva Contraseña Universal:</label>
-                        <input 
-                          type="password" 
-                          placeholder="Dejar en blanco para mantener la actual"
-                          value={newPass}
-                          onChange={e => setNewPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
+                  {procuracionSubTab === 'gestion' && (
+                    <div className="space-y-4">
+                      <div className={`border p-5 rounded-xl space-y-2 text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción con Semáforo de Riesgo</h3>
+                        <p>• 🟢 <strong>Verde (Seguro):</strong> Más de 30 días restantes para que venza el plazo o prescriba la acción.</p>
+                        <p>• 🟡 <strong>Amarillo (Atención):</strong> Menos de 30 días para el vencimiento de excepción o perención.</p>
+                        <p>• 🔴 <strong>Rojo (Crítico / Vencido):</strong> Plazo vencido o perención inminente en los próximos 7 días.</p>
                       </div>
 
-                      <div>
-                        <label className="block text-zinc-400 mb-1">Confirmar Nueva Contraseña:</label>
+                      <div className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos con Semáforo Temporal</h4>
+                        <div className="space-y-2">
+                          {fiscalCases.map(fc => {
+                            let semaforoColor = 'border-emerald-500/50 bg-emerald-500/5 text-emerald-500';
+                            let semaforoText = '🟢 SEGURO';
+
+                            if (fc.plazoPerencion && !fc.plazoPerencion.includes('A calcular')) {
+                              const pDate = new Date(fc.plazoPerencion);
+                              const diffDays = Math.ceil((pDate - today) / (1000 * 60 * 60 * 24));
+                              if (diffDays <= 7) {
+                                semaforoColor = 'border-red-500/80 bg-red-500/10 text-red-500 animate-pulse';
+                                semaforoText = '🔴 CRÍTICO (< 7 DÍAS)';
+                              } else if (diffDays <= 30) {
+                                semaforoColor = 'border-amber-500/80 bg-amber-500/10 text-amber-500';
+                                semaforoText = '🟡 ATENCIÓN (< 30 DÍAS)';
+                              }
+                            }
+
+                            return (
+                              <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer p-4 border rounded-xl flex justify-between items-center text-xs transition-colors ${semaforoColor} ${isDarkMode ? 'bg-zinc-950' : 'bg-white shadow-sm'}`}>
+                                <div>
+                                  <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
+                                  <p className="text-[10px] text-zinc-400 mt-1">
+                                    Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
+                                    Perención (Últ. Mov.): <span className="font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
+                                  </p>
+                                </div>
+                                <span className={`font-bold px-3 py-1.5 rounded border text-[11px] ${semaforoColor}`}>
+                                  {semaforoText}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'cautelares' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddCautelar} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Traba de Medida Cautelar (SOJ / DNRPA / RGP)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                          <select 
+                            value={newCautelar.fiscalId} 
+                            onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="">Seleccionar Liquidación...</option>
+                            {fiscalCases.map(fc => (
+                              <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
+                            ))}
+                          </select>
+
+                          <select 
+                            value={newCautelar.tipo} 
+                            onChange={e => setNewCautelar({...newCautelar, tipo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="SOJ (Bancario)">SOJ (Sistema Oficios Judiciales)</option>
+                            <option value="DNRPA (Automotor)">DNRPA (Registro Automotor)</option>
+                            <option value="RGP (Inmobiliario)">RGP (Registro General Inmueble)</option>
+                            <option value="Embargo de Sueldo">Embargo de Sueldo</option>
+                          </select>
+
+                          <input 
+                            type="date" 
+                            value={newCautelar.fecha} 
+                            onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+
+                          <input 
+                            type="text" 
+                            placeholder="Monto Embargo ($)" 
+                            value={newCautelar.montoEmbargo} 
+                            onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar Medida Cautelar
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Vigentes</h4>
+                        {cautelares.map(c => (
+                          <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                                  {c.tipo}
+                                </span>
+                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {c.nroLiquidacion}</span>
+                              </div>
+                              <p className="text-zinc-500 mt-1">Deudor: {c.titular} • Fecha: {formatDateToArg(c.fecha)}</p>
+                            </div>
+                            <button 
+                              onClick={() => deleteCautelar(c.id)}
+                              className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                            >
+                              🗑️ Levantar / Borrar
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'pagos' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddHonorario} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                          <select 
+                            value={newHonorario.fiscalId} 
+                            onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="">Seleccionar Liquidación...</option>
+                            {fiscalCases.map(fc => (
+                              <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
+                            ))}
+                          </select>
+
+                          <select 
+                            value={newHonorario.tipoIngreso} 
+                            onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="HONORARIOS">Honorarios Procurador</option>
+                            <option value="CEDULA_GASTOS">Gastos de Cédula</option>
+                            <option value="TASA_JUSTICIA">Tasa de Justicia</option>
+                            <option value="OTRO">Otro</option>
+                          </select>
+
+                          <input 
+                            type="date" 
+                            value={newHonorario.fecha} 
+                            onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+
+                          <input 
+                            type="text" 
+                            placeholder="Monto ($)" 
+                            value={newHonorario.monto} 
+                            onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
                         <input 
-                          type="password" 
-                          placeholder="Repita la nueva contraseña"
-                          value={confirmPass}
-                          onChange={e => setConfirmPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          type="text" 
+                          placeholder="Concepto detallado..." 
+                          value={newHonorario.concepto} 
+                          onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
+                          className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Guardar Registro
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Cobros y Honorarios</h4>
+                        {honorariosProcuracion.map(h => (
+                          <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div>
+                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2">
+                                {h.tipoIngreso}
+                              </span>
+                              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
+                              <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}><strong>{h.concepto}</strong></p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-emerald-500 font-black font-mono text-sm">${h.monto}</span>
+                              <button 
+                                onClick={() => deleteHonorario(h.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              >
+                                🗑️ Borrar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'tabla_plazos' && (
+                    <div className="space-y-4">
+                      <div className={`border p-5 rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Cuadro Único Integral: Proceso, Plazos y Citas Numéricas (Ejecución Fiscal Córdoba)</h3>
+                        <p className="text-xs text-zinc-500">Todo el proceso de ejecución fiscal integrado, abarcando plazos procesales principales, operativos, administrativos y particulares (Ley N° 9024, Decreto N° 2445/2023 y materiales FTA).</p>
                       </div>
 
-                      <div>
-                        <label className="block text-zinc-400 mb-1">Nuevo Correo de Recuperación:</label>
+                      <div className={`border rounded-xl overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <table className="w-full text-left text-xs">
+                          <thead className={`uppercase border-b ${isDarkMode ? 'bg-zinc-950 text-orange-400 border-zinc-800' : 'bg-zinc-100 text-orange-600 border-zinc-200'}`}>
+                            <tr>
+                              <th className="p-3">Etapa / Ámbito</th>
+                              <th className="p-3">Acciones y Plazos del Procurador Fiscal</th>
+                              <th className="p-3">Acciones y Plazos de la Contraparte (Demandado)</th>
+                              <th className="p-3">Base Legal y Artículos</th>
+                            </tr>
+                          </thead>
+                          <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800 text-zinc-300' : 'divide-zinc-200 text-zinc-700'}`}>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>1. Gestión Extrajudicial (Previa)</td>
+                              <td className="p-3">
+                                • Enviar intimación fehaciente dentro de los 30 días corridos de recibidos los títulos.<br/>
+                                • Cargar novedades en FTAGo! a más tardar el día hábil inmediato siguiente de producidas.<br/>
+                                • Mantener vigente la fianza (renovación 48 horas antes de vencer) y cumplir obligaciones de respaldo.
+                              </td>
+                              <td className="p-3 text-amber-500">
+                                Abonar la deuda en el término perentorio de 10 días corridos desde recibida la intimación fehaciente.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Decreto N° 2445/2023:<br/>Art. 116, 118 (inc. f), 119 (inc. a)
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>2. Inicio de Demanda</td>
+                              <td className="p-3">
+                                • Si la gestión previa es infructuosa, iniciar el cobro judicial dentro de las 48 horas de vencido el plazo anterior.<br/>
+                                • Presentar la demanda (genera despacho automático).
+                              </td>
+                              <td className="p-3 text-zinc-400 italic">
+                                Sin actuaciones en esta fase inicial de interposición y despacho automático.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2<br/>
+                                Decreto N° 2445/2023: Art. 119 (inc. b)<br/>
+                                CPCC (Ley N° 8465): Art. 526
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>3. Notificación y Citación</td>
+                              <td className="p-3">
+                                Notificar al demandado en un plazo máximo de 90 días corridos desde la iniciación del juicio (si es infructuosa, comunicarlo expresamente a la FTA).
+                              </td>
+                              <td className="p-3 text-amber-500 font-bold">
+                                Ser notificado y citado a estar a derecho por el término de 3 días.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2, 4<br/>
+                                Decreto N° 2445/2023: Art. 119 (inc. c)
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>4. Oposición de Excepciones</td>
+                              <td className="p-3">
+                                • Litigar y responder defensas.<br/>
+                                • Producir la prueba ofrecida (informes o testimonios) en el plazo fatal de 15 días hábiles.<br/>
+                                • Si no hay oposición, requerir la certificación de tal circunstancia.
+                              </td>
+                              <td className="p-3 text-amber-500">
+                                • Oponer excepciones admisibles (pago total documentado, espera documentada, prescripción o inhabilidad de título) dentro de los 3 días siguientes al vencimiento del plazo para estar a derecho.<br/>
+                                • Producir la prueba documental ofrecida en el plazo fatal de 15 días hábiles.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2, 6, 7<br/>
+                                CPCC (Ley N° 8465): Art. 547
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>5. Sentencia y Liquidación</td>
+                              <td className="p-3">
+                                • Si hubo oposición y prueba, el tribunal resolverá dentro de los 20 días de llamados autos para sentencia.<br/>
+                                • Llevar el juicio a estado de ejecución de sentencia dentro de los 150 días corridos siguientes a su iniciación.<br/>
+                                • Notificar la planilla de liquidación de capital, intereses y costas.
+                              </td>
+                              <td className="p-3 text-amber-500">
+                                Impugnar la liquidación o requerir regulación judicial de honorarios en el término perentorio de 3 días.
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 2, 7<br/>
+                                Decreto N° 2445/2023: Art. 119 (inc. d)
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>6. Medidas Cautelares y Pagos</td>
+                              <td className="p-3">
+                                • Solicitar medidas cautelares (SOJ, embargos, etc.).<br/>
+                                • Si se cancela la deuda o se paga la primera cuota de un plan mediante SOJ, solicitar el levantamiento del embargo en el plazo de 48 horas.
+                              </td>
+                              <td className="p-3">
+                                Solicitar la aplicación de fondos a dación en pago o adherirse a planes de pago (lo que suspende los plazos de pleno derecho).
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 7 bis, 10 (7 bis)<br/>
+                                Decreto N° 2445/2023: Art. 94, 95, 96, 97
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>7. Suspensión, Caducidad y Renuncia</td>
+                              <td className="p-3">
+                                • En caso de renuncia al cargo, producir informe general y rendir cuentas en el plazo de 15 días.<br/>
+                                • Instar el proceso regularmente para evitar la perención.
+                              </td>
+                              <td className="p-3">
+                                • Solicitar la suspensión del proceso por un plazo máximo de 1 año (por acuerdo o petición fundada).<br/>
+                                • Si hay acuerdo de suspensión y se pide reanudación anticipada, se da vista por 3 días y el juez resuelve en 5 días.<br/>
+                                • Solicitar la perención de instancia si el proceso no se impulsa en 2 años (en 1ª instancia) o 1 año (en incidentes o 2ª instancia).
+                              </td>
+                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
+                                Ley N° 9024: Art. 5 quinquies, 8 bis<br/>
+                                Decreto N° 2445/2023: Art. 120
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'plantillas' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddTemplate} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
+                        <p className="text-[10px] text-zinc-500">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora para tenerlos siempre disponibles en la nube.</p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <input 
+                            type="text" 
+                            placeholder="Nombre de la plantilla (ej. Cédula de Notificación)" 
+                            value={newTemplateTitle} 
+                            onChange={e => setNewTemplateTitle(e.target.value)}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          
+                          <select 
+                            value={newTemplateCategory} 
+                            onChange={e => setNewTemplateCategory(e.target.value)}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="Fiscal">Categoría: Fiscal</option>
+                            <option value="Procesal">Categoría: Procesal / Civil</option>
+                            <option value="Poderes">Categoría: Poderes / Contratos</option>
+                            <option value="General">Categoría: General</option>
+                          </select>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-1 text-xs">
+                          <label className={`border px-4 py-2 rounded cursor-pointer transition-colors flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 hover:border-orange-500 text-zinc-300' : 'bg-zinc-50 border-zinc-300 hover:border-orange-500 text-zinc-700'}`}>
+                            <span>📁 Seleccionar Archivo (Word / PDF)</span>
+                            <input 
+                              type="file" 
+                              onChange={e => setNewTemplateFile(e.target.files[0])}
+                              className="hidden"
+                            />
+                          </label>
+                          <span className={isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}>
+                            {newTemplateFile ? `Archivo seleccionado: ${newTemplateFile.name}` : 'Ningún archivo elegido'}
+                          </span>
+                        </div>
+
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Subir Plantilla a la Nube
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Modelos de Escritos Disponibles</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {templates.map(tpl => (
+                            <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                              <div>
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/25 mr-2 text-[10px]">
+                                  {tpl.category}
+                                </span>
+                                <h4 className={`font-bold text-sm mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{tpl.title}</h4>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">Archivo: {tpl.fileName}</p>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                {tpl.dataUrl ? (
+                                  <a 
+                                    href={tpl.dataUrl} 
+                                    download={tpl.fileName}
+                                    className="bg-orange-500 text-black font-bold px-3 py-1.5 rounded text-xs shadow hover:bg-orange-400"
+                                  >
+                                    ⬇️ Descargar
+                                  </a>
+                                ) : (
+                                  <span className="text-[10px] text-zinc-500 italic">Modelo base</span>
+                                )}
+                                <button 
+                                  onClick={() => deleteTemplate(tpl.id)}
+                                  className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all border border-red-500/20"
+                                  title="Eliminar plantilla"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'configuracion' && (
+                <div className="space-y-6 relative z-10 max-w-2xl">
+                  <div className={`border p-6 rounded-xl space-y-6 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div>
+                      <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Correos del Equipo</h3>
+                      <p className="text-xs text-zinc-500">Estos correos se utilizan al sincronizar eventos y audiencias de forma masiva con Google Calendar.</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className={`text-xs font-bold uppercase block ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Correos Electrónicos del Estudio / Equipo (Hasta 6):</label>
+                      {teamEmails.map((email, idx) => (
                         <input 
-                          type="email" 
-                          placeholder={recoveryEmailConfig}
-                          value={newRecoveryMail}
-                          onChange={e => setNewRecoveryMail(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          key={idx}
+                          type="email"
+                          placeholder={`Correo integrante ${idx + 1}`}
+                          value={email}
+                          onChange={(e) => {
+                            const updated = [...teamEmails];
+                            updated[idx] = e.target.value;
+                            setTeamEmails(updated);
+                          }}
+                          className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
+                      ))}
+                      <button 
+                        onClick={() => {
+                          updateTeamEmails(teamEmails);
+                          alert('¡Correos del equipo actualizados y sincronizados en la nube!');
+                        }}
+                        className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400"
+                      >
+                        Guardar Correos en la Nube
+                      </button>
+                    </div>
+
+                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">🔒 Modificar Contraseña Universal y Correo de Recuperación</h4>
+                        <p className="text-[10px] text-zinc-500 mt-0.5">Esta contraseña protege el acceso a todo el sistema operativo del estudio en cualquier dispositivo.</p>
                       </div>
 
                       {passMessage && (
-                        <p className={`p-2 rounded font-bold ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                          {passMessage}
-                        </p>
+                        <p className="text-xs font-bold text-emerald-500 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">{passMessage}</p>
                       )}
+
+                      <div className="space-y-3 text-xs">
+                        <div>
+                          <label className="text-zinc-500 block mb-1">Nueva Contraseña Universal:</label>
+                          <input 
+                            type="password"
+                            placeholder="Nueva contraseña..."
+                            value={newPass}
+                            onChange={(e) => setNewPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
+                          <input 
+                            type="password"
+                            placeholder="Repita la contraseña..."
+                            value={confirmPass}
+                            onChange={(e) => setConfirmPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-zinc-500 block mb-1">Nuevo Correo de Recuperación (Actual: {recoveryEmailConfig}):</label>
+                          <input 
+                            type="email"
+                            placeholder="nuevo_correo@estudio.com"
+                            value={newRecoveryMail}
+                            onChange={(e) => setNewRecoveryMail(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                      </div>
 
                       <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
                         Actualizar Credenciales en la Nube
                       </button>
                     </form>
-                  </div>
 
-                  <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo de Datos (Backup Local)</h3>
-                    <p className="text-xs text-zinc-500">Descargue un archivo de texto con absolutamente toda la base de datos sincronizada (expedientes, clientes, finanzas y plantillas).</p>
-                    <button 
-                      onClick={handleDownloadFullBackup}
-                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
-                    >
-                      📥 Descargar Archivo de Resguardo Integral (.txt)
-                    </button>
+                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo de Datos</h4>
+                      <p className="text-xs text-zinc-500">Descargue un archivo de texto con el resguardo completo de todas sus causas, plazos, finanzas y movimientos institucionales.</p>
+                      <button 
+                        onClick={handleDownloadFullBackup}
+                        className={`border font-bold text-xs px-4 py-2.5 rounded transition-colors flex items-center gap-2 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-orange-400' : 'bg-zinc-100 border-zinc-300 hover:bg-zinc-200 text-orange-600'}`}
+                      >
+                        <span>📥 Descargar Copia de Resguardo Completa (TXT / JSON)</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
