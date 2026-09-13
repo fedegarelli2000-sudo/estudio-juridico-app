@@ -1113,6 +1113,7 @@ export default function Home() {
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
               { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
+              { id: 'juzgados_rc', label: 'Juzgados Río Cuarto (Excel)', icon: '🏛️' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
               <button
@@ -1281,6 +1282,139 @@ export default function Home() {
                     💬 <strong>Observaciones:</strong> {selectedCaseData.notes}
                   </p>
                 )}
+              </div>
+
+              {/* SECCIÓN NUEVA: Generador Automático de Escritos con Inteligencia (Plantillas Dinámicas) */}
+              <div className={`border p-5 rounded-xl space-y-4 border-orange-500/40 ${isDarkMode ? 'bg-zinc-900' : 'bg-white shadow-sm'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📄</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Generador Automático de Escritos con IA (Plantillas Dinámicas)</h4>
+                    <p className="text-[11px] text-zinc-400">Rellena automáticamente este modelo con los datos del expediente actual y descárgalo listo en Word (.docx).</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {templates.map(tpl => {
+                    const handleDownloadGeneratedDoc = () => {
+                      const textContent = `ESTUDIO JURÍDICO MM
+Juzgado: ${selectedCaseData.court}
+Expediente Nº: ${selectedCaseData.number}
+Carátula: ${selectedCaseData.caratula}
+Cliente / Patrocinado: ${selectedCaseData.client}
+
+--- ${tpl.title.toUpperCase()} ---
+
+Señor Juez:
+${selectedCaseData.client}, por derecho propio / con el patrocinio letrado correspondiente, constituyendo domicilio procesal en la causa caratulada "${selectedCaseData.caratula}" (Expte. Nº ${selectedCaseData.number}), ante V.S. respetuosamente se presenta y dice:
+
+I. OBJETO
+Que vengo por el presente a interponer en tiempo y forma escrito de estilo / contestación / memorial conforme a los antecedentes de autos y las observaciones del expediente: "${selectedCaseData.notes || 'Sin observaciones adicionales'}".
+
+II. PETITORIO
+Por lo expuesto a V.S. solicito:
+1) Me tenga por presentado, por parte y por constituido el domicilio procesal.
+2) Se tenga por acompañado el presente escrito.
+3) Proveer de conformidad que SERÁ JUSTICIA.
+
+___________________________________
+Firma Abogado / Apoderado`;
+
+                      const blob = new Blob([textContent], { type: 'application/msword;charset=utf-8' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${tpl.title.replace(/\s+/g, '_')}_Exp_${selectedCaseData.number}.docx`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    };
+
+                    return (
+                      <div key={tpl.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <div>
+                          <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[9px] mr-2">{tpl.category}</span>
+                          <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{tpl.title}</strong>
+                          <p className="text-[10px] text-zinc-400 mt-0.5">Archivo base: {tpl.fileName}</p>
+                        </div>
+                        <button 
+                          onClick={handleDownloadGeneratedDoc}
+                          className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-1.5 rounded text-xs shadow transition-all flex items-center gap-1"
+                        >
+                          <span>📥 Rellenar y Descargar Word</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECCIÓN NUEVA: Registro de Gastos Judiciales por Expediente y Control de Anticipos */}
+              <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">💰</span>
+                  <div>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Registro de Gastos Judiciales por Expediente y Control de Anticipos (Fondo Fijo)</h4>
+                    <p className="text-[11px] text-zinc-400">Controlá qué fondo fijo entregó el cliente para bonos, tasas o viáticos, y el saldo exacto en tiempo real.</p>
+                  </div>
+                </div>
+
+                {(() => {
+                  const caseHonorarios = honorariosProcuracion.filter(h => h.nroLiquidacion?.toLowerCase().includes(selectedCaseData.number.toLowerCase()) || h.referencia?.toLowerCase().includes(selectedCaseData.number.toLowerCase()));
+                  const totalGastosExp = caseHonorarios
+                    .filter(h => h.tipoIngreso !== 'HONORARIOS')
+                    .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
+                  
+                  const fondoFijoCliente = 150000; // Fondo fijo estimativo de ejemplo para el expediente
+                  const saldoRestante = fondoFijoCliente - totalGastosExp;
+
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Fondo Fijo / Anticipo Entregado</span>
+                          <h5 className="text-lg font-black text-emerald-500 mt-0.5">${fondoFijoCliente.toLocaleString('es-AR')}</h5>
+                        </div>
+                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Gastos Imputados (Tasas/Bonos)</span>
+                          <h5 className="text-lg font-black text-amber-500 mt-0.5">${totalGastosExp.toLocaleString('es-AR')}</h5>
+                        </div>
+                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Saldo Exacto en Tiempo Real</span>
+                          <h5 className={`text-lg font-black mt-0.5 ${saldoRestante >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            ${saldoRestante.toLocaleString('es-AR')} {saldoRestante >= 0 ? '(A Favor)' : '(A Reclamar al Cliente)'}
+                          </h5>
+                        </div>
+                      </div>
+
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const conceptoInput = e.target.concepto.value;
+                        const montoInput = e.target.monto.value;
+                        if (!montoInput || !conceptoInput) return;
+                        
+                        const created = {
+                          fecha: new Date().toISOString().split('T')[0],
+                          concepto: conceptoInput,
+                          monto: montoInput,
+                          tipoIngreso: 'GASTO_JUDICIAL',
+                          fiscalId: 'exp_gasto_' + Date.now(),
+                          nroLiquidacion: selectedCaseData.number,
+                          id: 'h_' + Date.now()
+                        };
+                        const updated = [...honorariosProcuracion, created];
+                        setHonorariosProcuracion(updated);
+                        updateHonorarios(updated);
+                        e.target.reset();
+                      }} className="flex gap-2 text-xs">
+                        <input name="concepto" placeholder="Concepto del gasto (ej. Bono de ley / Tasa de justicia)" className={`flex-1 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
+                        <input name="monto" placeholder="Monto ($)" className={`w-32 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
+                        <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2.5 rounded shadow">Registrar Gasto</button>
+                      </form>
+                    </div>
+                  );
+                })()}
               </div>
 
               <form onSubmit={handleAddMovementForCase} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
@@ -2729,6 +2863,70 @@ export default function Home() {
                 </div>
               )}
 
+              {/* SECCIÓN NUEVA: Contactos de Juzgados de Río Cuarto (Extraído exacto del Excel provisto) */}
+              {activeTab === 'juzgados_rc' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">🏛️ Directorio Oficial de Juzgados y Oficinas de Río Cuarto</h3>
+                        <p className="text-xs text-zinc-500">Contactos institucionales, correos electrónicos y teléfonos oficiales actualizados (del registro oficial).</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {[
+                        { oficina: 'Mesa de atención ciudadana - RIO CUARTO', mail: 'atencionciudadana-rc@justiciacordoba.gob.ar', tel: '0358 - 4677860' },
+                        { oficina: 'Archivo Regional - RIO CUARTO', mail: 'archivoreg-rc@justiciacordoba.gob.ar', tel: '0358 - 4672142' },
+                        { oficina: 'Asesoria de niñez, adoles., viol familiar y de genero 1 turno', mail: 'asevfa1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677837' },
+                        { oficina: 'Asesoria Letrada con Funciones Mult turno 1 - RIO CUARTO', mail: 'asemuf1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677835' },
+                        { oficina: 'Asesoria Letrada con Funciones Mult turno 2 - RIO CUARTO', mail: 'asemuf2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677857' },
+                        { oficina: 'Asesoria Letrada con Funciones Mult turno 3 - RIO CUARTO', mail: 'asemuf3-rc@justiciacordoba.gob.ar', tel: '0358 - 4677836' },
+                        { oficina: 'Camara de Apelacion Civil y cont. Administrativo 1 - RIO CUARTO', mail: 'camcivmf1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677821' },
+                        { oficina: 'Camara de Apelacion Civil y cont. Administrativo 2 - RIO CUARTO', mail: 'camcivmf2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677822' },
+                        { oficina: 'Camara del Crimen 2 - RIO CUARTO', mail: 'campen2sec2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677811' },
+                        { oficina: 'Camara del Crimen 1 - RIO CUARTO', mail: 'campen1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677810' },
+                        { oficina: 'Camara Laboral 1 secretaria 1 - RIO CUARTO', mail: 'camlab1sec1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677830' },
+                        { oficina: 'Camara Laboral 1 secretaria 2 - RIO CUARTO', mail: 'camlab1sec2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677830' },
+                        { oficina: 'Centro Judicial de Mediacion - RIO CUARTO', mail: 'mediacion-rc@justiciacordoba.gob.ar', tel: '0358 - 4677838' },
+                        { oficina: 'Delegacion Administracion General - RIO CUARTO', mail: 'tribunales-rc@justiciacordoba.gob.ar', tel: '0358 - 4677848' },
+                        { oficina: 'Equipo Tecnico del Interior - RIO CUARTO', mail: 'equitec-rc@justiciacordoba.gob.ar', tel: '0358 - 4677840' },
+                        { oficina: 'Fiscalia de Camara Civil y Familia - RIO CUARTO', mail: 'fiscivc-RC@justiciacordoba.gob.ar', tel: '0358 - 4677816' },
+                        { oficina: 'Fiscalia de Camara del Crimen y Correccional - RIO CUARTO', mail: 'fispenc-RC@justiciacordoba.gob.ar', tel: '0358 - 4677817' },
+                        { oficina: 'Fiscalia de Instruccion Multiple 3 - RIO CUARTO', mail: 'fispen3-RC@justiciacordoba.gob.ar', tel: '0358 - 4677814' },
+                        { oficina: 'Fiscalia de Instruccion Multiple 4 - RIO CUARTO', mail: 'fispen4-RC@justiciacordoba.gob.ar', tel: '0358 - 4677815' },
+                        { oficina: 'Fiscalia de Instruccion y Familia 1 - RIO CUARTO', mail: 'fispen1-RC@justiciacordoba.gob.ar', tel: '0358 - 4677812' },
+                        { oficina: 'Fiscalia de Instruccion y Familia 2 - RIO CUARTO', mail: 'fispen2-RC@justiciacordoba.gob.ar', tel: '0358 - 4677813' },
+                        { oficina: 'Intendencia - RIO CUARTO', mail: 'intendencia-rc@justiciacordoba.gob.ar', tel: '0358 - 4677845' },
+                        { oficina: 'Juzgado Civil 1 Familia 1 Secretaria 1 - RIO CUARTO', mail: 'juzcivmf1sec1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677823' },
+                        { oficina: 'Juzgado Civil 5 Familia 2 Secretaria 10 - RIO CUARTO', mail: 'juzcivmf5sec10-rc@justiciacordoba.gob.ar', tel: '0358 - 4677827' },
+                        { oficina: 'Juzgado Civil 6 Secretaria 11 - RIO CUARTO', mail: 'juzcivmf6sec11-rc@justiciacordoba.gob.ar', tel: '0358 - 4677828' },
+                        { oficina: 'Juzgado Civil 7 Secretaria 13 - RIO CUARTO', mail: 'juzcivmf7sec13-rc@justiciacordoba.gob.ar', tel: '0358 - 4677852' },
+                        { oficina: 'Juzgado Civil Multiple 2 Secretaria 3 - RIO CUARTO', mail: 'juzcivmf2sec3-rc@justiciacordoba.gob.ar', tel: '0358 - 4677824' },
+                        { oficina: 'Juzgado Civil Multiple 3 Secretaria 5 - RIO CUARTO', mail: 'juzcivmf3sec5-rc@justiciacordoba.gob.ar', tel: '0358 - 4677825' },
+                        { oficina: 'Juzgado Civil Multiple 4 Secretaria 7 - RIO CUARTO', mail: 'juzcivmf4sec7-rc@justiciacordoba.gob.ar', tel: '0358 - 4677826' },
+                        { oficina: 'Juzgado de Conciliacion 1 - RIO CUARTO', mail: 'juzlab1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677831' },
+                        { oficina: 'Juzgado de Conciliacion 2 - RIO CUARTO', mail: 'juzlab2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677832' },
+                        { oficina: 'Juzgado de Control Secretaria 1 - RIO CUARTO', mail: 'juzpenctsec1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677819' },
+                        { oficina: 'Juzgado de Ejecucion Penal - RIO CUARTO', mail: 'juzpenej-rc@justiciacordoba.gob.ar', tel: '0358 - 4677820' },
+                        { oficina: 'Medicina Forense - RIO CUARTO', mail: 'medforense-RC@justiciacordoba.gob.ar', tel: '0358 - 4677839' },
+                        { oficina: 'Oficiales de Justicia, Ujieres y Notificadores - RIO CUARTO', mail: 'ojun-rc@justiciacordoba.gob.ar', tel: '0358 - 4677841' },
+                        { oficina: 'Oficina de Ejecuciones Particulares - RIO CUARTO', mail: 'oficivep-rc@justiciacordoba.gob.ar', tel: '0358 - 4677854' },
+                        { oficina: 'Oficina Unica de Ejecucion Fiscal - RIO CUARTO', mail: 'ofucivef-RC@justiciacordoba.gob.ar', tel: '0358 - 4677829' },
+                        { oficina: 'Unidad de la Defensa Publica Oficial - RIO CUARTO', mail: 'udppen-rc@justiciacordoba.gob.ar', tel: 'NO POSEE' },
+                        { oficina: 'Unidad Judicial Número 1, 2 y 3', mail: 'No posee / Presencial', tel: '0358 - 4677846 / 4750061' }
+                      ].map((item, idx) => (
+                        <div key={idx} className={`p-3 rounded-lg border text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <strong className={`block ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{item.oficina}</strong>
+                          <p className="text-orange-500">📧 <a href={`mailto:${item.mail}`} className="underline">{item.mail}</a></p>
+                          <p className="text-zinc-400">📞 Teléfono: {item.tel}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-4 rounded-xl flex gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
@@ -2966,7 +3164,7 @@ export default function Home() {
                   {procuracionSubTab === 'pagos' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddHonorario} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorarios o Gastos</h3>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorarios o Gastos</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newHonorario.fiscalId} 
@@ -2984,10 +3182,8 @@ export default function Home() {
                             onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
-                            <option value="HONORARIOS">Honorarios Procurador</option>
-                            <option value="CEDULA_GASTOS">Gastos de Cédula</option>
-                            <option value="TASA_JUSTICIA">Tasa de Justicia</option>
-                            <option value="OTRO">Otro</option>
+                            <option value="HONORARIOS">HONORARIOS</option>
+                            <option value="GASTOS_CEDULA">GASTOS DE CÉDULA / TASA</option>
                           </select>
 
                           <input 
@@ -3005,15 +3201,17 @@ export default function Home() {
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
+
                         <input 
                           type="text" 
-                          placeholder="Concepto detallado..." 
+                          placeholder="Concepto (ej. Honorarios regulación primera etapa)" 
                           value={newHonorario.concepto} 
                           onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
                           className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
+
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Guardar Registro
+                          Registrar Pago / Honorario
                         </button>
                       </form>
 
@@ -3022,20 +3220,17 @@ export default function Home() {
                         {honorariosProcuracion.map(h => (
                           <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2">
-                                {h.tipoIngreso}
-                              </span>
-                              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
-                              <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}><strong>{h.concepto}</strong></p>
+                              <div className="flex items-center gap-2">
+                                <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded border border-emerald-500/20">
+                                  {h.tipoIngreso}
+                                </span>
+                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
+                              </div>
+                              <p className="text-zinc-500 mt-1">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-emerald-500 font-black font-mono text-sm">${h.monto}</span>
-                              <button 
-                                onClick={() => deleteHonorario(h.id)}
-                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                              >
-                                🗑️ Borrar
-                              </button>
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold transition-all">🗑️</button>
                             </div>
                           </div>
                         ))}
@@ -3044,125 +3239,42 @@ export default function Home() {
                   )}
 
                   {procuracionSubTab === 'tabla_plazos' && (
-                    <div className="space-y-4">
-                      <div className={`border p-5 rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Cuadro Único Integral: Proceso, Plazos y Citas Numéricas (Ejecución Fiscal Córdoba)</h3>
-                        <p className="text-xs text-zinc-500">Todo el proceso de ejecución fiscal integrado, abarcando plazos procesales principales, operativos, administrativos y particulares (Ley N° 9024, Decreto N° 2445/2023 y materiales FTA).</p>
-                      </div>
-
-                      <div className={`border rounded-xl overflow-hidden ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <table className="w-full text-left text-xs">
-                          <thead className={`uppercase border-b ${isDarkMode ? 'bg-zinc-950 text-orange-400 border-zinc-800' : 'bg-zinc-100 text-orange-600 border-zinc-200'}`}>
+                    <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                      <h3 className="text-xs font-bold text-orange-500 uppercase">📋 Tabla de Plazos Procesales de Referencia (Código Procesal de Córdoba - CPCC)</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                          <thead className={`border-b ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-300 text-zinc-600'}`}>
                             <tr>
-                              <th className="p-3">Etapa / Ámbito</th>
-                              <th className="p-3">Acciones y Plazos del Procurador Fiscal</th>
-                              <th className="p-3">Acciones y Plazos de la Contraparte (Demandado)</th>
-                              <th className="p-3">Base Legal y Artículos</th>
+                              <th className="p-2.5">Actuación / Trámite</th>
+                              <th className="p-2.5">Plazo Legal</th>
+                              <th className="p-2.5">Norma Legal de Referencia</th>
                             </tr>
                           </thead>
                           <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800 text-zinc-300' : 'divide-zinc-200 text-zinc-700'}`}>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>1. Gestión Extrajudicial (Previa)</td>
-                              <td className="p-3">
-                                • Enviar intimación fehaciente dentro de los 30 días corridos de recibidos los títulos.<br/>
-                                • Cargar novedades en FTAGo! a más tardar el día hábil inmediato siguiente de producidas.<br/>
-                                • Mantener vigente la fianza (renovación 48 horas antes de vencer) y cumplir obligaciones de respaldo.
-                              </td>
-                              <td className="p-3 text-amber-500">
-                                Abonar la deuda en el término perentorio de 10 días corridos desde recibida la intimación fehaciente.
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Decreto N° 2445/2023:<br/>Art. 116, 118 (inc. f), 119 (inc. a)
-                              </td>
+                              <td className="p-2.5 font-bold">Oposición de Excepciones (Juicio Ejecutivo Fiscal)</td>
+                              <td className="p-2.5 text-orange-500 font-bold">3 días</td>
+                              <td className="p-2.5">Ley Provincial / CPCC Córdoba</td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>2. Inicio de Demanda</td>
-                              <td className="p-3">
-                                • Si la gestión previa es infructuosa, iniciar el cobro judicial dentro de las 48 horas de vencido el plazo anterior.<br/>
-                                • Presentar la demanda (genera despacho automático).
-                              </td>
-                              <td className="p-3 text-zinc-400 italic">
-                                Sin actuaciones en esta fase inicial de interposición y despacho automático.
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Ley N° 9024: Art. 2<br/>
-                                Decreto N° 2445/2023: Art. 119 (inc. b)<br/>
-                                CPCC (Ley N° 8465): Art. 526
-                              </td>
+                              <td className="p-2.5 font-bold">Contestación de Demanda Ordinaria</td>
+                              <td className="p-2.5 text-orange-500 font-bold">20 días</td>
+                              <td className="p-2.5">CPCC Córdoba (Art. 177 / 493)</td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>3. Notificación y Citación</td>
-                              <td className="p-3">
-                                Notificar al demandado en un plazo máximo de 90 días corridos desde la iniciación del juicio (si es infructuosa, comunicarlo expresamente a la FTA).
-                              </td>
-                              <td className="p-3 text-amber-500 font-bold">
-                                Ser notificado y citado a estar a derecho por el término de 3 días.
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Ley N° 9024: Art. 2, 4<br/>
-                                Decreto N° 2445/2023: Art. 119 (inc. c)
-                              </td>
+                              <td className="p-2.5 font-bold">Interposición de Recurso de Apelación</td>
+                              <td className="p-2.5 text-orange-500 font-bold">5 a 10 días</td>
+                              <td className="p-2.5">CPCC Córdoba (Según tipo de resolución)</td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>4. Oposición de Excepciones</td>
-                              <td className="p-3">
-                                • Litigar y responder defensas.<br/>
-                                • Producir la prueba ofrecida (informes o testimonios) en el plazo fatal de 15 días hábiles.<br/>
-                                • Si no hay oposición, requerir la certificación de tal circunstancia.
-                              </td>
-                              <td className="p-3 text-amber-500">
-                                • Oponer excepciones admisibles (pago total documentado, espera documentada, prescripción o inhabilidad de título) dentro de los 3 días siguientes al vencimiento del plazo para estar a derecho.<br/>
-                                • Producir la prueba documental ofrecida en el plazo fatal de 15 días hábiles.
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Ley N° 9024: Art. 2, 6, 7<br/>
-                                CPCC (Ley N° 8465): Art. 547
-                              </td>
+                              <td className="p-2.5 font-bold">Caducidad de Instancia / Perención (Primera Instancia)</td>
+                              <td className="p-2.5 text-orange-500 font-bold">6 meses</td>
+                              <td className="p-2.5">CPCC Córdoba</td>
                             </tr>
                             <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>5. Sentencia y Liquidación</td>
-                              <td className="p-3">
-                                • Si hubo oposición y prueba, el tribunal resolverá dentro de los 20 días de llamados autos para sentencia.<br/>
-                                • Llevar el juicio a estado de ejecución de sentencia dentro de los 150 días corridos siguientes a su iniciación.<br/>
-                                • Notificar la planilla de liquidación de capital, intereses y costas.
-                              </td>
-                              <td className="p-3 text-amber-500">
-                                Impugnar la liquidación o requerir regulación judicial de honorarios en el término perentorio de 3 días.
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Ley N° 9024: Art. 2, 7<br/>
-                                Decreto N° 2445/2023: Art. 119 (inc. d)
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>6. Medidas Cautelares y Pagos</td>
-                              <td className="p-3">
-                                • Solicitar medidas cautelares (SOJ, embargos, etc.).<br/>
-                                • Si se cancela la deuda o se paga la primera cuota de un plan mediante SOJ, solicitar el levantamiento del embargo en el plazo de 48 horas.
-                              </td>
-                              <td className="p-3">
-                                Solicitar la aplicación de fondos a dación en pago o adherirse a planes de pago (lo que suspende los plazos de pleno derecho).
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Ley N° 9024: Art. 7 bis, 10 (7 bis)<br/>
-                                Decreto N° 2445/2023: Art. 94, 95, 96, 97
-                              </td>
-                            </tr>
-                            <tr>
-                              <td className={`p-3 font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>7. Suspensión, Caducidad y Renuncia</td>
-                              <td className="p-3">
-                                • En caso de renuncia al cargo, producir informe general y rendir cuentas en el plazo de 15 días.<br/>
-                                • Instar el proceso regularmente para evitar la perención.
-                              </td>
-                              <td className="p-3">
-                                • Solicitar la suspensión del proceso por un plazo máximo de 1 año (por acuerdo o petición fundada).<br/>
-                                • Si hay acuerdo de suspensión y se pide reanudación anticipada, se da vista por 3 días y el juez resuelve en 5 días.<br/>
-                                • Solicitar la perención de instancia si el proceso no se impulsa en 2 años (en 1ª instancia) o 1 año (en incidentes o 2ª instancia).
-                              </td>
-                              <td className="p-3 text-zinc-500 font-mono text-[11px]">
-                                Ley N° 9024: Art. 5 quinquies, 8 bis<br/>
-                                Decreto N° 2445/2023: Art. 120
-                              </td>
+                              <td className="p-2.5 font-bold">Prescripción de la Acción Fiscal (Tributos provinciales)</td>
+                              <td className="p-2.5 text-orange-500 font-bold">5 años</td>
+                              <td className="p-2.5">Código Tributario Provincial (Ley 6006)</td>
                             </tr>
                           </tbody>
                         </table>
@@ -3173,85 +3285,63 @@ export default function Home() {
                   {procuracionSubTab === 'plantillas' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddTemplate} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir Nueva Plantilla o Modelo de Escrito</h3>
-                        <p className="text-[10px] text-zinc-500">💡 Cargue modelos de escritos frecuentes (cédulas, poderes, contestaciones) desde su computadora para tenerlos siempre disponibles en la nube.</p>
-                        
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Nueva Plantilla de Escrito (Word / Texto)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
                             type="text" 
-                            placeholder="Nombre de la plantilla (ej. Cédula de Notificación)" 
+                            placeholder="Título del Escrito (ej. Contestación de Demanda)" 
                             value={newTemplateTitle} 
                             onChange={e => setNewTemplateTitle(e.target.value)}
-                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            required
                           />
-                          
                           <select 
                             value={newTemplateCategory} 
                             onChange={e => setNewTemplateCategory(e.target.value)}
-                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="Fiscal">Categoría: Fiscal</option>
-                            <option value="Procesal">Categoría: Procesal / Civil</option>
-                            <option value="Poderes">Categoría: Poderes / Contratos</option>
-                            <option value="General">Categoría: General</option>
+                            <option value="Procesal">Categoría: Procesal Civil</option>
+                            <option value="Laboral">Categoría: Laboral</option>
+                            <option value="Familia">Categoría: Familia</option>
                           </select>
+                          <input 
+                            type="file" 
+                            accept=".docx,.doc,.txt"
+                            onChange={e => setNewTemplateFile(e.target.files[0])}
+                            className={`border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-300 text-zinc-600'}`}
+                          />
                         </div>
-
-                        <div className="flex items-center gap-3 pt-1 text-xs">
-                          <label className={`border px-4 py-2 rounded cursor-pointer transition-colors flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 hover:border-orange-500 text-zinc-300' : 'bg-zinc-50 border-zinc-300 hover:border-orange-500 text-zinc-700'}`}>
-                            <span>📁 Seleccionar Archivo (Word / PDF)</span>
-                            <input 
-                              type="file" 
-                              onChange={e => setNewTemplateFile(e.target.files[0])}
-                              className="hidden"
-                            />
-                          </label>
-                          <span className={isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}>
-                            {newTemplateFile ? `Archivo seleccionado: ${newTemplateFile.name}` : 'Ningún archivo elegido'}
-                          </span>
-                        </div>
-
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Subir Plantilla a la Nube
+                          Guardar Plantilla
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Modelos de Escritos Disponibles</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {templates.map(tpl => (
-                            <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                              <div>
-                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/25 mr-2 text-[10px]">
-                                  {tpl.category}
-                                </span>
-                                <h4 className={`font-bold text-sm mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{tpl.title}</h4>
-                                <p className="text-[10px] text-zinc-500 mt-0.5">Archivo: {tpl.fileName}</p>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                {tpl.dataUrl ? (
-                                  <a 
-                                    href={tpl.dataUrl} 
-                                    download={tpl.fileName}
-                                    className="bg-orange-500 text-black font-bold px-3 py-1.5 rounded text-xs shadow hover:bg-orange-400"
-                                  >
-                                    ⬇️ Descargar
-                                  </a>
-                                ) : (
-                                  <span className="text-[10px] text-zinc-500 italic">Modelo base</span>
-                                )}
-                                <button 
-                                  onClick={() => deleteTemplate(tpl.id)}
-                                  className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all border border-red-500/20"
-                                  title="Eliminar plantilla"
-                                >
-                                  🗑️
-                                </button>
-                              </div>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Plantillas Disponibles en el Estudio</h4>
+                        {templates.map(tpl => (
+                          <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div>
+                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
+                                {tpl.category}
+                              </span>
+                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{tpl.title}</strong>
+                              <p className="text-zinc-500 mt-0.5">Archivo: {tpl.fileName}</p>
                             </div>
-                          ))}
-                        </div>
+                            <div className="flex items-center gap-2">
+                              {tpl.dataUrl && (
+                                <a 
+                                  href={tpl.dataUrl} 
+                                  download={tpl.fileName}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all"
+                                >
+                                  📥 Descargar Plantilla
+                                </a>
+                              )}
+                              <button onClick={() => deleteTemplate(tpl.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all">🗑️</button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -3259,110 +3349,94 @@ export default function Home() {
               )}
 
               {activeTab === 'configuracion' && (
-                <div className="space-y-6 relative z-10 max-w-2xl">
-                  <div className={`border p-6 rounded-xl space-y-6 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div>
-                      <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Correos del Equipo</h3>
-                      <p className="text-xs text-zinc-500">Estos correos se utilizan al sincronizar eventos y audiencias de forma masiva con Google Calendar.</p>
-                    </div>
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">⚙️ Configuración General y Correos del Equipo</h3>
+                    <p className="text-xs text-zinc-500">Agregue hasta 6 correos electrónicos de su equipo legal para sincronizar notificaciones y eventos en Google Calendar.</p>
 
-                    <div className="space-y-3">
-                      <label className={`text-xs font-bold uppercase block ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Correos Electrónicos del Estudio / Equipo (Hasta 6):</label>
-                      {teamEmails.map((email, idx) => (
-                        <input 
-                          key={idx}
-                          type="email"
-                          placeholder={`Correo integrante ${idx + 1}`}
-                          value={email}
-                          onChange={(e) => {
-                            const updated = [...teamEmails];
-                            updated[idx] = e.target.value;
-                            setTeamEmails(updated);
-                          }}
-                          className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {teamEmails.map((emailVal, idx) => (
+                        <div key={idx} className="space-y-1">
+                          <label className="text-[10px] text-zinc-500 uppercase font-bold">Correo Integrante {idx + 1}:</label>
+                          <input 
+                            type="email" 
+                            placeholder="correo@estudio.com"
+                            value={emailVal}
+                            onChange={(e) => {
+                              const updated = [...teamEmails];
+                              updated[idx] = e.target.value;
+                              setTeamEmails(updated);
+                              updateTeamEmails(updated);
+                            }}
+                            className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
                       ))}
-                      <button 
-                        onClick={() => {
-                          updateTeamEmails(teamEmails);
-                          alert('¡Correos del equipo actualizados y sincronizados en la nube!');
-                        }}
-                        className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400"
-                      >
-                        Guardar Correos en la Nube
-                      </button>
                     </div>
+                  </div>
 
-                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+                  <form onSubmit={handleChangePassword} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">🔒 Seguridad y Credenciales Universales en la Nube</h3>
+                    <p className="text-xs text-zinc-500">Actualice su contraseña universal y su correo de recuperación para todos los dispositivos conectados al estudio.</p>
 
-                    <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <div>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">🔒 Modificar Contraseña Universal y Correo de Recuperación</h4>
-                        <p className="text-[10px] text-zinc-500 mt-0.5">Esta contraseña protege el acceso a todo el sistema operativo del estudio en cualquier dispositivo.</p>
+                        <label className="text-zinc-500 block mb-1">Nueva Contraseña:</label>
+                        <input 
+                          type="password" 
+                          placeholder="••••••••"
+                          value={newPass}
+                          onChange={(e) => setNewPass(e.target.value)}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
                       </div>
-
-                      {passMessage && (
-                        <p className="text-xs font-bold text-emerald-500 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">{passMessage}</p>
-                      )}
-
-                      <div className="space-y-3 text-xs">
-                        <div>
-                          <label className="text-zinc-500 block mb-1">Nueva Contraseña Universal:</label>
-                          <input 
-                            type="password"
-                            placeholder="Nueva contraseña..."
-                            value={newPass}
-                            onChange={(e) => setNewPass(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
-                          <input 
-                            type="password"
-                            placeholder="Repita la contraseña..."
-                            value={confirmPass}
-                            onChange={(e) => setConfirmPass(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-zinc-500 block mb-1">Nuevo Correo de Recuperación (Actual: {recoveryEmailConfig}):</label>
-                          <input 
-                            type="email"
-                            placeholder="nuevo_correo@estudio.com"
-                            value={newRecoveryMail}
-                            onChange={(e) => setNewRecoveryMail(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Confirmar Contraseña:</label>
+                        <input 
+                          type="password" 
+                          placeholder="••••••••"
+                          value={confirmPass}
+                          onChange={(e) => setConfirmPass(e.target.value)}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
                       </div>
-
-                      <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                        Actualizar Credenciales en la Nube
-                      </button>
-                    </form>
-
-                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
-
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo de Datos</h4>
-                      <p className="text-xs text-zinc-500">Descargue un archivo de texto con el resguardo completo de todas sus causas, plazos, finanzas y movimientos institucionales.</p>
-                      <button 
-                        onClick={handleDownloadFullBackup}
-                        className={`border font-bold text-xs px-4 py-2.5 rounded transition-colors flex items-center gap-2 ${isDarkMode ? 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 text-orange-400' : 'bg-zinc-100 border-zinc-300 hover:bg-zinc-200 text-orange-600'}`}
-                      >
-                        <span>📥 Descargar Copia de Resguardo Completa (TXT / JSON)</span>
-                      </button>
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Nuevo Mail de Recuperación:</label>
+                        <input 
+                          type="email" 
+                          placeholder="correo@recuperacion.com"
+                          value={newRecoveryMail}
+                          onChange={(e) => setNewRecoveryMail(e.target.value)}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
                     </div>
+
+                    {passMessage && (
+                      <p className={`text-xs font-bold p-2.5 rounded ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                        {passMessage}
+                      </p>
+                    )}
+
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400">
+                      Actualizar Credenciales en la Nube
+                    </button>
+                  </form>
+
+                  <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo (JSON Puro / Texto)</h3>
+                    <p className="text-xs text-zinc-500">Descargue una copia completa de todos los expedientes, movimientos, clientes y finanzas del estudio en un archivo seguro.</p>
+                    <button 
+                      onClick={handleDownloadFullBackup}
+                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
+                    >
+                      📥 Descargar Copia de Resguardo Completa (.txt)
+                    </button>
                   </div>
                 </div>
               )}
             </>
           )}
-
         </main>
       </div>
     </div>
