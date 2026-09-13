@@ -1043,6 +1043,8 @@ export default function Home() {
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
+              { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
+              { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
               <button
@@ -2382,12 +2384,132 @@ export default function Home() {
                 </div>
               )}
 
+              {activeTab === 'finanzas' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">💰 Módulo de Finanzas y Control de Caja del Estudio</h3>
+                    <p className="text-xs text-zinc-500">Lleve un control detallado de los ingresos por honorarios, tasas de justicia, viáticos o gastos de cédulas por cada causa o liquidación.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Honorarios Cobrados</span>
+                        <h4 className="text-2xl font-black text-emerald-500 mt-1">
+                          ${honorariosProcuracion
+                            .filter(h => h.tipoIngreso === 'HONORARIOS')
+                            .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0)
+                            .toLocaleString('es-AR')}
+                        </h4>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Gastos (Cédulas / Tasas)</span>
+                        <h4 className="text-2xl font-black text-amber-500 mt-1">
+                          ${honorariosProcuracion
+                            .filter(h => h.tipoIngreso !== 'HONORARIOS')
+                            .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0)
+                            .toLocaleString('es-AR')}
+                        </h4>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Registros Totales en Caja</span>
+                        <h4 className={`text-2xl font-black mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{honorariosProcuracion.length}</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Historial Financiero del Estudio</h4>
+                    <div className="space-y-2">
+                      {honorariosProcuracion.map(h => (
+                        <div key={h.id} className={`p-3 border rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <div>
+                            <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
+                              {h.tipoIngreso}
+                            </span>
+                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq/Ref: {h.nroLiquidacion}</span>
+                            <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                            <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2 py-1 rounded font-bold">🗑️</button>
+                          </div>
+                        </div>
+                      ))}
+                      {honorariosProcuracion.length === 0 && (
+                        <p className="text-xs text-zinc-500 italic">No hay registros financieros cargados en el estudio.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'reporte' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-center border-b pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria del Estudio</h3>
+                        <p className="text-xs text-zinc-500">Resumen consolidado para imprimir, revisar por la mañana o reenviar al equipo.</p>
+                      </div>
+                      <button 
+                        onClick={() => window.print()}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2 rounded shadow"
+                      >
+                        🖨️ Imprimir / Guardar PDF
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">📅 Audiencias Agendadas ({hearings.filter(h => h.status === 'PENDIENTE').length} pendientes)</h4>
+                        <div className="space-y-2">
+                          {hearings.filter(h => h.status === 'PENDIENTE').map(h => (
+                            <div key={h.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <div>
+                                <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.title}</strong>
+                                <p className="text-[10px] text-zinc-500">Lugar: {h.location} • Modalidad: {h.modalidad}</p>
+                              </div>
+                              <span className="font-mono text-orange-500 font-bold">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚡ Plazos Procesales Activos ({deadlines.filter(d => d.status === 'PENDIENTE').length})</h4>
+                        <div className="space-y-2">
+                          {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                            <div key={d.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <span className={isDarkMode ? 'text-white font-bold' : 'text-zinc-900 font-bold'}>{d.title}</span>
+                              <span className="font-mono text-amber-500 font-bold">Vence: {formatDateToArg(d.dueDate)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">🚨 Alertas Fiscales Urgentes ({urgentFiscalAlerts.length})</h4>
+                        <div className="space-y-2">
+                          {urgentFiscalAlerts.map(fc => (
+                            <div key={fc.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <span className={isDarkMode ? 'text-white font-bold' : 'text-zinc-900 font-bold'}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+                              <span className="font-mono text-red-500 font-bold">Vto. Excepción: {formatDateToArg(fc.plazoExcepcionesFecha)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'procuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-4 rounded-xl flex gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     {[
                       { id: 'titulos', label: '1. Títulos y Vto. de Liquidación' },
-                      { id: 'gestion', label: '2. Plazos y Perención' },
+                      { id: 'gestion', label: '2. Plazos y Perención (Semáforo)' },
                       { id: 'cautelares', label: '3. Medidas Cautelares' },
                       { id: 'pagos', label: '4. Cobros y Honorarios' },
                       { id: 'tabla_plazos', label: '5. 📋 Tabla de Plazos Procesales' },
@@ -2499,29 +2621,46 @@ export default function Home() {
                   {procuracionSubTab === 'gestion' && (
                     <div className="space-y-4">
                       <div className={`border p-5 rounded-xl space-y-2 text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
-                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción Fiscal</h3>
-                        <p>• <strong>Perención automática por movimiento:</strong> Cada vez que registre un movimiento nuevo en la ficha del título fiscal, el sistema tomará esa fecha como base y renovará automáticamente el plazo de perención.</p>
-                        <p>• <strong>Prescripción quinquenal:</strong> Se calcula automáticamente a 5 años exactos desde la fecha de vencimiento de la liquidación fiscal.</p>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción con Semáforo de Riesgo</h3>
+                        <p>• 🟢 <strong>Verde (Seguro):</strong> Más de 30 días restantes para que venza el plazo o prescriba la acción.</p>
+                        <p>• 🟡 <strong>Amarillo (Atención):</strong> Menos de 30 días para el vencimiento de excepción o perención.</p>
+                        <p>• 🔴 <strong>Rojo (Crítico / Vencido):</strong> Plazo vencido o perención inminente en los próximos 7 días.</p>
                       </div>
 
                       <div className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos con Semáforo Temporal</h4>
                         <div className="space-y-2">
-                          {fiscalCases.map(fc => (
-                            <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer p-3 border rounded flex justify-between items-center text-xs hover:border-orange-500 transition-colors ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                              <div>
-                                <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
-                                <p className="text-[10px] text-zinc-500">
-                                  Vto. Liq: <span className={isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}>{formatDateToArg(fc.fechaVencimientoLiquidacion)}</span> | 
-                                  Prescripción: <span className="text-purple-500 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
-                                  Perención (Últ. Mov.): <span className="text-red-500 font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
-                                </p>
+                          {fiscalCases.map(fc => {
+                            let semaforoColor = 'border-emerald-500/50 bg-emerald-500/5 text-emerald-500';
+                            let semaforoText = '🟢 SEGURO';
+
+                            if (fc.plazoPerencion && !fc.plazoPerencion.includes('A calcular')) {
+                              const pDate = new Date(fc.plazoPerencion);
+                              const diffDays = Math.ceil((pDate - today) / (1000 * 60 * 60 * 24));
+                              if (diffDays <= 7) {
+                                semaforoColor = 'border-red-500/80 bg-red-500/10 text-red-500 animate-pulse';
+                                semaforoText = '🔴 CRÍTICO (< 7 DÍAS)';
+                              } else if (diffDays <= 30) {
+                                semaforoColor = 'border-amber-500/80 bg-amber-500/10 text-amber-500';
+                                semaforoText = '🟡 ATENCIÓN (< 30 DÍAS)';
+                              }
+                            }
+
+                            return (
+                              <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer p-4 border rounded-xl flex justify-between items-center text-xs transition-colors ${semaforoColor} ${isDarkMode ? 'bg-zinc-950' : 'bg-white shadow-sm'}`}>
+                                <div>
+                                  <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
+                                  <p className="text-[10px] text-zinc-400 mt-1">
+                                    Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
+                                    Perención (Últ. Mov.): <span className="font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
+                                  </p>
+                                </div>
+                                <span className={`font-bold px-3 py-1.5 rounded border text-[11px] ${semaforoColor}`}>
+                                  {semaforoText}
+                                </span>
                               </div>
-                              <span className="bg-red-500/10 text-red-500 font-bold px-2.5 py-1 rounded border border-red-500/20 text-[10px]">
-                                CONTROL ACTIVO
-                              </span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -2665,7 +2804,7 @@ export default function Home() {
                               <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}><strong>{h.concepto}</strong></p>
                             </div>
                             <div className="flex items-center gap-4">
-                              <span className="text-emerald-500 font-black font-mono text-sm">{h.monto}</span>
+                              <span className="text-emerald-500 font-black font-mono text-sm">${h.monto}</span>
                               <button 
                                 onClick={() => deleteHonorario(h.id)}
                                 className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
