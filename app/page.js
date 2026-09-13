@@ -1975,13 +1975,25 @@ export default function Home() {
                             <div key={m.id} className={`border p-3 rounded-lg text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                               <div className="flex justify-between items-center">
                                 <span className="font-bold text-orange-500">{m.title}</span>
-                                <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
+                                  <button 
+                                    onClick={() => handleDeleteMovement(m.id)} 
+                                    className="text-red-500 hover:text-red-600 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20 text-xs" 
+                                    title="Eliminar Movimiento"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
                               </div>
                               {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number} - {caseInfo.caratula}</p>}
                               {m.text && <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{m.text}</p>}
                             </div>
                           );
                         })}
+                      {movements.filter(m => !selectedCaseId || m.caseId === selectedCaseId).length === 0 && (
+                        <p className="text-xs text-zinc-500">No hay actuaciones registradas.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3207,97 +3219,6 @@ export default function Home() {
                       </div>
                     </div>
                   )}
-                </div>
-              )}
-
-              {activeTab === 'configuracion' && (
-                <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración del Sistema, Mails de Equipo y Seguridad Universal</h3>
-                    
-                    <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
-                      <h4 className={`font-bold text-xs ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>🔒 Modificar Contraseña Universal y Correo de Recuperación</h4>
-                      <p className="text-xs text-zinc-500">Estos cambios se sincronizan en la nube de inmediato para que usted y su equipo accedan con las nuevas credenciales en cualquier dispositivo.</p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div>
-                          <label className="text-zinc-500 block mb-1">Nueva Contraseña:</label>
-                          <input 
-                            type="password" 
-                            placeholder="Dejar en blanco si no desea cambiarla"
-                            value={newPass} 
-                            onChange={e => setNewPass(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
-                        <div>
-                          <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
-                          <input 
-                            type="password" 
-                            placeholder="Repita la nueva contraseña"
-                            value={confirmPass} 
-                            onChange={e => setConfirmPass(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-zinc-500 block mb-1 text-xs">Nuevo Correo de Recuperación:</label>
-                        <input 
-                          type="email" 
-                          placeholder={recoveryEmailConfig}
-                          value={newRecoveryMail} 
-                          onChange={e => setNewRecoveryMail(e.target.value)}
-                          className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      {passMessage && (
-                        <p className={`text-xs font-bold p-2.5 rounded border ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
-                          {passMessage}
-                        </p>
-                      )}
-
-                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
-                        Actualizar Credenciales en la Nube
-                      </button>
-                    </form>
-
-                    <div className={`pt-6 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                      <h4 className={`font-bold text-xs ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>📧 Correos Electrónicos del Equipo (Google Calendar y Alertas)</h4>
-                      <p className="text-xs text-zinc-500">Configure los correos del estudio que aparecerán al sincronizar audiencias o vencimientos en Google Calendar.</p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {teamEmails.map((emailVal, idx) => (
-                          <input 
-                            key={idx}
-                            type="email"
-                            placeholder={`Correo integrante ${idx + 1}`}
-                            value={emailVal}
-                            onChange={(e) => {
-                              const updated = [...teamEmails];
-                              updated[idx] = e.target.value;
-                              setTeamEmails(updated);
-                              updateTeamEmails(updated);
-                            }}
-                            className={`border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={`pt-6 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                      <h4 className={`font-bold text-xs ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>💾 Copia de Resguardo y Seguridad de Datos (Backup Local)</h4>
-                      <p className="text-xs text-zinc-500">Puede descargar una copia de seguridad completa con todos los expedientes, movimientos, finanzas y plantillas en un archivo de texto plano para resguardo personal.</p>
-                      <button 
-                        onClick={handleDownloadFullBackup}
-                        className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-4 py-2.5 rounded border border-zinc-700 shadow flex items-center gap-2"
-                      >
-                        📥 Descargar Copia de Resguardo Completa (.txt)
-                      </button>
-                    </div>
-                  </div>
                 </div>
               )}
             </>
