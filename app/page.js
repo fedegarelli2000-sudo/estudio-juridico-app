@@ -250,6 +250,38 @@ export default function Home() {
   const [cautelares, setCautelares] = useState([]);
   const [honorariosProcuracion, setHonorariosProcuracion] = useState([]);
 
+  // Estado para carga directa en Finanzas
+  const [newDirectFinance, setNewDirectFinance] = useState({
+    fecha: new Date().toISOString().split('T')[0],
+    concepto: '',
+    monto: '',
+    tipoIngreso: 'HONORARIOS',
+    referencia: 'General / Estudio'
+  });
+
+  const handleAddDirectFinance = (e) => {
+    e.preventDefault();
+    if (!newDirectFinance.monto || !newDirectFinance.concepto) return;
+
+    const created = {
+      ...newDirectFinance,
+      fiscalId: 'direct_' + Date.now(),
+      nroLiquidacion: newDirectFinance.referencia,
+      id: 'h_' + Date.now()
+    };
+
+    const updated = [...honorariosProcuracion, created];
+    setHonorariosProcuracion(updated);
+    updateHonorarios(updated);
+    setNewDirectFinance({
+      fecha: new Date().toISOString().split('T')[0],
+      concepto: '',
+      monto: '',
+      tipoIngreso: 'HONORARIOS',
+      referencia: 'General / Estudio'
+    });
+  };
+
   const [newFiscalCase, setNewFiscalCase] = useState({
     tributo: 'Inmobiliario',
     contribuyente: '',
@@ -1020,6 +1052,28 @@ export default function Home() {
   return (
     <div className={`flex h-screen font-sans overflow-hidden ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
       
+      <style jsx global>{`
+        /* SCROLLBAR PERSONALIZADO Y ARMONIOSO */
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: ${isDarkMode ? '#27272a #09090b' : '#d4d4d8 #f4f4f5'};
+        }
+        *::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        *::-webkit-scrollbar-track {
+          background: ${isDarkMode ? '#09090b' : '#f4f4f5'};
+        }
+        *::-webkit-scrollbar-thumb {
+          background-color: ${isDarkMode ? '#27272a' : '#d4d4d8'};
+          border-radius: 4px;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+          background-color: ${isDarkMode ? '#f97316' : '#ea580c'};
+        }
+      `}</style>
+
       <aside className={`w-64 border-r flex flex-col justify-between shrink-0 z-20 overflow-y-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
         <div>
           <div className={`p-5 border-b flex items-center gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
@@ -2388,7 +2442,7 @@ export default function Home() {
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">💰 Módulo de Finanzas y Control de Caja del Estudio</h3>
-                    <p className="text-xs text-zinc-500">Lleve un control detallado de los ingresos por honorarios, tasas de justicia, viáticos o gastos de cédulas por cada causa o liquidación.</p>
+                    <p className="text-xs text-zinc-500">Lleve un control detallado de los ingresos por honorarios, tasas de justicia, viáticos o gastos de cédulas. Puede cargarlos directamente aquí o desde Procuración Fiscal.</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
@@ -2418,6 +2472,57 @@ export default function Home() {
                     </div>
                   </div>
 
+                  <form onSubmit={handleAddDirectFinance} className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Nuevo Ingreso u Gasto Financiero Directo</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                      <select 
+                        value={newDirectFinance.tipoIngreso} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, tipoIngreso: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="HONORARIOS">Honorarios Procurador / Abogado</option>
+                        <option value="CEDULA_GASTOS">Gastos de Cédula / Viáticos</option>
+                        <option value="TASA_JUSTICIA">Tasa de Justicia</option>
+                        <option value="OTRO">Otro Ingreso / Gasto</option>
+                      </select>
+
+                      <input 
+                        type="date" 
+                        value={newDirectFinance.fecha} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, fecha: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+
+                      <input 
+                        type="text" 
+                        placeholder="Monto ($)" 
+                        value={newDirectFinance.monto} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, monto: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+
+                      <input 
+                        type="text" 
+                        placeholder="Referencia (ej. Causa García / Liq 8763)" 
+                        value={newDirectFinance.referencia} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, referencia: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    </div>
+
+                    <input 
+                      type="text" 
+                      placeholder="Concepto detallado (ej. Cobro de honorarios etapa preliminar)..." 
+                      value={newDirectFinance.concepto} 
+                      onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                    />
+
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
+                      Guardar en Caja del Estudio
+                    </button>
+                  </form>
+
                   <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Historial Financiero del Estudio</h4>
                     <div className="space-y-2">
@@ -2427,7 +2532,7 @@ export default function Home() {
                             <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
                               {h.tipoIngreso}
                             </span>
-                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq/Ref: {h.nroLiquidacion}</span>
+                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Ref: {h.nroLiquidacion}</span>
                             <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
                           </div>
                           <div className="flex items-center gap-3">
