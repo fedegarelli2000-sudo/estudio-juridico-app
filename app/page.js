@@ -183,16 +183,20 @@ export default function Home() {
   const [newTemplateCategory, setNewTemplateCategory] = useState('Fiscal');
   const [newTemplateFile, setNewTemplateFile] = useState(null);
 
+  // ESTADO PARA EDICIÓN DE GASTOS / HONORARIOS / FINANZAS
+  const [editingFinanceId, setEditingFinanceId] = useState(null);
+  const [editFinanceForm, setEditFinanceForm] = useState({ concepto: '', monto: '', fecha: '', tipoIngreso: 'HONORARIOS' });
+
   const handleAddTemplate = (e) => {
     e.preventDefault();
-    if (!newTemplateTitle) return;
+    if (!newTemplateTitle.trim()) return;
 
     if (newTemplateFile) {
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         const created = {
           id: 'tpl_' + Date.now(),
-          title: newTemplateTitle,
+          title: newTemplateTitle.trim(),
           category: newTemplateCategory,
           fileName: newTemplateFile.name,
           dataUrl: uploadEvent.target.result
@@ -207,15 +211,16 @@ export default function Home() {
     } else {
       const created = {
         id: 'tpl_' + Date.now(),
-        title: newTemplateTitle,
+        title: newTemplateTitle.trim(),
         category: newTemplateCategory,
-        fileName: 'Sin archivo adjunto',
-        dataUrl: ''
+        fileName: 'Escrito_Base.txt',
+        dataUrl: 'data:text/plain;charset=utf-8,' + encodeURIComponent(`MODELO DE ESCRITO: ${newTemplateTitle.trim()}\nCategoría: ${newTemplateCategory}\n\nSeñor Juez:\n[Completar datos de autos y petitorio]\n\nSERÁ JUSTICIA.`)
       };
       const updated = [...templates, created];
       setTemplates(updated);
       updateTemplates(updated);
       setNewTemplateTitle('');
+      setNewTemplateFile(null);
     }
   };
 
@@ -224,6 +229,18 @@ export default function Home() {
     const updated = templates.filter(t => t.id !== id);
     setTemplates(updated);
     updateTemplates(updated);
+  };
+
+  const startEditingFinance = (h) => {
+    setEditingFinanceId(h.id);
+    setEditFinanceForm({ concepto: h.concepto, monto: h.monto, fecha: h.fecha, tipoIngreso: h.tipoIngreso || 'HONORARIOS' });
+  };
+
+  const handleSaveEditFinance = (id) => {
+    const updated = honorariosProcuracion.map(h => h.id === id ? { ...h, ...editFinanceForm } : h);
+    setHonorariosProcuracion(updated);
+    updateHonorarios(updated);
+    setEditingFinanceId(null);
   };
 
   const startEditingFiscal = (fc) => {
@@ -538,7 +555,7 @@ export default function Home() {
   };
 
   const deleteHonorario = (id) => {
-    if (!confirm('¿Eliminar registro de cobro/honorario?')) return;
+    if (!confirm('¿Eliminar registro de cobro/honorario/gasto?')) return;
     const updated = honorariosProcuracion.filter(h => h.id !== id);
     setHonorariosProcuracion(updated);
     updateHonorarios(updated);
@@ -1297,7 +1314,9 @@ export default function Home() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {templates.map(tpl => {
                     const handleDownloadGeneratedDoc = () => {
-                      const textContent = `ESTUDIO JURÍDICO MM
+                      const textContent = tpl.dataUrl && tpl.dataUrl.startsWith('data:text/plain') 
+                        ? decodeURIComponent(tpl.dataUrl.split(',')[1]) 
+                        : `ESTUDIO JURÍDICO MM
 Juzgado: ${selectedCaseData.court}
 Expediente Nº: ${selectedCaseData.number}
 Carátula: ${selectedCaseData.caratula}
@@ -1338,12 +1357,21 @@ Firma Abogado / Apoderado`;
                           <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{tpl.title}</strong>
                           <p className="text-[10px] text-zinc-400 mt-0.5">Archivo base: {tpl.fileName}</p>
                         </div>
-                        <button 
-                          onClick={handleDownloadGeneratedDoc}
-                          className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-1.5 rounded text-xs shadow transition-all flex items-center gap-1"
-                        >
-                          <span>📥 Rellenar y Descargar Word</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={handleDownloadGeneratedDoc}
+                            className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-1.5 rounded text-xs shadow transition-all flex items-center gap-1"
+                          >
+                            <span>📥 Descargar Word</span>
+                          </button>
+                          <button 
+                            onClick={() => deleteTemplate(tpl.id)}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all text-xs"
+                            title="Eliminar plantilla"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -1356,7 +1384,7 @@ Firma Abogado / Apoderado`;
                   <span className="text-xl">💰</span>
                   <div>
                     <h4 className="text-xs font-bold text-orange-500 uppercase">Registro de Gastos Judiciales por Expediente y Control de Anticipos (Fondo Fijo)</h4>
-                    <p className="text-[11px] text-zinc-400">Controlá qué fondo fijo entregó el cliente para bonos, tasas o viáticos, y el saldo exacto en tiempo real.</p>
+                    <p className="text-[11px] text-zinc-400">Controlá qué fondo fijo entregó el cliente para bonos, tasas o viáticos, y el saldo exacto en tiempo real. Ahora podés editar o borrar cualquier gasto.</p>
                   </div>
                 </div>
 
@@ -1412,6 +1440,45 @@ Firma Abogado / Apoderado`;
                         <input name="monto" placeholder="Monto ($)" className={`w-32 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
                         <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2.5 rounded shadow">Registrar Gasto</button>
                       </form>
+
+                      {/* Listado de gastos de este expediente con opción de editar y borrar */}
+                      <div className="space-y-2 pt-2">
+                        {caseHonorarios.map(h => (
+                          <div key={h.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            {editingFinanceId === h.id ? (
+                              <div className="flex-1 flex gap-2 items-center">
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.concepto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, concepto: e.target.value})}
+                                  className={`flex-1 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.monto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, monto: e.target.value})}
+                                  className={`w-24 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <button onClick={() => handleSaveEditFinance(h.id)} className="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded">Guardar</button>
+                                <button onClick={() => setEditingFinanceId(null)} className={`px-2 py-1.5 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>✕</button>
+                              </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <span className="bg-amber-500/10 text-amber-500 font-bold px-2 py-0.5 rounded text-[9px] mr-2">{h.tipoIngreso}</span>
+                                  <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
+                                  <p className="text-[10px] text-zinc-400">Fecha: {formatDateToArg(h.fecha)}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-mono font-bold text-amber-500">${h.monto}</span>
+                                  <button onClick={() => startEditingFinance(h)} className="px-2 py-1 rounded border text-xs" title="Editar Gasto">✏️</button>
+                                  <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold" title="Eliminar Gasto">🗑️</button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   );
                 })()}
@@ -2636,7 +2703,7 @@ Firma Abogado / Apoderado`;
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-sm font-bold text-orange-500 uppercase">💰 Módulo de Finanzas y Control de Caja del Estudio</h3>
-                    <p className="text-xs text-zinc-500">Lleve un control detallado de los ingresos por honorarios, tasas de justicia, viáticos o gastos de cédulas. Puede cargarlos directamente aquí o desde Procuración Fiscal.</p>
+                    <p className="text-xs text-zinc-500">Lleve un control detallado de los ingresos por honorarios, tasas de justicia, viáticos o gastos de cédulas. Ahora puede editar o eliminar cualquier registro directamente.</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
@@ -2731,7 +2798,7 @@ Firma Abogado / Apoderado`;
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                       <div>
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Historial Financiero del Estudio (Seleccione para Autosuma Individual)</h4>
-                        <p className="text-[10px] text-zinc-500">Marque las casillas de los registros que desee sumar para ver el total parcial de forma inmediata.</p>
+                        <p className="text-[10px] text-zinc-500">Marque las casillas de los registros que desee sumar para ver el total parcial de forma inmediata. Puede editar o eliminar cualquier ítem.</p>
                       </div>
 
                       {selectedFinanceIds.length > 0 && (
@@ -2766,32 +2833,54 @@ Firma Abogado / Apoderado`;
                                 : (isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200')
                             }`}
                           >
-                            <div className="flex items-center gap-3">
-                              <input 
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedFinanceIds([...selectedFinanceIds, h.id]);
-                                  } else {
-                                    setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
-                                  }
-                                }}
-                                className="w-4 h-4 accent-orange-500 cursor-pointer"
-                              />
-                              <div>
-                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
-                                  {h.tipoIngreso}
-                                </span>
-                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Ref: {h.nroLiquidacion}</span>
-                                <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                            {editingFinanceId === h.id ? (
+                              <div className="flex-1 flex gap-2 items-center">
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.concepto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, concepto: e.target.value})}
+                                  className={`flex-1 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.monto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, monto: e.target.value})}
+                                  className={`w-24 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <button onClick={() => handleSaveEditFinance(h.id)} className="bg-emerald-600 text-white font-bold px-3 py-1 rounded">Guardar</button>
+                                <button onClick={() => setEditingFinanceId(null)} className={`px-2 py-1 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>✕</button>
                               </div>
-                            </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-3">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedFinanceIds([...selectedFinanceIds, h.id]);
+                                      } else {
+                                        setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
+                                      }
+                                    }}
+                                    className="w-4 h-4 accent-orange-500 cursor-pointer"
+                                  />
+                                  <div>
+                                    <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
+                                      {h.tipoIngreso}
+                                    </span>
+                                    <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Ref: {h.nroLiquidacion}</span>
+                                    <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                                  </div>
+                                </div>
 
-                            <div className="flex items-center gap-4">
-                              <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
-                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2.5 py-1 rounded font-bold hover:bg-red-500 hover:text-white transition-all">🗑️</button>
-                            </div>
+                                <div className="flex items-center gap-4">
+                                  <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                                  <button onClick={() => startEditingFinance(h)} className="px-2 py-1 rounded border text-xs" title="Editar Registro">✏️</button>
+                                  <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2.5 py-1 rounded font-bold hover:bg-red-500 hover:text-white transition-all" title="Eliminar Registro">🗑️</button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         );
                       })}
@@ -3219,19 +3308,41 @@ Firma Abogado / Apoderado`;
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Cobros y Honorarios</h4>
                         {honorariosProcuracion.map(h => (
                           <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded border border-emerald-500/20">
-                                  {h.tipoIngreso}
-                                </span>
-                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
+                            {editingFinanceId === h.id ? (
+                              <div className="flex-1 flex gap-2 items-center">
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.concepto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, concepto: e.target.value})}
+                                  className={`flex-1 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.monto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, monto: e.target.value})}
+                                  className={`w-24 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <button onClick={() => handleSaveEditFinance(h.id)} className="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded">Guardar</button>
+                                <button onClick={() => setEditingFinanceId(null)} className={`px-2 py-1.5 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>✕</button>
                               </div>
-                              <p className="text-zinc-500 mt-1">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
-                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold transition-all">🗑️</button>
-                            </div>
+                            ) : (
+                              <>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded border border-emerald-500/20">
+                                      {h.tipoIngreso}
+                                    </span>
+                                    <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
+                                  </div>
+                                  <p className="text-zinc-500 mt-1">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                                  <button onClick={() => startEditingFinance(h)} className="px-2 py-1 rounded border text-xs" title="Editar Registro">✏️</button>
+                                  <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2.5 py-1 rounded font-bold hover:bg-red-500 hover:text-white transition-all" title="Eliminar Registro">🗑️</button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -3329,14 +3440,27 @@ Firma Abogado / Apoderado`;
                               <p className="text-zinc-500 mt-0.5">Archivo: {tpl.fileName}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              {tpl.dataUrl && (
+                              {tpl.dataUrl ? (
                                 <a 
                                   href={tpl.dataUrl} 
                                   download={tpl.fileName}
                                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all"
                                 >
-                                  📥 Descargar Plantilla
+                                  📥 Descargar
                                 </a>
+                              ) : (
+                                <button 
+                                  onClick={() => {
+                                    const dummyUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`MODELO: ${tpl.title}\n\nSeñor Juez:\n[Completar]`);
+                                    const a = document.createElement('a');
+                                    a.href = dummyUrl;
+                                    a.download = `${tpl.title.replace(/\s+/g, '_')}.txt`;
+                                    a.click();
+                                  }}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all"
+                                >
+                                  📥 Descargar
+                                </button>
                               )}
                               <button onClick={() => deleteTemplate(tpl.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all">🗑️</button>
                             </div>
