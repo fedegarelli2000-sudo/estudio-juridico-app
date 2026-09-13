@@ -1078,7 +1078,7 @@ export default function Home() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         
-        <header className={`h-16 border-flex flex items-center justify-between px-6 shrink-0 z-10 border-b ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+        <header className={`h-16 flex items-center justify-between px-6 shrink-0 z-10 border-b ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
           <div className="flex items-center gap-4 flex-1 max-w-xl">
             <h2 className="text-sm font-bold tracking-wide text-orange-500 uppercase shrink-0">
               {selectedCaseId ? `FICHA DE EXPEDIENTE: ${selectedCaseData?.number}` :
