@@ -3211,42 +3211,42 @@ export default function Home() {
                           </span>
                         </div>
 
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400 mt-2">
-                          Guardar Plantilla en la App
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Subir Plantilla a la Nube
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Plantillas y Modelos Disponibles en el Estudio</h4>
-                        {templates.map(tpl => (
-                          <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Plantillas y Modelos Disponibles en la Nube</h4>
+                        {templates.map(t => (
+                          <div key={t.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
                               <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 text-[10px]">
-                                  {tpl.category}
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                                  {t.category}
                                 </span>
-                                <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{tpl.title}</h4>
+                                <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{t.title}</h4>
                               </div>
-                              <p className="text-zinc-500 mt-1">Archivo: <strong>{tpl.fileName}</strong></p>
+                              <p className="text-zinc-500 mt-1 font-mono text-[10px]">Archivo: {t.fileName}</p>
                             </div>
 
                             <div className="flex items-center gap-2">
-                              {tpl.dataUrl ? (
+                              {t.dataUrl ? (
                                 <a 
-                                  href={tpl.dataUrl} 
-                                  download={tpl.fileName}
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded text-xs transition-colors"
+                                  href={t.dataUrl} 
+                                  download={t.fileName}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all text-xs"
                                 >
-                                  📥 Descargar
+                                  ⬇️ Descargar
                                 </a>
                               ) : (
-                                <span className="text-zinc-500 italic text-[11px]">Modelo base predeterminado</span>
+                                <span className="text-zinc-500 italic text-[10px]">Modelo Base</span>
                               )}
                               <button 
-                                onClick={() => deleteTemplate(tpl.id)}
+                                onClick={() => deleteTemplate(t.id)}
                                 className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
                               >
-                                🗑️
+                                🗑️ Eliminar
                               </button>
                             </div>
                           </div>
@@ -3258,32 +3258,55 @@ export default function Home() {
               )}
 
               {activeTab === 'configuracion' && (
-                <div className="space-y-6 relative z-10 max-w-2xl">
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales Universales</h3>
-                    <p className="text-xs text-zinc-500">Configure los correos del equipo de trabajo y modifique la contraseña universal de acceso para todos los dispositivos vinculados.</p>
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-6 rounded-xl space-y-5 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Gestión de Accesos</h3>
+                    <p className="text-xs text-zinc-500">Configure los correos del equipo para notificaciones de Google Calendar, cambie su contraseña universal y descargue copias de resguardo completas.</p>
 
-                    <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
-                      <h4 className="text-xs font-bold uppercase text-zinc-300 border-b pb-1 border-zinc-800">Modificar Clave y Correo en la Nube</h4>
-                      
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-zinc-300 uppercase">Correos Electrónicos del Equipo (Google Calendar):</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        {teamEmails.map((mail, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <input 
+                              type="email" 
+                              placeholder={`Correo colaborador ${idx + 1}`}
+                              value={mail}
+                              onChange={e => {
+                                const updated = [...teamEmails];
+                                updated[idx] = e.target.value;
+                                setTeamEmails(updated);
+                                updateTeamEmails(updated);
+                              }}
+                              className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+
+                    <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
+                      <h4 className="font-bold text-orange-500 uppercase">Seguridad y Recuperación de Cuenta</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-zinc-400 block mb-1 font-bold">Nueva Contraseña Universal:</label>
+                          <label className="text-zinc-500 block mb-1">Nueva Contraseña Universal (Nube):</label>
                           <input 
                             type="password" 
-                            placeholder="Dejar en blanco para no cambiar" 
-                            value={newPass} 
+                            placeholder="Dejar en blanco para no cambiar"
+                            value={newPass}
                             onChange={e => setNewPass(e.target.value)}
                             className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
-
                         <div>
-                          <label className="text-zinc-400 block mb-1 font-bold">Confirmar Nueva Contraseña:</label>
+                          <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
                           <input 
                             type="password" 
-                            placeholder="Repita la contraseña" 
-                            value={confirmPass} 
+                            placeholder="Repita la contraseña"
+                            value={confirmPass}
                             onChange={e => setConfirmPass(e.target.value)}
                             className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
@@ -3291,57 +3314,37 @@ export default function Home() {
                       </div>
 
                       <div>
-                        <label className="text-zinc-400 block mb-1 font-bold">Nuevo Correo de Recuperación:</label>
+                        <label className="text-zinc-500 block mb-1">Correo Electrónico de Recuperación:</label>
                         <input 
                           type="email" 
-                          placeholder={recoveryEmailConfig} 
-                          value={newRecoveryMail} 
+                          placeholder={recoveryEmailConfig}
+                          value={newRecoveryMail}
                           onChange={e => setNewRecoveryMail(e.target.value)}
                           className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
                       </div>
 
                       {passMessage && (
-                        <p className={`text-xs font-bold p-2.5 rounded border ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                        <p className={`p-2 rounded font-bold ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
                           {passMessage}
                         </p>
                       )}
 
-                      <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400 shadow">
-                        Actualizar Credenciales en la Nube
+                      <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400">
+                        Actualizar Credenciales de Acceso
                       </button>
                     </form>
 
-                    <div className="pt-4 border-t border-zinc-800 space-y-3">
-                      <h4 className="text-xs font-bold uppercase text-zinc-300">Correos del Equipo (Google Calendar Sync)</h4>
-                      <div className="space-y-2">
-                        {teamEmails.map((emailVal, index) => (
-                          <div key={index} className="flex gap-2 text-xs">
-                            <input 
-                              type="email"
-                              placeholder={`Correo ${index + 1} (ej. integrante@estudio.com)`}
-                              value={emailVal}
-                              onChange={(e) => {
-                                const updated = [...teamEmails];
-                                updated[index] = e.target.value;
-                                setTeamEmails(updated);
-                                updateTeamEmails(updated);
-                              }}
-                              className={`flex-1 border p-2 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
 
-                    <div className="pt-4 border-t border-zinc-800 space-y-3">
-                      <h4 className="text-xs font-bold uppercase text-zinc-300">Copia de Resguardo y Seguridad (Backup Descargable)</h4>
-                      <p className="text-xs text-zinc-500">Descargue un archivo de texto con absolutamente toda la base de datos de su estudio para resguardo personal.</p>
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">Copia de Resguardo y Seguridad (Backup Descargable)</h4>
+                      <p className="text-xs text-zinc-500">Descargue un archivo de texto plano con todos los expedientes, movimientos, finanzas y plantillas del estudio para resguardo externo.</p>
                       <button 
                         onClick={handleDownloadFullBackup}
-                        className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-4 py-2.5 rounded border border-zinc-700 shadow flex items-center gap-2"
+                        className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 border border-zinc-700 font-bold text-xs px-5 py-3 rounded-xl transition-all shadow flex items-center gap-2"
                       >
-                        💾 Descargar Copia de Resguardo Completa (.txt)
+                        <span>📥 Descargar Copia de Resguardo Completa (.txt)</span>
                       </button>
                     </div>
                   </div>
@@ -3349,6 +3352,7 @@ export default function Home() {
               )}
             </>
           )}
+
         </main>
       </div>
     </div>
