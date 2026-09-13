@@ -1089,10 +1089,11 @@ export default function Home() {
 
       <aside className={`w-64 border-r flex flex-col justify-between shrink-0 z-20 overflow-y-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
         <div>
+          {/* 1. CAMBIO DE LOGO DEL ALMANAQUE DE INICIO / BARRA LATERAL */}
           <div className={`p-5 border-b flex items-center gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-            <div className="flex items-center text-3xl font-black tracking-tighter">
-              <span className="text-orange-500">M</span>
-              <span className={isDarkMode ? 'text-zinc-500' : 'text-zinc-400'}>M</span>
+            <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center font-black text-xs shadow-md border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-orange-500' : 'bg-zinc-100 border-zinc-300 text-orange-600'}`}>
+              <span className="text-[9px] uppercase tracking-tighter leading-none opacity-80">ESTUDIO</span>
+              <span className="text-sm font-black leading-none mt-0.5">MM</span>
             </div>
             <div>
               <h1 className={`font-bold text-sm uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>LexStudio</h1>
@@ -2220,18 +2221,41 @@ export default function Home() {
                         className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                       />
 
-                      <select 
-                        value={newHearing.tipoAudiencia} 
-                        onChange={e => setNewHearing({...newHearing, tipoAudiencia: e.target.value})}
-                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                      >
-                        <option value="Preliminar">Tipo: Preliminar</option>
-                        <option value="Vista de Causa">Tipo: Vista de Causa</option>
-                        <option value="Conciliación">Tipo: Conciliación / Mediación</option>
-                        <option value="Penal">Tipo: Audiencia Penal</option>
-                        <option value="Fiscal">Tipo: Audiencia Fiscal</option>
-                        <option value="Otra">Tipo: Otra</option>
-                      </select>
+                      {/* 2. AMPLIACIÓN DE OPCIONES DE TIPOS DE AUDIENCIA CON MANEJO DE "OTRO" */}
+                      <div className="flex flex-col gap-1">
+                        <select 
+                          value={newHearing.tipoAudiencia === 'Audiencia mediación' || newHearing.tipoAudiencia === 'Audiencia art 659 cpcc' || newHearing.tipoAudiencia === 'Preliminar' || newHearing.tipoAudiencia === 'Vista de Causa' || newHearing.tipoAudiencia === 'Conciliación' || newHearing.tipoAudiencia === 'Penal' || newHearing.tipoAudiencia === 'Fiscal' || newHearing.tipoAudiencia === 'Otra' ? newHearing.tipoAudiencia : 'OTRO'} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val === 'OTRO') {
+                              setNewHearing({...newHearing, tipoAudiencia: ''});
+                            } else {
+                              setNewHearing({...newHearing, tipoAudiencia: val});
+                            }
+                          }}
+                          className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          <option value="Preliminar">Tipo: Preliminar</option>
+                          <option value="Audiencia mediación">Tipo: Audiencia Mediación</option>
+                          <option value="Audiencia art 659 cpcc">Tipo: Audiencia Art. 659 CPCC</option>
+                          <option value="Vista de Causa">Tipo: Vista de Causa</option>
+                          <option value="Conciliación">Tipo: Conciliación / Mediación</option>
+                          <option value="Penal">Tipo: Audiencia Penal</option>
+                          <option value="Fiscal">Tipo: Audiencia Fiscal</option>
+                          <option value="OTRO">Tipo: Otro (Escribir personalizado)</option>
+                        </select>
+
+                        {/* Input que aparece automáticamente al apretar "Otro" */}
+                        {!(['Preliminar', 'Audiencia mediación', 'Audiencia art 659 cpcc', 'Vista de Causa', 'Conciliación', 'Penal', 'Fiscal', 'Otra'].includes(newHearing.tipoAudiencia)) && (
+                          <input 
+                            type="text"
+                            placeholder="Especifique el tipo de audiencia..."
+                            value={newHearing.tipoAudiencia}
+                            onChange={e => setNewHearing({...newHearing, tipoAudiencia: e.target.value})}
+                            className={`border border-orange-500 p-2 rounded outline-none text-xs ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                          />
+                        )}
+                      </div>
 
                       <select 
                         value={newHearing.modalidad} 
@@ -3218,12 +3242,7 @@ export default function Home() {
                               ) : (
                                 <span className="text-zinc-500 text-[10px] italic">Sin archivo adjunto</span>
                               )}
-                              <button 
-                                onClick={() => deleteTemplate(tpl.id)}
-                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                              >
-                                🗑️ Eliminar
-                              </button>
+                              <button onClick={() => deleteTemplate(tpl.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20">🗑️</button>
                             </div>
                           </div>
                         ))}
@@ -3232,9 +3251,115 @@ export default function Home() {
                   )}
                 </div>
               )}
+
+              {activeTab === 'configuracion' && (
+                <div className="space-y-6 relative z-10 max-w-2xl">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Gestión de Correos del Equipo</h3>
+                    
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold block text-zinc-400 uppercase">Correos del Equipo (Para notificaciones automáticas en Google Calendar):</label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {teamEmails.map((emailVal, idx) => (
+                          <input 
+                            key={idx}
+                            type="email"
+                            placeholder={`Correo integrante ${idx + 1}`}
+                            value={emailVal}
+                            onChange={(e) => {
+                              const updatedMails = [...teamEmails];
+                              updatedMails[idx] = e.target.value;
+                              setTeamEmails(updatedMails);
+                              updateTeamEmails(updatedMails);
+                            }}
+                            className={`border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={`pt-4 border-t space-y-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">🔒 Seguridad y Contraseña Universal en Nube</h4>
+                      <form onSubmit={handleChangePassword} className="space-y-3">
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-1">Nueva Contraseña de Acceso:</label>
+                          <input 
+                            type="password"
+                            placeholder="Dejar en blanco para mantener actual"
+                            value={newPass}
+                            onChange={(e) => setNewPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-1">Confirmar Nueva Contraseña:</label>
+                          <input 
+                            type="password"
+                            placeholder="Repita la contraseña"
+                            value={confirmPass}
+                            onChange={(e) => setConfirmPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-1">Correo de Recuperación:</label>
+                          <input 
+                            type="email"
+                            placeholder={recoveryEmailConfig}
+                            value={newRecoveryMail}
+                            onChange={(e) => setNewRecoveryMail(e.target.value)}
+                            className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        {passMessage && (
+                          <p className="text-xs font-bold text-emerald-500 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">{passMessage}</p>
+                        )}
+
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400 shadow">
+                          Actualizar Credenciales en la Nube
+                        </button>
+                      </form>
+                    </div>
+
+                    <div className={`pt-4 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">🧬 Configuración de Huella Digital / Biometría</h4>
+                      <p className="text-xs text-zinc-500">Habilite el desbloqueo rápido por biometría (FaceID / Huella) en este dispositivo:</p>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const newState = !biometricEnabled;
+                          setBiometricEnabled(newState);
+                          localStorage.setItem('lex_biometric_enabled', newState ? 'true' : 'false');
+                          alert(newState ? '✅ Autenticación biométrica activada en este navegador.' : '❌ Autenticación biométrica desactivada.');
+                        }}
+                        className={`px-4 py-2 rounded text-xs font-bold transition-all border ${
+                          biometricEnabled 
+                            ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-emerald-500' 
+                            : (isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700' : 'bg-zinc-200 text-zinc-700 border-zinc-300 hover:bg-zinc-300')
+                        }`}
+                      >
+                        {biometricEnabled ? '✓ Biometría Habilitada (Clic para Desactivar)' : '🧬 Habilitar Huella Digital / Biometría'}
+                      </button>
+                    </div>
+
+                    <div className={`pt-4 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo (Archivo de Texto)</h4>
+                      <p className="text-xs text-zinc-500">Descargue un respaldo completo con toda la base de datos de expedientes, plazos, finanzas y causas fiscales en formato de texto estructurado.</p>
+                      <button 
+                        onClick={handleDownloadFullBackup}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow flex items-center gap-2"
+                      >
+                        📥 Descargar Copia de Resguardo en Texto (.txt)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
-
         </main>
       </div>
     </div>
