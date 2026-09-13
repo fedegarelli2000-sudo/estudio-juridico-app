@@ -745,6 +745,36 @@ export default function Home() {
 
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
+  // ESTADO PARA NUEVA HERRAMIENTA: CALCULADORA DE INTERESES Y TASA JUDICIAL
+  const [calcCapital, setCalcCapital] = useState('');
+  const [calcTasa, setCalcTasa] = useState('tasa_activa_bna'); // tasa_activa_bna, cer_ipc, fija_anual
+  const [calcAnualPorcentaje, setCalcAnualPorcentaje] = useState('36');
+  const [calcDias, setCalcDias] = useState('365');
+  const [calcResultado, setCalcResultado] = useState(null);
+
+  const handleCalcularIntereses = (e) => {
+    e.preventDefault();
+    const cap = parseFloat(calcCapital.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0;
+    if (cap <= 0) return;
+
+    let tasaEfectivaAnual = 36;
+    if (calcTasa === 'tasa_activa_bna') tasaEfectivaAnual = 75; // Tasa activa Banco Nación aprox estimada
+    else if (calcTasa === 'cer_ipc') tasaEfectivaAnual = 45; // Estimado inflación / CER
+    else tasaEfectivaAnual = parseFloat(calcAnualPorcentaje) || 0;
+
+    const dias = parseInt(calcDias) || 365;
+    const interesGenerado = cap * (tasaEfectivaAnual / 100) * (dias / 365);
+    const totalFinal = cap + interesGenerado;
+
+    setCalcResultado({
+      capital: cap,
+      tasaNombre: calcTasa === 'tasa_activa_bna' ? 'Tasa Activa BNA' : calcTasa === 'cer_ipc' ? 'Ajuste por CER / IPC' : `Tasa Fija (${tasaEfectivaAnual}%)`,
+      dias: dias,
+      interes: interesGenerado,
+      total: totalFinal
+    });
+  };
+
   const handleAddClient = (e) => {
     e.preventDefault();
     if (!newClient.name) return;
@@ -1111,6 +1141,7 @@ export default function Home() {
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
+              { id: 'calculadora', label: 'Calculadora de Tasas e Intereses', icon: '🧮' },
               { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
             ].map((tab) => (
@@ -1717,24 +1748,35 @@ export default function Home() {
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
+                  {/* --- NUEVO DISEÑO PREMIUM PARA LA CABECERA / FECHA --- */}
                   <div className={`border p-6 rounded-2xl shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${isDarkMode ? 'bg-gradient-to-r from-zinc-900 to-zinc-950 border-zinc-800/80' : 'bg-gradient-to-r from-white to-zinc-50 border-zinc-200'}`}>
                     <div>
-                      <h3 className={`text-2xl md:text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="text-[10px] uppercase font-black tracking-widest text-emerald-500">Sistema Operativo Conectado</span>
+                      </div>
+                      <h3 className={`text-2xl md:text-3xl font-black tracking-tight mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                         {(() => {
                           const hour = new Date().getHours();
-                          if (hour < 12) return '¡Buenos días!';
-                          if (hour < 20) return '¡Buenas tardes!';
-                          return '¡Buenas noches!';
+                          if (hour < 12) return '¡Buenos días, Estudio MM!';
+                          if (hour < 20) return '¡Buenas tardes, Estudio MM!';
+                          return '¡Buenas noches, Estudio MM!';
                         })()}
                       </h3>
-                      <p className="text-xs text-orange-500 font-bold uppercase tracking-widest mt-1">
-                        Estudio Jurídico MM • Sistema Operativo Legal Activo
+                      <p className="text-xs text-orange-500 font-semibold uppercase tracking-wider mt-0.5">
+                        Panel de Control y Gestión Jurídica Integral
                       </p>
                     </div>
-                    <div className="self-end md:self-auto">
-                      <span className={`text-xs font-mono font-bold px-3.5 py-2 rounded-xl border shadow-inner flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
-                        📅 {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                      </span>
+
+                    {/* Tarjeta de Fecha Estilizada tipo Widget de Alta Gama */}
+                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-inner ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
+                      <div className="text-2xl">📅</div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wider text-orange-500 font-extrabold">Fecha de Hoy</p>
+                        <p className="text-xs font-black capitalize">
+                          {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -2630,6 +2672,95 @@ export default function Home() {
                         <p className="text-xs text-zinc-500 italic">No hay registros financieros cargados en el estudio.</p>
                       )}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- NUEVA PESTAÑA: CALCULADORA DE TASAS E INTERESES JUDICIALES --- */}
+              {activeTab === 'calculadora' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div>
+                      <h3 className="text-sm font-bold text-orange-500 uppercase">🧮 Calculadora de Tasas de Interés y Liquidación Judicial</h3>
+                      <p className="text-xs text-zinc-500">Herramienta útil para calcular rápidamente intereses moratorios, punitorios o ajustes por tasas judiciales aplicables en Provincia de Córdoba.</p>
+                    </div>
+
+                    <form onSubmit={handleCalcularIntereses} className="space-y-4 text-xs">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Capital Histórico Adeudado ($):</label>
+                          <input 
+                            type="text" 
+                            placeholder="ej. 1500000"
+                            value={calcCapital}
+                            onChange={(e) => setCalcCapital(e.target.value)}
+                            className={`w-full border p-3 rounded-lg outline-none focus:border-orange-500 font-mono font-bold text-sm ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Tasa de Aplicación:</label>
+                          <select 
+                            value={calcTasa}
+                            onChange={(e) => setCalcTasa(e.target.value)}
+                            className={`w-full border p-3 rounded-lg outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="tasa_activa_bna">Tasa Activa BNA (Banco Nación - Promedio 75%)</option>
+                            <option value="cer_ipc">Índice CER / IPC (Actualización inflacionaria aprox)</option>
+                            <option value="fija_anual">Tasa Fija Personalizada Anual</option>
+                          </select>
+                        </div>
+
+                        {calcTasa === 'fija_anual' && (
+                          <div>
+                            <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Porcentaje Anual Fijo (%):</label>
+                            <input 
+                              type="number" 
+                              value={calcAnualPorcentaje}
+                              onChange={(e) => setCalcAnualPorcentaje(e.target.value)}
+                              className={`w-full border p-3 rounded-lg outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            />
+                          </div>
+                        )}
+
+                        <div>
+                          <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Cantidad de Días a Liquidar:</label>
+                          <input 
+                            type="number" 
+                            value={calcDias}
+                            onChange={(e) => setCalcDias(e.target.value)}
+                            className={`w-full border p-3 rounded-lg outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                      </div>
+
+                      <button 
+                        type="submit"
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-6 py-3 rounded-lg transition-all shadow-lg shadow-orange-500/20"
+                      >
+                        🧮 Calcular Liquidación de Intereses
+                      </button>
+                    </form>
+
+                    {calcResultado && (
+                      <div className={`mt-6 p-5 rounded-xl border space-y-3 ${isDarkMode ? 'bg-zinc-950 border-orange-500/50' : 'bg-orange-50/50 border-orange-500/40'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase text-xs">📊 Resultado de la Liquidación Estimada:</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
+                          <div>
+                            <span className="text-zinc-500 block">Capital Base:</span>
+                            <strong className={`text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>${calcResultado.capital.toLocaleString('es-AR')}</strong>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block">Intereses ({calcResultado.tasaNombre} por {calcResultado.dias} días):</span>
+                            <strong className="text-sm text-amber-500">+ ${calcResultado.interes.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</strong>
+                          </div>
+                          <div>
+                            <span className="text-zinc-500 block">Monto Total a Reclamar:</span>
+                            <strong className="text-base text-emerald-500 font-black">${calcResultado.total.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</strong>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
