@@ -21,6 +21,58 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
+  // --- RELOJ Y FECHA DINÁMICA (ESTILO FLIP CLOCK RETRO) ---
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // --- NOTIFICACIONES NATIVAS EN EL CELU / DISPOSITIVO (1 DÍA ANTES DE AUDIENCIAS) ---
+  const [notificationsRequested, setNotificationsRequested] = useState(false);
+
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default" && !notificationsRequested) {
+      Notification.requestPermission().then(permission => {
+        setNotificationsRequested(true);
+      });
+    }
+  }, [notificationsRequested]);
+
+  // Verificar audiencias para notificar 1 día antes
+  useEffect(() => {
+    if (!hearings || hearings.length === 0) return;
+    
+    const checkAudiencesForNotification = () => {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+      const now = new Date();
+      hearings.forEach(h => {
+        if (h.status !== 'PENDIENTE' || !h.date) return;
+        const hearingDate = new Date(h.date);
+        const timeDiff = hearingDate - now;
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+        // Si faltan entre 23 y 24 horas (exactamente 1 día antes)
+        if (hoursDiff >= 23 && hoursDiff <= 24) {
+          const notificationKey = `notified_hearing_${h.id}`;
+          if (!localStorage.getItem(notificationKey)) {
+            new Notification("⚖️ Aviso de Audiencia - Estudio MM", {
+              body: `Mañana tiene la audiencia: "${h.title}" a las ${hearingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Dependencia: ${h.location || 'A confirmar'}`,
+              icon: '/favicon.ico'
+            });
+            localStorage.setItem(notificationKey, 'true');
+          }
+        }
+      });
+    };
+
+    checkAudiencesForNotification();
+    const interval = setInterval(checkAudiencesForNotification, 60000); // Revisa cada minuto
+    return () => clearInterval(interval);
+  }, [hearings]);
+
   // --- MODO CLARO / OSCURO (ACTIVABLE / DESACTIVABLE) ---
   const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -1721,7 +1773,7 @@ export default function Home() {
                     <div>
                       <h3 className={`text-2xl md:text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                         {(() => {
-                          const hour = new Date().getHours();
+                          const hour = currentTime.getHours();
                           if (hour < 12) return '¡Buenos días!';
                           if (hour < 20) return '¡Buenas tardes!';
                           return '¡Buenas noches!';
@@ -1731,10 +1783,29 @@ export default function Home() {
                         Estudio Jurídico MM • Sistema Operativo Legal Activo
                       </p>
                     </div>
-                    <div className="self-end md:self-auto">
-                      <span className={`text-xs font-mono font-bold px-3.5 py-2 rounded-xl border shadow-inner flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
-                        📅 {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                      </span>
+
+                    {/* RELOJ Y FECHA ESTILO FLIP CLOCK RETRO */}
+                    <div className="flex items-center gap-2 self-end md:self-auto">
+                      {/* Horas */}
+                      <div className="bg-zinc-900 text-white font-black text-xl px-3 py-2 rounded-lg border border-zinc-700 shadow-lg tracking-wider font-mono">
+                        {String(currentTime.getHours()).padStart(2, '0')}
+                      </div>
+                      <span className="text-orange-500 font-black animate-pulse">:</span>
+                      {/* Minutos */}
+                      <div className="bg-zinc-900 text-white font-black text-xl px-3 py-2 rounded-lg border border-zinc-700 shadow-lg tracking-wider font-mono">
+                        {String(currentTime.getMinutes()).padStart(2, '0')}
+                      </div>
+                      <span className="text-orange-500 font-black animate-pulse">:</span>
+                      {/* Segundos */}
+                      <div className="bg-zinc-900 text-orange-400 font-black text-xl px-3 py-2 rounded-lg border border-zinc-700 shadow-lg tracking-wider font-mono">
+                        {String(currentTime.getSeconds()).padStart(2, '0')}
+                      </div>
+
+                      {/* Tarjeta de Fecha Estilo Solapa */}
+                      <div className={`ml-2 px-3.5 py-2 rounded-lg border text-xs font-mono font-bold shadow-inner flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
+                        <span>📅</span>
+                        <span>{currentTime.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      </div>
                     </div>
                   </div>
 
