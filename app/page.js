@@ -187,6 +187,10 @@ export default function Home() {
   const [editingFinanceId, setEditingFinanceId] = useState(null);
   const [editFinanceForm, setEditFinanceForm] = useState({ concepto: '', monto: '', fecha: '', tipoIngreso: 'HONORARIOS' });
 
+  // ESTADO PARA EDITAR FONDO FIJO POR EXPEDIENTE
+  const [editingFondoCaseId, setEditingFondoCaseId] = useState(null);
+  const [editFondoInput, setEditFondoInput] = useState('');
+
   const handleAddTemplate = (e) => {
     e.preventDefault();
     if (!newTemplateTitle.trim()) return;
@@ -572,6 +576,7 @@ export default function Home() {
       client: 'Cámara',
       processType: 'JUDICIAL',
       status: 'EN TRAMITE',
+      fondoFijo: 0, // Por defecto en 0 tal como fue solicitado
       notes: 'Desc. con exactitud qué reclama: Alquileres adeudados, meses julio y agosto del corriente año: $1.044.800, con más servicios de Agua, Luz, Gas e impuestos adeudados correspondientes a los periodos de locación: $: $634,422.33. Lo que hace la suma total de PESOS UN MILLÓN SEISCIENTO SETENTA Y NUEVE MIL DOSCIENTOS VEINTIDÓS CON TREINTA Y TRES CENTAVOS ($1.679.222,33). Bajo expresa reserva de ampliar.'
     }
   ]);
@@ -744,7 +749,7 @@ export default function Home() {
   };
 
   // FORMULARIOS GENERALES
-  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
+  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '', fondoFijo: 0 });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
   
@@ -1301,7 +1306,7 @@ export default function Home() {
                 )}
               </div>
 
-              {/* SECCIÓN NUEVA: Generador Automático de Escritos con Inteligencia (Plantillas Dinámicas) */}
+              {/* SECCIÓN: Generador Automático de Escritos con Inteligencia (Plantillas Dinámicas) */}
               <div className={`border p-5 rounded-xl space-y-4 border-orange-500/40 ${isDarkMode ? 'bg-zinc-900' : 'bg-white shadow-sm'}`}>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📄</span>
@@ -1310,6 +1315,37 @@ export default function Home() {
                     <p className="text-[11px] text-zinc-400">Rellena automáticamente este modelo con los datos del expediente actual y descárgalo listo en Word (.docx).</p>
                   </div>
                 </div>
+
+                {/* Formulario para agregar plantilla directamente desde el expediente */}
+                <form onSubmit={handleAddTemplate} className={`p-3 rounded-lg border flex flex-col md:flex-row gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                  <input 
+                    type="text" 
+                    placeholder="Título de la nueva plantilla..."
+                    value={newTemplateTitle}
+                    onChange={e => setNewTemplateTitle(e.target.value)}
+                    className={`flex-1 border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                    required
+                  />
+                  <select 
+                    value={newTemplateCategory}
+                    onChange={e => setNewTemplateCategory(e.target.value)}
+                    className={`border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                  >
+                    <option value="Fiscal">Fiscal</option>
+                    <option value="Procesal">Procesal</option>
+                    <option value="Laboral">Laboral</option>
+                    <option value="Familia">Familia</option>
+                  </select>
+                  <input 
+                    type="file" 
+                    accept=".docx,.doc,.txt"
+                    onChange={e => setNewTemplateFile(e.target.files[0])}
+                    className={`border p-1.5 rounded text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-zinc-400' : 'bg-white border-zinc-300 text-zinc-600'}`}
+                  />
+                  <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-2 rounded text-xs">
+                    + Agregar Plantilla
+                  </button>
+                </form>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {templates.map(tpl => {
@@ -1378,14 +1414,47 @@ Firma Abogado / Apoderado`;
                 </div>
               </div>
 
-              {/* SECCIÓN NUEVA: Registro de Gastos Judiciales por Expediente y Control de Anticipos */}
+              {/* SECCIÓN: Registro de Gastos Judiciales por Expediente y Control de Anticipos con Fondo Fijo en 0 y Recibo Genérico */}
               <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">💰</span>
-                  <div>
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Registro de Gastos Judiciales por Expediente y Control de Anticipos (Fondo Fijo)</h4>
-                    <p className="text-[11px] text-zinc-400">Controlá qué fondo fijo entregó el cliente para bonos, tasas o viáticos, y el saldo exacto en tiempo real. Ahora podés editar o borrar cualquier gasto.</p>
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">💰</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">Registro de Gastos Judiciales por Expediente y Control de Anticipos (Fondo Fijo)</h4>
+                      <p className="text-[11px] text-zinc-400">Controlá qué fondo fijo entregó el cliente, modificalo cuando sea necesario y generá recibos genéricos.</p>
+                    </div>
                   </div>
+
+                  {/* Botón para descargar recibo genérico */}
+                  <button 
+                    onClick={() => {
+                      const reciboText = `ESTUDIO JURÍDICO MM
+RECIBO DE PAGO / ANTICIPO
+
+Fecha: ${new Date().toLocaleDateString('es-AR')}
+Expediente Nº: ${selectedCaseData.number}
+Carátula: ${selectedCaseData.caratula}
+Cliente: ${selectedCaseData.client}
+
+Recibí del Sr./Sra. ${selectedCaseData.client} la cantidad de pesos correspondientes a anticipo / fondo fijo para gastos de tasas y diligenciamiento.
+
+________________________________________
+Firma y Sello - Estudio Jurídico MM`;
+
+                      const blob = new Blob([reciboText], { type: 'text/plain;charset=utf-8' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `Recibo_Pago_${selectedCaseData.number}.txt`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded shadow transition-all flex items-center gap-1.5"
+                  >
+                    <span>📄 Descargar Recibo Genérico</span>
+                  </button>
                 </div>
 
                 {(() => {
@@ -1394,20 +1463,56 @@ Firma Abogado / Apoderado`;
                     .filter(h => h.tipoIngreso !== 'HONORARIOS')
                     .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
                   
-                  const fondoFijoCliente = 150000; // Fondo fijo estimativo de ejemplo para el expediente
+                  const fondoFijoCliente = selectedCaseData.fondoFijo !== undefined ? selectedCaseData.fondoFijo : 0;
                   const saldoRestante = fondoFijoCliente - totalGastosExp;
 
                   return (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Fondo Fijo / Anticipo Entregado</span>
-                          <h5 className="text-lg font-black text-emerald-500 mt-0.5">${fondoFijoCliente.toLocaleString('es-AR')}</h5>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Fondo Fijo / Anticipo Entregado</span>
+                            <button 
+                              onClick={() => {
+                                setEditingFondoCaseId(selectedCaseData.id);
+                                setEditFondoInput(fondoFijoCliente.toString());
+                              }}
+                              className="text-[10px] text-orange-500 font-bold hover:underline"
+                            >
+                              ✏️ Modificar
+                            </button>
+                          </div>
+
+                          {editingFondoCaseId === selectedCaseData.id ? (
+                            <div className="flex gap-2 mt-1">
+                              <input 
+                                type="text"
+                                value={editFondoInput}
+                                onChange={e => setEditFondoInput(e.target.value)}
+                                className={`w-full border border-orange-500 p-1.5 rounded text-xs ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                              />
+                              <button 
+                                onClick={() => {
+                                  const newVal = parseFloat(editFondoInput.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0;
+                                  const updatedCases = cases.map(c => c.id === selectedCaseData.id ? { ...c, fondoFijo: newVal } : c);
+                                  updateCases(updatedCases);
+                                  setEditingFondoCaseId(null);
+                                }}
+                                className="bg-emerald-600 text-white px-2.5 py-1 rounded text-xs font-bold"
+                              >
+                                ✓
+                              </button>
+                            </div>
+                          ) : (
+                            <h5 className="text-lg font-black text-emerald-500 mt-0.5">${fondoFijoCliente.toLocaleString('es-AR')}</h5>
+                          )}
                         </div>
+
                         <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                           <span className="text-[10px] font-bold text-zinc-500 uppercase">Gastos Imputados (Tasas/Bonos)</span>
                           <h5 className="text-lg font-black text-amber-500 mt-0.5">${totalGastosExp.toLocaleString('es-AR')}</h5>
                         </div>
+
                         <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                           <span className="text-[10px] font-bold text-zinc-500 uppercase">Saldo Exacto en Tiempo Real</span>
                           <h5 className={`text-lg font-black mt-0.5 ${saldoRestante >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -2082,9 +2187,9 @@ Firma Abogado / Apoderado`;
                     e.preventDefault();
                     if (!newCase.number || !newCase.caratula) return;
                     const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
-                    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
+                    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE', fondoFijo: 0 };
                     updateCases([...cases, created]);
-                    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
+                    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '', fondoFijo: 0 });
                   }} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
