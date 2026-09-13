@@ -21,58 +21,6 @@ export default function Home() {
     document.title = "Estudio Jurídico MM";
   }, []);
 
-  // --- RELOJ Y FECHA DINÁMICA (ESTILO FLIP CLOCK RETRO) ---
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // --- NOTIFICACIONES NATIVAS EN EL CELU / DISPOSITIVO (1 DÍA ANTES DE AUDIENCIAS) ---
-  const [notificationsRequested, setNotificationsRequested] = useState(false);
-
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default" && !notificationsRequested) {
-      Notification.requestPermission().then(permission => {
-        setNotificationsRequested(true);
-      });
-    }
-  }, [notificationsRequested]);
-
-  // Verificar audiencias para notificar 1 día antes
-  useEffect(() => {
-    if (!hearings || hearings.length === 0) return;
-    
-    const checkAudiencesForNotification = () => {
-      if (!("Notification" in window) || Notification.permission !== "granted") return;
-
-      const now = new Date();
-      hearings.forEach(h => {
-        if (h.status !== 'PENDIENTE' || !h.date) return;
-        const hearingDate = new Date(h.date);
-        const timeDiff = hearingDate - now;
-        const hoursDiff = timeDiff / (1000 * 60 * 60);
-
-        // Si faltan entre 23 y 24 horas (exactamente 1 día antes)
-        if (hoursDiff >= 23 && hoursDiff <= 24) {
-          const notificationKey = `notified_hearing_${h.id}`;
-          if (!localStorage.getItem(notificationKey)) {
-            new Notification("⚖️ Aviso de Audiencia - Estudio MM", {
-              body: `Mañana tiene la audiencia: "${h.title}" a las ${hearingDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}. Dependencia: ${h.location || 'A confirmar'}`,
-              icon: '/favicon.ico'
-            });
-            localStorage.setItem(notificationKey, 'true');
-          }
-        }
-      });
-    };
-
-    checkAudiencesForNotification();
-    const interval = setInterval(checkAudiencesForNotification, 60000); // Revisa cada minuto
-    return () => clearInterval(interval);
-  }, [hearings]);
-
   // --- MODO CLARO / OSCURO (ACTIVABLE / DESACTIVABLE) ---
   const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -1773,7 +1721,7 @@ export default function Home() {
                     <div>
                       <h3 className={`text-2xl md:text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
                         {(() => {
-                          const hour = currentTime.getHours();
+                          const hour = new Date().getHours();
                           if (hour < 12) return '¡Buenos días!';
                           if (hour < 20) return '¡Buenas tardes!';
                           return '¡Buenas noches!';
@@ -1783,29 +1731,10 @@ export default function Home() {
                         Estudio Jurídico MM • Sistema Operativo Legal Activo
                       </p>
                     </div>
-
-                    {/* RELOJ Y FECHA ESTILO FLIP CLOCK RETRO */}
-                    <div className="flex items-center gap-2 self-end md:self-auto">
-                      {/* Horas */}
-                      <div className="bg-zinc-900 text-white font-black text-xl px-3 py-2 rounded-lg border border-zinc-700 shadow-lg tracking-wider font-mono">
-                        {String(currentTime.getHours()).padStart(2, '0')}
-                      </div>
-                      <span className="text-orange-500 font-black animate-pulse">:</span>
-                      {/* Minutos */}
-                      <div className="bg-zinc-900 text-white font-black text-xl px-3 py-2 rounded-lg border border-zinc-700 shadow-lg tracking-wider font-mono">
-                        {String(currentTime.getMinutes()).padStart(2, '0')}
-                      </div>
-                      <span className="text-orange-500 font-black animate-pulse">:</span>
-                      {/* Segundos */}
-                      <div className="bg-zinc-900 text-orange-400 font-black text-xl px-3 py-2 rounded-lg border border-zinc-700 shadow-lg tracking-wider font-mono">
-                        {String(currentTime.getSeconds()).padStart(2, '0')}
-                      </div>
-
-                      {/* Tarjeta de Fecha Estilo Solapa */}
-                      <div className={`ml-2 px-3.5 py-2 rounded-lg border text-xs font-mono font-bold shadow-inner flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
-                        <span>📅</span>
-                        <span>{currentTime.toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                      </div>
+                    <div className="self-end md:self-auto">
+                      <span className={`text-xs font-mono font-bold px-3.5 py-2 rounded-xl border shadow-inner flex items-center gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
+                        📅 {new Date().toLocaleDateString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
                     </div>
                   </div>
 
@@ -3275,11 +3204,6 @@ export default function Home() {
                             </div>
                           </div>
                         ))}
-                        {templates.length === 0 && (
-                          <p className={`text-xs italic p-4 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-500' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
-                            No hay plantillas cargadas todavía. Use el formulario de arriba para incorporar sus modelos.
-                          </p>
-                        )}
                       </div>
                     </div>
                   )}
@@ -3289,98 +3213,90 @@ export default function Home() {
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">Mails del Equipo para Notificaciones en Google Calendar</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      {[0, 1, 2, 3, 4, 5].map((index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <span className="text-zinc-500 font-bold w-14">Mail {index + 1}:</span>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración del Sistema, Mails de Equipo y Seguridad Universal</h3>
+                    
+                    <form onSubmit={handleChangePassword} className="space-y-4 pt-2">
+                      <h4 className={`font-bold text-xs ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>🔒 Modificar Contraseña Universal y Correo de Recuperación</h4>
+                      <p className="text-xs text-zinc-500">Estos cambios se sincronizan en la nube de inmediato para que usted y su equipo accedan con las nuevas credenciales en cualquier dispositivo.</p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <label className="text-zinc-500 block mb-1">Nueva Contraseña:</label>
                           <input 
-                            type="email" 
-                            placeholder={`ejemplo${index + 1}@estudio.com`}
-                            value={teamEmails[index] || ''}
-                            onChange={(e) => {
-                              const updated = [...teamEmails];
-                              updated[index] = e.target.value;
-                              updateTeamEmails(updated);
-                            }}
-                            className={`flex-1 border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            type="password" 
+                            placeholder="Dejar en blanco si no desea cambiarla"
+                            value={newPass} 
+                            onChange={e => setNewPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                        <div>
+                          <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
+                          <input 
+                            type="password" 
+                            placeholder="Repita la nueva contraseña"
+                            value={confirmPass} 
+                            onChange={e => setConfirmPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                      </div>
 
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">🧬 Seguridad Biométrica (Acceso con Huella Digital)</h3>
-                    <p className="text-xs text-zinc-500">Active o desactive el inicio de sesión rápido mediante huella digital o reconocimiento biométrico en su dispositivo móvil.</p>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={biometricEnabled}
-                        onChange={(e) => {
-                          const val = e.target.checked;
-                          setBiometricEnabled(val);
-                          localStorage.setItem('lex_biometric_enabled', val ? 'true' : 'false');
-                        }}
-                        className="w-5 h-5 accent-orange-500"
-                      />
-                      <span className={`font-bold text-xs ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Habilitar acceso automático con Huella Digital al abrir la aplicación</span>
-                    </label>
-                  </div>
-
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo de Datos (Backup Completo)</h3>
-                    <p className="text-xs text-zinc-500">Descargue un archivo de respaldo con toda la información del estudio (expedientes, causas fiscales, plazos, clientes, plantillas) en formato de texto puro para garantizar que nunca pierda nada importante.</p>
-                    <button 
-                      onClick={handleDownloadFullBackup}
-                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-3 rounded-lg transition-colors shadow-lg shadow-orange-500/20 flex items-center gap-2"
-                    >
-                      <span>📥 Descargar Archivo de Respaldo (.txt)</span>
-                    </button>
-                  </div>
-
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">Configuración de Seguridad, Contraseña y Correo de Recuperación</h3>
-                    <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
                       <div>
-                        <label className="text-zinc-500 block mb-1">Correo Electrónico de Recuperación:</label>
+                        <label className="text-zinc-500 block mb-1 text-xs">Nuevo Correo de Recuperación:</label>
                         <input 
                           type="email" 
-                          placeholder="tu-correo@estudio.com"
-                          defaultValue={recoveryEmailConfig}
-                          onChange={(e) => setNewRecoveryMail(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Nueva Contraseña (opcional):</label>
-                        <input 
-                          type="password" 
-                          placeholder="••••••••••••"
-                          value={newPass}
-                          onChange={(e) => setNewPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="••••••••••••"
-                          value={confirmPass}
-                          onChange={(e) => setConfirmPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          placeholder={recoveryEmailConfig}
+                          value={newRecoveryMail} 
+                          onChange={e => setNewRecoveryMail(e.target.value)}
+                          className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
                       </div>
 
                       {passMessage && (
-                        <p className={`text-xs font-bold p-2 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>{passMessage}</p>
+                        <p className={`text-xs font-bold p-2.5 rounded border ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                          {passMessage}
+                        </p>
                       )}
 
-                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs transition-colors">
-                        Guardar Cambios de Seguridad
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
+                        Actualizar Credenciales en la Nube
                       </button>
                     </form>
+
+                    <div className={`pt-6 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className={`font-bold text-xs ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>📧 Correos Electrónicos del Equipo (Google Calendar y Alertas)</h4>
+                      <p className="text-xs text-zinc-500">Configure los correos del estudio que aparecerán al sincronizar audiencias o vencimientos en Google Calendar.</p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {teamEmails.map((emailVal, idx) => (
+                          <input 
+                            key={idx}
+                            type="email"
+                            placeholder={`Correo integrante ${idx + 1}`}
+                            value={emailVal}
+                            onChange={(e) => {
+                              const updated = [...teamEmails];
+                              updated[idx] = e.target.value;
+                              setTeamEmails(updated);
+                              updateTeamEmails(updated);
+                            }}
+                            className={`border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={`pt-6 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className={`font-bold text-xs ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>💾 Copia de Resguardo y Seguridad de Datos (Backup Local)</h4>
+                      <p className="text-xs text-zinc-500">Puede descargar una copia de seguridad completa con todos los expedientes, movimientos, finanzas y plantillas en un archivo de texto plano para resguardo personal.</p>
+                      <button 
+                        onClick={handleDownloadFullBackup}
+                        className="bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-bold text-xs px-4 py-2.5 rounded border border-zinc-700 shadow flex items-center gap-2"
+                      >
+                        📥 Descargar Copia de Resguardo Completa (.txt)
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
