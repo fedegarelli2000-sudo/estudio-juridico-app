@@ -250,21 +250,32 @@ export default function Home() {
   const [cautelares, setCautelares] = useState([]);
   const [honorariosProcuracion, setHonorariosProcuracion] = useState([]);
 
-  // Estado para carga directa en Finanzas
+  // Estados para selección múltiple y autosuma en Finanzas
+  const [selectedFinanceIds, setSelectedFinanceIds] = useState([]);
+
+  // Estado para carga directa en Finanzas con soporte para concepto "OTRO"
   const [newDirectFinance, setNewDirectFinance] = useState({
     fecha: new Date().toISOString().split('T')[0],
     concepto: '',
     monto: '',
     tipoIngreso: 'HONORARIOS',
+    customConcepto: '',
     referencia: 'General / Estudio'
   });
 
   const handleAddDirectFinance = (e) => {
     e.preventDefault();
-    if (!newDirectFinance.monto || !newDirectFinance.concepto) return;
+    if (!newDirectFinance.monto) return;
+
+    const finalConcepto = newDirectFinance.tipoIngreso === 'OTRO' 
+      ? (newDirectFinance.customConcepto.trim() || 'Otro concepto') 
+      : (newDirectFinance.concepto.trim() || (newDirectFinance.tipoIngreso === 'HONORARIOS' ? 'Cobro de honorarios' : 'Gastos operativos'));
 
     const created = {
-      ...newDirectFinance,
+      fecha: newDirectFinance.fecha,
+      concepto: finalConcepto,
+      monto: newDirectFinance.monto,
+      tipoIngreso: newDirectFinance.tipoIngreso,
       fiscalId: 'direct_' + Date.now(),
       nroLiquidacion: newDirectFinance.referencia,
       id: 'h_' + Date.now()
@@ -278,6 +289,7 @@ export default function Home() {
       concepto: '',
       monto: '',
       tipoIngreso: 'HONORARIOS',
+      customConcepto: '',
       referencia: 'General / Estudio'
     });
   };
@@ -530,6 +542,7 @@ export default function Home() {
     const updated = honorariosProcuracion.filter(h => h.id !== id);
     setHonorariosProcuracion(updated);
     updateHonorarios(updated);
+    setSelectedFinanceIds(selectedFinanceIds.filter(itemId => itemId !== id));
   };
 
   // --- EXPEDIENTES Y DEMÁS MÓDULOS ---
@@ -2483,7 +2496,7 @@ export default function Home() {
                         <option value="HONORARIOS">Honorarios Procurador / Abogado</option>
                         <option value="CEDULA_GASTOS">Gastos de Cédula / Viáticos</option>
                         <option value="TASA_JUSTICIA">Tasa de Justicia</option>
-                        <option value="OTRO">Otro Ingreso / Gasto</option>
+                        <option value="OTRO">Otro (Personalizado)</option>
                       </select>
 
                       <input 
@@ -2510,13 +2523,23 @@ export default function Home() {
                       />
                     </div>
 
-                    <input 
-                      type="text" 
-                      placeholder="Concepto detallado (ej. Cobro de honorarios etapa preliminar)..." 
-                      value={newDirectFinance.concepto} 
-                      onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
-                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                    />
+                    {newDirectFinance.tipoIngreso === 'OTRO' ? (
+                      <input 
+                        type="text" 
+                        placeholder="Especifique el concepto personalizado (ej. Peritaje, fotocopias, etc.)..." 
+                        value={newDirectFinance.customConcepto} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, customConcepto: e.target.value})}
+                        className={`w-full border border-orange-500 p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                      />
+                    ) : (
+                      <input 
+                        type="text" 
+                        placeholder="Concepto detallado (ej. Cobro de honorarios etapa preliminar)..." 
+                        value={newDirectFinance.concepto} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
+                        className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    )}
 
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
                       Guardar en Caja del Estudio
@@ -2524,23 +2547,73 @@ export default function Home() {
                   </form>
 
                   <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">Historial Financiero del Estudio</h4>
-                    <div className="space-y-2">
-                      {honorariosProcuracion.map(h => (
-                        <div key={h.id} className={`p-3 border rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <div>
-                            <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
-                              {h.tipoIngreso}
-                            </span>
-                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Ref: {h.nroLiquidacion}</span>
-                            <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
-                            <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2 py-1 rounded font-bold">🗑️</button>
-                          </div>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                      <div>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial Financiero del Estudio (Seleccione para Autosuma Individual)</h4>
+                        <p className="text-[10px] text-zinc-500">Marque las casillas de los registros que desee sumar para ver el total parcial de forma inmediata.</p>
+                      </div>
+
+                      {selectedFinanceIds.length > 0 && (
+                        <div className="bg-orange-500 text-black px-3 py-1.5 rounded-lg font-bold text-xs shadow-md flex items-center gap-2">
+                          <span>⚡ Autosuma seleccionados ({selectedFinanceIds.length}):</span>
+                          <span className="font-mono text-sm font-black">
+                            ${honorariosProcuracion
+                              .filter(h => selectedFinanceIds.includes(h.id))
+                              .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0)
+                              .toLocaleString('es-AR')}
+                          </span>
+                          <button 
+                            onClick={() => setSelectedFinanceIds([])} 
+                            className="ml-2 text-[10px] bg-black/20 hover:bg-black/40 px-1.5 py-0.5 rounded text-black"
+                            title="Limpiar selección"
+                          >
+                            ✕ Limpiar
+                          </button>
                         </div>
-                      ))}
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      {honorariosProcuracion.map(h => {
+                        const isSelected = selectedFinanceIds.includes(h.id);
+                        return (
+                          <div 
+                            key={h.id} 
+                            className={`p-3 border rounded-xl flex justify-between items-center text-xs transition-all ${
+                              isSelected 
+                                ? 'border-orange-500 bg-orange-500/10' 
+                                : (isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200')
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input 
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedFinanceIds([...selectedFinanceIds, h.id]);
+                                  } else {
+                                    setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
+                                  }
+                                }}
+                                className="w-4 h-4 accent-orange-500 cursor-pointer"
+                              />
+                              <div>
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
+                                  {h.tipoIngreso}
+                                </span>
+                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Ref: {h.nroLiquidacion}</span>
+                                <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                              <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2.5 py-1 rounded font-bold hover:bg-red-500 hover:text-white transition-all">🗑️</button>
+                            </div>
+                          </div>
+                        );
+                      })}
                       {honorariosProcuracion.length === 0 && (
                         <p className="text-xs text-zinc-500 italic">No hay registros financieros cargados en el estudio.</p>
                       )}
