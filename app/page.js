@@ -187,6 +187,58 @@ export default function Home() {
   const [editingFinanceId, setEditingFinanceId] = useState(null);
   const [editFinanceForm, setEditFinanceForm] = useState({ concepto: '', monto: '', fecha: '', tipoIngreso: 'HONORARIOS' });
 
+  // ESTADOS Y DATOS PARA RECIBOS DE SUELDO
+  const [recibosList, setRecibosList] = useState([
+    {
+      id: 'rec_default_1',
+      empleador: 'Estudio Jurídico MM S.R.L.',
+      cuitEmpleador: '30-71234567-9',
+      domicilioEmpleador: 'General Paz 850, Río Cuarto, Córdoba',
+      empleado: 'Juan Carlos Pérez',
+      cuilEmpleado: '20-35123456-9',
+      categoria: 'Administrativo Senior',
+      periodo: 'Agosto 2026',
+      fechaPago: '2026-09-01',
+      banco: 'Banco de la Nación Argentina',
+      nroCuenta: '1234567890/5',
+      remunerativos: [
+        { concepto: 'Sueldo Básico', importe: '450000' },
+        { concepto: 'Antigüedad (5%)', importe: '22500' },
+        { concepto: 'Presentismo', importe: '45000' }
+      ],
+      noRemunerativos: [
+        { concepto: 'Viáticos no remunerativos', importe: '15000' }
+      ],
+      descuentos: [
+        { concepto: 'Jubilación (11%)', importe: '56375' },
+        { concepto: 'Ley 19.032 (INSSJP) (3%)', importe: '15375' },
+        { concepto: 'Obra Social (3%)', importe: '15375' },
+        { concepto: 'Sindicato (2%)', importe: '10250' }
+      ]
+    }
+  ]);
+  const [selectedReciboId, setSelectedReciboId] = useState('rec_default_1');
+  const [customReciboForm, setCustomReciboForm] = useState({
+    empleador: 'Estudio Jurídico MM S.R.L.',
+    cuitEmpleador: '30-71234567-9',
+    domicilioEmpleador: 'General Paz 850, Río Cuarto, Córdoba',
+    empleado: '',
+    cuilEmpleado: '',
+    categoria: 'Abogado Asociado / Asistente',
+    periodo: 'Septiembre 2026',
+    fechaPago: new Date().toISOString().split('T')[0],
+    banco: 'Banco de Córdoba (BANCOR)',
+    nroCuenta: '',
+    sueldoBasico: '500000',
+    antiguedad: '25000',
+    presentismo: '50000',
+    viaticos: '20000',
+    jubilacionPct: 11,
+    ley19032Pct: 3,
+    obraSocialPct: 3,
+    sindicatoPct: 2
+  });
+
   const handleAddTemplate = (e) => {
     e.preventDefault();
     if (!newTemplateTitle.trim()) return;
@@ -685,6 +737,7 @@ export default function Home() {
         if (data.lex_templates) setTemplates(data.lex_templates);
         if (data.lex_app_password) setCurrentPassword(data.lex_app_password);
         if (data.lex_recovery_email) setRecoveryEmailConfig(data.lex_recovery_email);
+        if (data.lex_recibos) setRecibosList(data.lex_recibos);
       }
     } catch (e) {
       console.error('Error obteniendo de nube:', e);
@@ -711,6 +764,7 @@ export default function Home() {
   const updateTemplates = (val) => { setTemplates(val); syncWithCloud('lex_templates', val); };
   const updateAppPassword = (val) => { setCurrentPassword(val); syncWithCloud('lex_app_password', val); };
   const updateRecoveryEmail = (val) => { setRecoveryEmailConfig(val); syncWithCloud('lex_recovery_email', val); };
+  const updateRecibos = (val) => { setRecibosList(val); syncWithCloud('lex_recibos', val); };
 
   const handleDownloadFullBackup = () => {
     const backupData = {
@@ -727,7 +781,8 @@ export default function Home() {
       fiscalMovements,
       cautelares,
       honorariosProcuracion,
-      templates
+      templates,
+      recibosList
     };
 
     const jsonString = JSON.stringify(backupData, null, 2);
@@ -1129,6 +1184,7 @@ export default function Home() {
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
+              { id: 'recibos', label: 'Generador de Recibos Sueldo', icon: '📝' },
               { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
               { id: 'juzgados_rc', label: 'Juzgados Río Cuarto (Excel)', icon: '🏛️' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
@@ -1919,6 +1975,7 @@ Firma Abogado / Apoderado`;
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
+                  {/* --- NUEVO DISEÑO PREMIUM PARA LA CABECERA / FECHA --- */}
                   <div className={`border p-6 rounded-2xl shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${isDarkMode ? 'bg-gradient-to-r from-zinc-900 to-zinc-950 border-zinc-800/80' : 'bg-gradient-to-r from-white to-zinc-50 border-zinc-200'}`}>
                     <div>
                       <div className="flex items-center gap-2">
@@ -1938,6 +1995,7 @@ Firma Abogado / Apoderado`;
                       </p>
                     </div>
 
+                    {/* Tarjeta de Fecha Estilizada tipo Widget de Alta Gama */}
                     <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-inner ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
                       <div className="text-2xl">📅</div>
                       <div>
@@ -2036,75 +2094,1815 @@ Firma Abogado / Apoderado`;
                       </p>
                     )}
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
+                      <div className="space-y-2">
+                        {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                          <div key={d.id} className={`p-3 border rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            <div>
+                              <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{d.title}</p>
+                              <p className="text-[10px] text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
+                            </div>
+                            <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px]">
+                              PENDIENTE
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Tareas de Mayor Urgencia</h4>
+                      <div className="space-y-2">
+                        {tasks.filter(t => !t.completed).map(t => (
+                          <div key={t.id} className={`p-3 border rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            <span className={`font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>{t.title}</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                              t.priority === 'ALTA' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-amber-500/20 text-amber-500'
+                            }`}>
+                              {t.priority}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'expedientes' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newCase.number || !newCase.caratula) return;
+                    const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
+                    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
+                    updateCases([...cases, created]);
+                    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
+                  }} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Nº de Expediente (ej. EXP-1002/2026)" 
+                        value={newCase.number} onChange={e => setNewCase({...newCase, number: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="text" placeholder="Carátula completa" 
+                        value={newCase.caratula} onChange={e => setNewCase({...newCase, caratula: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="text" placeholder="Juzgado / Tribunal" 
+                        value={newCase.court} onChange={e => setNewCase({...newCase, court: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <select 
+                        value={newCase.client} 
+                        onChange={e => setNewCase({...newCase, client: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="">Seleccionar Cliente Asociado...</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.name}>{c.name} ({c.role})</option>
+                        ))}
+                      </select>
+                      <select 
+                        value={newCase.processType} 
+                        onChange={e => setNewCase({...newCase, processType: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="JUDICIAL">Tipo de Proceso: CAUSA JUDICIAL</option>
+                        <option value="EXTRAJUDICIAL">Tipo de Proceso: TRÁMITE EXTRAJUDICIAL / MEDIACIÓN</option>
+                      </select>
+                    </div>
+                    <textarea 
+                      placeholder="Observaciones..."
+                      value={newCase.notes} onChange={e => setNewCase({...newCase, notes: e.target.value})}
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 h-16 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                    />
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Expediente
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <p className="text-xs text-zinc-500 font-medium">Hacé clic en cualquiera de tus expedientes para ingresar:</p>
+                    {cases.map(c => (
+                      <div 
+                        key={c.id} 
+                        className={`border p-4 rounded-xl space-y-2 transition-all flex justify-between items-center ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}
+                      >
+                        <div onClick={() => setSelectedCaseId(c.id)} className="cursor-pointer flex-1">
+                          <span className="bg-orange-500/10 text-orange-500 font-mono text-[10px] font-bold px-2 py-0.5 rounded border border-orange-500/20">
+                            {c.number}
+                          </span>
+                          <span className={`ml-2 text-[10px] font-bold px-2 py-0.5 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-700'}`}>
+                            {c.processType || 'JUDICIAL'}
+                          </span>
+                          <h4 className={`font-bold text-sm mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{c.caratula}</h4>
+                          <p className="text-xs text-zinc-500">{c.court} • Cliente: {c.client}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setSelectedCaseId(c.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                            Ingresar →
+                          </button>
+                          <button 
+                            onClick={() => deleteCase(c.id)}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'movimientos' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Consultar Movimientos por Causa</h4>
+                    <select 
+                      value={selectedCaseId || ''} 
+                      onChange={e => setSelectedCaseId(e.target.value || null)}
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                    >
+                      <option value="">Ver Todos los Movimientos</option>
+                      {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                    </select>
+
+                    <div className="space-y-2 pt-2">
+                      {movements
+                        .filter(m => !selectedCaseId || m.caseId === selectedCaseId)
+                        .map(m => {
+                          const caseInfo = cases.find(c => c.id === m.caseId);
+                          return (
+                            <div key={m.id} className={`border p-3 rounded-lg text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-orange-500">{m.title}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-zinc-500">{formatDateToArg(m.date)}</span>
+                                  <button 
+                                    onClick={() => handleDeleteMovement(m.id)} 
+                                    className="text-red-500 hover:text-red-600 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20 text-xs" 
+                                    title="Eliminar Movimiento"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+                              {caseInfo && <p className="text-[10px] text-zinc-500">Expediente: {caseInfo.number} - {caseInfo.caratula}</p>}
+                              {m.text && <p className={`mt-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>{m.text}</p>}
+                            </div>
+                          );
+                        })}
+                      {movements.filter(m => !selectedCaseId || m.caseId === selectedCaseId).length === 0 && (
+                        <p className="text-xs text-zinc-500">No hay actuaciones registradas.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'plazos' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddDeadline} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Plazo Procesal</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <select 
+                        value={newDeadline.caseId} onChange={e => setNewDeadline({...newDeadline, caseId: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="">Seleccionar Expediente...</option>
+                        {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                      </select>
+                      <input 
+                        type="text" placeholder="Descripción del Plazo (ej. Traslado Demanda)" 
+                        value={newDeadline.title} onChange={e => setNewDeadline({...newDeadline, title: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="date" value={newDeadline.dueDate} onChange={e => setNewDeadline({...newDeadline, dueDate: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="number" placeholder="Días hábiles (ej. 5)" 
+                        value={newDeadline.days} onChange={e => setNewDeadline({...newDeadline, days: parseInt(e.target.value)})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Registrar Plazo
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Plazos Registrados</h4>
+                    {deadlines.map(d => (
+                      <div key={d.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <div>
+                          <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{d.title}</h4>
+                          <p className="text-zinc-500">Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => updateDeadlines(deadlines.map(x => x.id === d.id ? {...x, status: x.status === 'CUMPLIDO' ? 'PENDIENTE' : 'CUMPLIDO'} : x))}
+                            className={`px-3 py-1.5 rounded font-bold ${d.status === 'CUMPLIDO' ? (isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600') : 'bg-orange-500 text-black'}`}
+                          >
+                            {d.status === 'CUMPLIDO' ? '✓ Cumplido' : 'Marcar Cumplido'}
+                          </button>
+                          <button 
+                            onClick={() => deleteDeadline(d.id)}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'audiencias' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    <div className={`flex flex-col md:flex-row justify-between items-center border-b pb-3 gap-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📅 Calendario Institucional Interactivo (Feriados Argentina & Múltiples Años)</h3>
+                        <p className="text-xs text-zinc-500">Navegue por cualquier año y mes. Los feriados oficiales nacionales se marcan en rojo y las audiencias en naranja.</p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={currentCalendarMonth}
+                          onChange={(e) => setCurrentCalendarMonth(parseInt(e.target.value))}
+                          className={`border text-xs font-bold p-2 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map((mName, mIdx) => (
+                            <option key={mIdx} value={mIdx}>{mName}</option>
+                          ))}
+                        </select>
+
+                        <select 
+                          value={currentCalendarYear}
+                          onChange={(e) => setCurrentCalendarYear(parseInt(e.target.value))}
+                          className={`border text-xs font-bold p-2 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          {Array.from({ length: 11 }, (_, i) => 2024 + i).map(yr => (
+                            <option key={yr} value={yr}>{yr}</option>
+                          ))}
+                        </select>
+
+                        <button 
+                          onClick={() => {
+                            const now = new Date();
+                            setCurrentCalendarYear(now.getFullYear());
+                            setCurrentCalendarMonth(now.getMonth());
+                          }}
+                          className={`font-bold text-xs px-3 py-2 rounded border transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-orange-400 border-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200 text-orange-600 border-zinc-300'}`}
+                        >
+                          Hoy
+                        </button>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const year = currentCalendarYear;
+                      const month = currentCalendarMonth;
+                      const firstDayIndex = new Date(year, month, 1).getDay();
+                      const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+                      const holidays = getArgentineHolidays(year);
+
+                      const daysGrid = [];
+                      for (let i = 0; i < firstDayIndex; i++) {
+                        daysGrid.push(<div key={`empty-${i}`} className={`min-h-[85px] border rounded opacity-30 ${isDarkMode ? 'bg-zinc-950/40 border-zinc-900' : 'bg-zinc-100 border-zinc-200'}`}></div>);
+                      }
+
+                      for (let d = 1; d <= totalDaysInMonth; d++) {
+                        const formattedD = d < 10 ? `0${d}` : `${d}`;
+                        const formattedM = (month + 1) < 10 ? `0${month + 1}` : `${month + 1}`;
+                        const dateKey = `${year}-${formattedM}-${formattedD}`;
+                        
+                        const dayHearings = hearings.filter(h => h.date.startsWith(dateKey));
+                        const holidayName = holidays[dateKey];
+                        const isToday = new Date().toISOString().split('T')[0] === dateKey;
+
+                        daysGrid.push(
+                          <div 
+                            key={dateKey} 
+                            className={`min-h-[90px] border p-2 rounded flex flex-col justify-between text-left transition-all ${
+                              isToday ? 'border-orange-500 bg-orange-500/10' :
+                              holidayName ? 'border-red-500/50 bg-red-500/5' :
+                              dayHearings.length > 0 ? 'border-amber-500 bg-amber-500/5' : (isDarkMode ? 'border-zinc-800/80 bg-zinc-950 hover:border-zinc-700' : 'border-zinc-300 bg-zinc-50 hover:border-zinc-400')
+                            }`}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className={`font-bold text-xs ${isToday ? 'text-orange-500 underline' : (isDarkMode ? 'text-zinc-300' : 'text-zinc-800')}`}>{d}</span>
+                              {holidayName && <span className="text-[8px] bg-red-500 text-white font-bold px-1 rounded uppercase tracking-tighter" title={holidayName}>Feriado</span>}
+                            </div>
+
+                            <div className="space-y-1 overflow-y-auto max-h-[55px]">
+                              {holidayName && (
+                                <div className="text-[9px] text-red-500 font-bold truncate">🎉 {holidayName}</div>
+                              )}
+                              {dayHearings.map(h => (
+                                <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded truncate shadow" title={`${h.title} (${h.tipoAudiencia})`}>
+                                  ⚖️ {h.tipoAudiencia}: {h.title}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="grid grid-cols-7 gap-2 text-center text-xs">
+                          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
+                            <div key={day} className={`font-bold text-orange-500 p-2 rounded border uppercase text-[10px] ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-100 border-zinc-200'}`}>
+                              {day}
+                            </div>
+                          ))}
+                          {daysGrid}
+                        </div>
+                      );
+                    })()}
+
+                    <div className={`mt-4 pt-4 border-t space-y-2 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">📌 Detalle de Feriados y Días Inhábiles del Mes Seleccionado ({['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][currentCalendarMonth]} {currentCalendarYear}):</h4>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        {(() => {
+                          const holidays = getArgentineHolidays(currentCalendarYear);
+                          const monthPrefix = `${currentCalendarYear}-${(currentCalendarMonth + 1) < 10 ? '0' + (currentCalendarMonth + 1) : (currentCalendarMonth + 1)}`;
+                          const monthHolidays = Object.entries(holidays).filter(([dateStr]) => dateStr.startsWith(monthPrefix));
+
+                          if (monthHolidays.length === 0) {
+                            return <p className="text-zinc-500 text-xs italic col-span-2">No hay feriados nacionales fijos registrados para este mes específico.</p>;
+                          }
+
+                          return monthHolidays.map(([dateStr, motivo]) => {
+                            const parts = dateStr.split('-');
+                            const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                            return (
+                              <div key={dateStr} className={`flex items-start gap-2 text-xs p-2 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800/60' : 'bg-white border-zinc-200'}`}>
+                                <span className="w-2 h-2 rounded-full bg-red-500 mt-1 shrink-0"></span>
+                                <div>
+                                  <span className={`font-bold font-mono ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>{formattedDate}:</span>{' '}
+                                  <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{motivo}</strong>
+                                  <p className="text-[10px] text-zinc-500 mt-0.5">Asueto oficial / Inhábil procesal</p>
+                                </div>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleAddHearingAndSyncGoogle} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Sincronizar Nueva Audiencia (Bidireccional y Google Calendar)</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Título o Carátula de la Audiencia" 
+                        value={newHearing.title} onChange={e => setNewHearing({...newHearing, title: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      
+                      <input 
+                        type="datetime-local" value={newHearing.date} onChange={e => setNewHearing({...newHearing, date: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+
+                      <div className="flex flex-col gap-1">
+                        <select 
+                          value={newHearing.tipoAudiencia === 'Audiencia mediación' || newHearing.tipoAudiencia === 'Audiencia art 659 cpcc' || newHearing.tipoAudiencia === 'Preliminar' || newHearing.tipoAudiencia === 'Vista de Causa' || newHearing.tipoAudiencia === 'Conciliación' || newHearing.tipoAudiencia === 'Penal' || newHearing.tipoAudiencia === 'Fiscal' || newHearing.tipoAudiencia === 'Otra' ? newHearing.tipoAudiencia : 'OTRO'} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val === 'OTRO') {
+                              setNewHearing({...newHearing, tipoAudiencia: ''});
+                            } else {
+                              setNewHearing({...newHearing, tipoAudiencia: val});
+                            }
+                          }}
+                          className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          <option value="Preliminar">Tipo: Preliminar</option>
+                          <option value="Audiencia mediación">Tipo: Audiencia Mediación</option>
+                          <option value="Audiencia art 659 cpcc">Tipo: Audiencia Art. 659 CPCC</option>
+                          <option value="Vista de Causa">Tipo: Vista de Causa</option>
+                          <option value="Conciliación">Tipo: Conciliación / Mediación</option>
+                          <option value="Penal">Tipo: Audiencia Penal</option>
+                          <option value="Fiscal">Tipo: Audiencia Fiscal</option>
+                          <option value="OTRO">Tipo: Otro (Escribir personalizado)</option>
+                        </select>
+
+                        {!(['Preliminar', 'Audiencia mediación', 'Audiencia art 659 cpcc', 'Vista de Causa', 'Conciliación', 'Penal', 'Fiscal', 'Otra'].includes(newHearing.tipoAudiencia)) && (
+                          <input 
+                            type="text"
+                            placeholder="Especifique el tipo de audiencia..."
+                            value={newHearing.tipoAudiencia}
+                            onChange={e => setNewHearing({...newHearing, tipoAudiencia: e.target.value})}
+                            className={`border border-orange-500 p-2 rounded outline-none text-xs ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                          />
+                        )}
+                      </div>
+
+                      <select 
+                        value={newHearing.modalidad} 
+                        onChange={e => setNewHearing({...newHearing, modalidad: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="Presencial">Modalidad: Presencial</option>
+                        <option value="Zoom">Modalidad: Zoom</option>
+                        <option value="Meet">Modalidad: Google Meet</option>
+                        <option value="WhatsApp">Modalidad: Videollamada WhatsApp</option>
+                      </select>
+
+                      <input 
+                        type="text" placeholder="Juzgado / Dependencia / Ubicación" 
+                        value={newHearing.location} onChange={e => setNewHearing({...newHearing, location: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+
+                      <input 
+                        type="text" placeholder="Enlace de Videollamada (Zoom, Meet, etc.)" 
+                        value={newHearing.enlaceVideo} onChange={e => setNewHearing({...newHearing, enlaceVideo: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    </div>
+
+                    <textarea 
+                      placeholder="Observaciones adicionales, instrucciones o documentación a llevar..."
+                      value={newHearing.observaciones} onChange={e => setNewHearing({...newHearing, observaciones: e.target.value})}
+                      className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 h-16 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                    />
+
+                    <div className="space-y-2 text-xs">
+                      <span className={`font-bold block ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Seleccionar Múltiples Mails del Equipo para Notificación:</span>
+                      <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        {teamEmails.filter(m => m !== '').length > 0 ? (
+                          teamEmails.filter(m => m !== '').map((mail, idx) => (
+                            <label key={idx} className={`flex items-center gap-2 cursor-pointer ${isDarkMode ? 'text-zinc-300 hover:text-white' : 'text-zinc-700 hover:text-zinc-900'}`}>
+                              <input 
+                                type="checkbox" 
+                                checked={newHearing.assignedMails.includes(mail)}
+                                onChange={(e) => {
+                                  const current = [...newHearing.assignedMails];
+                                  if (e.target.checked) {
+                                    current.push(mail);
+                                  } else {
+                                    const index = current.indexOf(mail);
+                                    if (index > -1) current.splice(index, 1);
+                                  }
+                                  setNewHearing({...newHearing, assignedMails: current});
+                                }}
+                                className="w-4 h-4 accent-orange-500"
+                              />
+                              <span className="truncate">{mail}</span>
+                            </label>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 text-[11px] italic col-span-2">No hay correos configurados. Podés agregarlos en Configuración.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400 flex items-center gap-2 shadow-lg shadow-orange-500/20">
+                      📅 Agendar, Sincronizar y Abrir Google Calendar
+                    </button>
+                  </form>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">Listado General de Audiencias y Comparendos</h4>
+                    {hearings.map(h => (
+                      <div key={h.id} className={`border p-4 rounded-xl text-xs space-y-2 shadow ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded ${h.status === 'REALIZADA' ? (isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500') : 'bg-orange-500/20 text-orange-500 border border-orange-500/30'}`}>
+                              {h.status === 'REALIZADA' ? '✓ REALIZADA / TOMADA' : 'PENDIENTE'}
+                            </span>
+                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>
+                              {h.tipoAudiencia || 'General'} • {h.modalidad || 'Presencial'}
+                            </span>
+                          </div>
+                          <span className="text-orange-500 font-bold font-mono">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                        </div>
+
+                        <h4 className={`font-bold text-sm ${h.status === 'REALIZADA' ? 'line-through text-zinc-500' : (isDarkMode ? 'text-white' : 'text-zinc-900')}`}>
+                          {h.title}
+                        </h4>
+                        
+                        <p className="text-zinc-500">📍 <strong>Dependencia:</strong> {h.location}</p>
+                        {h.enlaceVideo && (
+                          <p className="text-orange-500">🔗 <strong>Enlace de Videollamada:</strong> <a href={h.enlaceVideo} target="_blank" rel="noreferrer" className="underline">{h.enlaceVideo}</a></p>
+                        )}
+                        {h.observaciones && (
+                          <p className={`p-2.5 rounded border mt-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-200 text-zinc-700'}`}>
+                            💬 <strong>Observaciones:</strong> {h.observaciones}
+                          </p>
+                        )}
+                        
+                        <div className={`flex items-center justify-between pt-2 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                          <button 
+                            onClick={() => toggleHearingStatus(h.id)}
+                            className={`px-3 py-1.5 rounded font-bold text-xs ${h.status === 'REALIZADA' ? (isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700') : 'bg-emerald-600 text-white hover:bg-emerald-500'}`}
+                          >
+                            {h.status === 'REALIZADA' ? 'Deshacer (Marcar Pendiente)' : '✓ Marcar como Tomada / Realizada'}
+                          </button>
+                          <button 
+                            onClick={() => deleteHearing(h.id)}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                          >
+                            🗑️ Eliminar / Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'tareas' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddTask} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Crear Nueva Tarea</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Descripción de la tarea" 
+                        value={newTask.title} onChange={e => setNewTask({...newTask, title: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <select 
+                        value={newTask.priority} onChange={e => setNewTask({...newTask, priority: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="BAJA">Prioridad BAJA</option>
+                        <option value="MEDIA">Prioridad MEDIA</option>
+                        <option value="ALTA">Prioridad ALTA</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Tarea
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {tasks.map(t => (
+                      <div key={t.id} className={`flex items-center justify-between p-3 border rounded-xl text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <div className="flex items-center gap-3">
+                          <input 
+                            type="checkbox" 
+                            checked={t.completed} 
+                            onChange={() => toggleTask(t.id)}
+                            className="w-4 h-4 accent-orange-500 cursor-pointer"
+                          />
+                          <span className={t.completed ? 'line-through text-zinc-500 font-medium' : (isDarkMode ? 'text-zinc-100 font-bold' : 'text-zinc-900 font-bold')}>
+                            {t.title}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                            t.completed ? (isDarkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500') : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
+                          }`}>
+                            {t.completed ? 'CUMPLIDA' : t.priority}
+                          </span>
+                          <button 
+                            onClick={() => deleteTask(t.id)}
+                            className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white p-1 rounded font-bold text-xs transition-all border border-red-500/20"
+                            title="Eliminar tarea"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'clientes' && (
+                <div className="space-y-6 relative z-10">
+                  <form onSubmit={handleAddClient} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cliente / Contacto</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <input 
+                        type="text" placeholder="Nombre completo / Razón Social" 
+                        value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <select 
+                        value={newClient.role} onChange={e => setNewClient({...newClient, role: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="CLIENTE">ROL: CLIENTE</option>
+                        <option value="CONTRAPARTE">ROL: CONTRAPARTE</option>
+                        <option value="TERCERO">ROL: TERCERO / PROFESIONAL</option>
+                      </select>
+                      <input 
+                        type="text" placeholder="CUIT / DNI" 
+                        value={newClient.taxId} onChange={e => setNewClient({...newClient, taxId: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="email" placeholder="Correo Electrónico" 
+                        value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="text" placeholder="Teléfono" 
+                        value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                      <input 
+                        type="text" placeholder="Domicilio / Localidad" 
+                        value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    </div>
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                      Guardar Contacto
+                    </button>
+                  </form>
+
+                  <div className="space-y-2">
+                    {clients.map(c => (
+                      <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{c.name}</h4>
+                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${isDarkMode ? 'bg-zinc-800 text-orange-400' : 'bg-zinc-200 text-orange-600'}`}>{c.role}</span>
+                          </div>
+                          <p className="text-zinc-500 mt-1">
+                            {c.taxId && `DNI/CUIT: ${c.taxId} • `}
+                            {c.phone && `Tel: ${c.phone} • `}
+                            {c.email && `Mail: ${c.email}`}
+                          </p>
+                        </div>
+                        <button 
+                          onClick={() => deleteClient(c.id)}
+                          className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20"
+                        >
+                          🗑️ Eliminar
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'finanzas' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">💰 Módulo de Finanzas y Control de Caja del Estudio</h3>
+                    <p className="text-xs text-zinc-500">Lleve un control detallado de los ingresos por honorarios, tasas de justicia, viáticos o gastos de cédulas. Ahora puede editar o eliminar cualquier registro directamente.</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Honorarios Cobrados</span>
+                        <h4 className="text-2xl font-black text-emerald-500 mt-1">
+                          ${honorariosProcuracion
+                            .filter(h => h.tipoIngreso === 'HONORARIOS')
+                            .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0)
+                            .toLocaleString('es-AR')}
+                        </h4>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Gastos (Cédulas / Tasas)</span>
+                        <h4 className="text-2xl font-black text-amber-500 mt-1">
+                          ${honorariosProcuracion
+                            .filter(h => h.tipoIngreso !== 'HONORARIOS')
+                            .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0)
+                            .toLocaleString('es-AR')}
+                        </h4>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase">Registros Totales en Caja</span>
+                        <h4 className={`text-2xl font-black mt-1 ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{honorariosProcuracion.length}</h4>
+                      </div>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleAddDirectFinance} className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Nuevo Ingreso u Gasto Financiero Directo</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                      <select 
+                        value={newDirectFinance.tipoIngreso} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, tipoIngreso: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      >
+                        <option value="HONORARIOS">Honorarios Procurador / Abogado</option>
+                        <option value="CEDULA_GASTOS">Gastos de Cédula / Viáticos</option>
+                        <option value="TASA_JUSTICIA">Tasa de Justicia</option>
+                        <option value="OTRO">Otro (Personalizado)</option>
+                      </select>
+
+                      <input 
+                        type="date" 
+                        value={newDirectFinance.fecha} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, fecha: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+
+                      <input 
+                        type="text" 
+                        placeholder="Monto ($)" 
+                        value={newDirectFinance.monto} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, monto: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+
+                      <input 
+                        type="text" 
+                        placeholder="Referencia (ej. Causa García / Liq 8763)" 
+                        value={newDirectFinance.referencia} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, referencia: e.target.value})}
+                        className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    </div>
+
+                    {newDirectFinance.tipoIngreso === 'OTRO' ? (
+                      <input 
+                        type="text" 
+                        placeholder="Especifique el concepto personalizado (ej. Peritaje, fotocopias, etc.)..." 
+                        value={newDirectFinance.customConcepto} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, customConcepto: e.target.value})}
+                        className={`w-full border border-orange-500 p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                      />
+                    ) : (
+                      <input 
+                        type="text" 
+                        placeholder="Concepto detallado (ej. Cobro de honorarios etapa preliminar)..." 
+                        value={newDirectFinance.concepto} 
+                        onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
+                        className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
+                    )}
+
+                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
+                      Guardar en Caja del Estudio
+                    </button>
+                  </form>
+
+                  <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                      <div>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial Financiero del Estudio (Seleccione para Autosuma Individual)</h4>
+                        <p className="text-[10px] text-zinc-500">Marque las casillas de los registros que desee sumar para ver el total parcial de forma inmediata. Puede editar o eliminar cualquier ítem.</p>
+                      </div>
+
+                      {selectedFinanceIds.length > 0 && (
+                        <div className="bg-orange-500 text-black px-3 py-1.5 rounded-lg font-bold text-xs shadow-md flex items-center gap-2">
+                          <span>⚡ Autosuma seleccionados ({selectedFinanceIds.length}):</span>
+                          <span className="font-mono text-sm font-black">
+                            ${honorariosProcuracion
+                              .filter(h => selectedFinanceIds.includes(h.id))
+                              .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0)
+                              .toLocaleString('es-AR')}
+                          </span>
+                          <button 
+                            onClick={() => setSelectedFinanceIds([])} 
+                            className="ml-2 text-[10px] bg-black/20 hover:bg-black/40 px-1.5 py-0.5 rounded text-black"
+                            title="Limpiar selección"
+                          >
+                            ✕ Limpiar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      {honorariosProcuracion.map(h => {
+                        const isSelected = selectedFinanceIds.includes(h.id);
+                        return (
+                          <div 
+                            key={h.id} 
+                            className={`p-3 border rounded-xl flex justify-between items-center text-xs transition-all ${
+                              isSelected 
+                                ? 'border-orange-500 bg-orange-500/10' 
+                                : (isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200')
+                            }`}
+                          >
+                            {editingFinanceId === h.id ? (
+                              <div className="flex-1 flex gap-2 items-center">
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.concepto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, concepto: e.target.value})}
+                                  className={`flex-1 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <input 
+                                  type="text" 
+                                  value={editFinanceForm.monto} 
+                                  onChange={e => setEditFinanceForm({...editFinanceForm, monto: e.target.value})}
+                                  className={`w-24 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                                />
+                                <button onClick={() => handleSaveEditFinance(h.id)} className="bg-emerald-600 text-white font-bold px-3 py-1 rounded">Guardar</button>
+                                <button onClick={() => setEditingFinanceId(null)} className={`px-2 py-1 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>✕</button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-3">
+                                  <input 
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedFinanceIds([...selectedFinanceIds, h.id]);
+                                      } else {
+                                        setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
+                                      }
+                                    }}
+                                    className="w-4 h-4 accent-orange-500 cursor-pointer"
+                                  />
+                                  <div>
+                                    <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
+                                      {h.tipoIngreso}
+                                    </span>
+                                    <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Ref: {h.nroLiquidacion}</span>
+                                    <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-4">
+                                  <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                                  <button onClick={() => startEditingFinance(h)} className="px-2 py-1 rounded border text-xs" title="Editar Registro">✏️</button>
+                                  <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2.5 py-1 rounded font-bold hover:bg-red-500 hover:text-white transition-all" title="Eliminar Registro">🗑️</button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {honorariosProcuracion.length === 0 && (
+                        <p className="text-xs text-zinc-500 italic">No hay registros financieros cargados en el estudio.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- MÓDULO NUEVO: GENERADOR PROFESIONAL DE RECIBOS DE SUELDO --- */}
+              {activeTab === 'recibos' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-center border-b pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📝 Generador y Visor de Recibos de Sueldo Profesionales</h3>
+                        <p className="text-xs text-zinc-500">Cree o edite recibos laborales con cálculo automático de descuentos de ley, retenciones y neto a cobrar.</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          // Crear nuevo recibo basado en el formulario actual
+                          const newRec = {
+                            id: 'rec_' + Date.now(),
+                            ...customReciboForm,
+                            remunerativos: [
+                              { concepto: 'Sueldo Básico', importe: customReciboForm.sueldoBasico },
+                              { concepto: 'Antigüedad', importe: customReciboForm.antiguedad },
+                              { concepto: 'Presentismo', importe: customReciboForm.presentismo }
+                            ],
+                            noRemunerativos: [
+                              { concepto: 'Viáticos', importe: customReciboForm.viaticos }
+                            ],
+                            descuentos: [
+                              { concepto: `Jubilación (${customReciboForm.jubilacionPct}%)`, importe: String(Math.round((parseFloat(customReciboForm.sueldoBasico || 0) + parseFloat(customReciboForm.antiguedad || 0) + parseFloat(customReciboForm.presentismo || 0)) * (customReciboForm.jubilacionPct / 100))) },
+                              { concepto: `Ley 19.032 (${customReciboForm.ley19032Pct}%)`, importe: String(Math.round((parseFloat(customReciboForm.sueldoBasico || 0) + parseFloat(customReciboForm.antiguedad || 0) + parseFloat(customReciboForm.presentismo || 0)) * (customReciboForm.ley19032Pct / 100))) },
+                              { concepto: `Obra Social (${customReciboForm.obraSocialPct}%)`, importe: String(Math.round((parseFloat(customReciboForm.sueldoBasico || 0) + parseFloat(customReciboForm.antiguedad || 0) + parseFloat(customReciboForm.presentismo || 0)) * (customReciboForm.obraSocialPct / 100))) },
+                              { concepto: `Sindicato (${customReciboForm.sindicatoPct}%)`, importe: String(Math.round((parseFloat(customReciboForm.sueldoBasico || 0) + parseFloat(customReciboForm.antiguedad || 0) + parseFloat(customReciboForm.presentismo || 0)) * (customReciboForm.sindicatoPct / 100))) }
+                            ]
+                          };
+                          const updated = [...recibosList, newRec];
+                          setRecibosList(updated);
+                          updateRecibos(updated);
+                          setSelectedReciboId(newRec.id);
+                          alert('✅ ¡Recibo de sueldo generado y guardado exitosamente!');
+                        }}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
+                      >
+                        + Generar y Guardar Nuevo Recibo
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <div>
+                        <label className="text-zinc-500 block mb-1 font-bold">Seleccionar Recibo Guardado:</label>
+                        <select 
+                          value={selectedReciboId}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setSelectedReciboId(val);
+                            const found = recibosList.find(r => r.id === val);
+                            if (found) {
+                              setCustomReciboForm({
+                                empleador: found.empleador,
+                                cuitEmpleador: found.cuitEmpleador,
+                                domicilioEmpleador: found.domicilioEmpleador,
+                                empleado: found.empleado,
+                                cuilEmpleado: found.cuilEmpleado,
+                                categoria: found.categoria,
+                                periodo: found.periodo,
+                                fechaPago: found.fechaPago,
+                                banco: found.banco,
+                                nroCuenta: found.nroCuenta,
+                                sueldoBasico: found.remunerativos?.[0]?.importe || '0',
+                                antiguedad: found.remunerativos?.[1]?.importe || '0',
+                                presentismo: found.remunerativos?.[2]?.importe || '0',
+                                viaticos: found.noRemunerativos?.[0]?.importe || '0',
+                                jubilacionPct: 11,
+                                ley19032Pct: 3,
+                                obraSocialPct: 3,
+                                sindicatoPct: 2
+                              });
+                            }
+                          }}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          {recibosList.map(r => (
+                            <option key={r.id} value={r.id}>{r.empleado || 'Sin Nombre'} - Período: {r.periodo}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Nombre del Empleado:</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.empleado}
+                          onChange={e => setCustomReciboForm({...customReciboForm, empleado: e.target.value})}
+                          placeholder="Apellido y Nombre"
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">CUIL del Empleado:</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.cuilEmpleado}
+                          onChange={e => setCustomReciboForm({...customReciboForm, cuilEmpleado: e.target.value})}
+                          placeholder="20-35000000-9"
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Categoría Laboral:</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.categoria}
+                          onChange={e => setCustomReciboForm({...customReciboForm, categoria: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Período Liquidado:</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.periodo}
+                          onChange={e => setCustomReciboForm({...customReciboForm, periodo: e.target.value})}
+                          placeholder="Ej. Septiembre 2026"
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Sueldo Básico ($):</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.sueldoBasico}
+                          onChange={e => setCustomReciboForm({...customReciboForm, sueldoBasico: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Antigüedad ($):</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.antiguedad}
+                          onChange={e => setCustomReciboForm({...customReciboForm, antiguedad: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Presentismo ($):</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.presentismo}
+                          onChange={e => setCustomReciboForm({...customReciboForm, presentismo: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-500 block mb-1">Viáticos / No Remunerativos ($):</label>
+                        <input 
+                          type="text"
+                          value={customReciboForm.viaticos}
+                          onChange={e => setCustomReciboForm({...customReciboForm, viaticos: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Vista Previa del Recibo de Sueldo Oficial */}
+                    {(() => {
+                      const currentRec = recibosList.find(r => r.id === selectedReciboId) || recibosList[0];
+                      const basico = parseFloat(customReciboForm.sueldoBasico) || 0;
+                      const antig = parseFloat(customReciboForm.antiguedad) || 0;
+                      const presen = parseFloat(customReciboForm.presentismo) || 0;
+                      const viat = parseFloat(customReciboForm.viaticos) || 0;
+
+                      const totalRemunerativo = basico + antig + presen;
+                      const totalNoRemunerativo = viat;
+
+                      const descJub = Math.round(totalRemunerativo * 0.11);
+                      const descLey = Math.round(totalRemunerativo * 0.03);
+                      const descObra = Math.round(totalRemunerativo * 0.03);
+                      const descSind = Math.round(totalRemunerativo * 0.02);
+
+                      const totalDescuentos = descJub + descLey + descObra + descSind;
+                      const netoACobrar = (totalRemunerativo + totalNoRemunerativo) - totalDescuentos;
+
+                      return (
+                        <div className={`p-6 rounded-2xl border space-y-4 font-mono text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-900 shadow-2xl'}`}>
+                          <div className="flex justify-between items-start border-b pb-4">
+                            <div>
+                              <h4 className="font-bold text-sm text-orange-500 uppercase">{customReciboForm.empleador}</h4>
+                              <p className="text-[10px] text-zinc-400">CUIT: {customReciboForm.cuitEmpleador} • Domicilio: {customReciboForm.domicilioEmpleador}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="bg-orange-500 text-black font-bold px-3 py-1 rounded text-[10px] uppercase">RECIBO DE HABERES</span>
+                              <p className="text-[10px] text-zinc-400 mt-1">Período: {customReciboForm.periodo}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded border bg-zinc-900/40 text-[11px]">
+                            <div><strong>Apellido y Nombre:</strong><br/>{customReciboForm.empleado || 'A completar'}</div>
+                            <div><strong>CUIL:</strong><br/>{customReciboForm.cuilEmpleado || 'Sin CUIL'}</div>
+                            <div><strong>Categoría:</strong><br/>{customReciboForm.categoria}</div>
+                            <div><strong>Fecha de Pago:</strong><br/>{formatDateToArg(customReciboForm.fechaPago)}</div>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className={`border-b text-[10px] uppercase ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-300 text-zinc-600'}`}>
+                                  <th className="p-2">Concepto</th>
+                                  <th className="p-2 text-right">Remunerativo</th>
+                                  <th className="p-2 text-right">No Remunerativo</th>
+                                  <th className="p-2 text-right">Descuentos</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-zinc-800/40">
+                                <tr>
+                                  <td className="p-2">Sueldo Básico</td>
+                                  <td className="p-2 text-right text-emerald-400">${basico.toLocaleString('es-AR')}</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Adicional Antigüedad</td>
+                                  <td className="p-2 text-right text-emerald-400">${antig.toLocaleString('es-AR')}</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Presentismo</td>
+                                  <td className="p-2 text-right text-emerald-400">${presen.toLocaleString('es-AR')}</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Viáticos / Gastos de Movilidad</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right text-amber-400">${viat.toLocaleString('es-AR')}</td>
+                                  <td className="p-2 text-right">-</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Jubilación (11%)</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right text-red-400">${descJub.toLocaleString('es-AR')}</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Ley 19.032 (3%)</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right text-red-400">${descLey.toLocaleString('es-AR')}</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Obra Social (3%)</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right text-red-400">${descObra.toLocaleString('es-AR')}</td>
+                                </tr>
+                                <tr>
+                                  <td className="p-2">Cuota Sindical (2%)</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right">-</td>
+                                  <td className="p-2 text-right text-red-400">${descSind.toLocaleString('es-AR')}</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div className={`grid grid-cols-1 md:grid-cols-4 gap-3 p-4 rounded-xl border font-sans font-bold text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-100 border-zinc-300'}`}>
+                            <div>Total Remunerativo: <span className="text-emerald-400 font-mono">${totalRemunerativo.toLocaleString('es-AR')}</span></div>
+                            <div>Total No Remunerativo: <span className="text-amber-400 font-mono">${totalNoRemunerativo.toLocaleString('es-AR')}</span></div>
+                            <div>Total Descuentos: <span className="text-red-400 font-mono">${totalDescuentos.toLocaleString('es-AR')}</span></div>
+                            <div className="text-orange-500 text-sm">NETO A COBRAR: <span className="font-mono font-black">${netoACobrar.toLocaleString('es-AR')}</span></div>
+                          </div>
+
+                          <div className="flex justify-end gap-3 pt-2">
+                            <button 
+                              onClick={() => {
+                                const printContent = `RECIBO DE HABERES - ${customReciboForm.empleador}
+Empleado: ${customReciboForm.empleado} (CUIL: ${customReciboForm.cuilEmpleado})
+Período: ${customReciboForm.periodo}
+--------------------------------------------------
+Total Remunerativo: $${totalRemunerativo.toLocaleString('es-AR')}
+Total No Remunerativo: $${totalNoRemunerativo.toLocaleString('es-AR')}
+Total Descuentos: $${totalDescuentos.toLocaleString('es-AR')}
+NETO A COBRAR: $${netoACobrar.toLocaleString('es-AR')}
+--------------------------------------------------
+Firma Empleador: _________________  Firma Empleado: _________________`;
+
+                                const blob = new Blob([printContent], { type: 'text/plain;charset=utf-8' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `Recibo_Sueldo_${customReciboForm.empleado.replace(/\s+/g, '_')}_${customReciboForm.periodo.replace(/\s+/g, '_')}.txt`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                              }}
+                              className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded shadow"
+                            >
+                              🖨️ Descargar Recibo en Texto / Imprimir
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'reporte' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex justify-between items-center border-b pb-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria del Estudio</h3>
+                        <p className="text-xs text-zinc-500">Resumen consolidado para imprimir, revisar por la mañana o reenviar al equipo.</p>
+                      </div>
+                      <button 
+                        onClick={() => window.print()}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2 rounded shadow"
+                      >
+                        🖨️ Imprimir / Guardar PDF
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 text-xs">
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">📅 Audiencias Agendadas ({hearings.filter(h => h.status === 'PENDIENTE').length} pendientes)</h4>
+                        <div className="space-y-2">
+                          {hearings.filter(h => h.status === 'PENDIENTE').map(h => (
+                            <div key={h.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <div>
+                                <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.title}</strong>
+                                <p className="text-[10px] text-zinc-500">Lugar: {h.location} • Modalidad: {h.modalidad}</p>
+                              </div>
+                              <span className="font-mono text-orange-500 font-bold">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚡ Plazos Procesales Activos ({deadlines.filter(d => d.status === 'PENDIENTE').length})</h4>
+                        <div className="space-y-2">
+                          {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                            <div key={d.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <span className={isDarkMode ? 'text-white font-bold' : 'text-zinc-900 font-bold'}>{d.title}</span>
+                              <span className="font-mono text-amber-500 font-bold">Vence: {formatDateToArg(d.dueDate)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">🚨 Alertas Fiscales Urgentes ({urgentFiscalAlerts.length})</h4>
+                        <div className="space-y-2">
+                          {urgentFiscalAlerts.map(fc => (
+                            <div key={fc.id} className="flex justify-between items-center border-b pb-1 border-zinc-800/50">
+                              <span className={isDarkMode ? 'text-white font-bold' : 'text-zinc-900 font-bold'}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+                              <span className="font-mono text-red-500 font-bold">Vto. Excepción: {formatDateToArg(fc.plazoExcepcionesFecha)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SECCIÓN NUEVA: Contactos de Juzgados de Río Cuarto (Extraído exacto del Excel provisto) */}
+              {activeTab === 'juzgados_rc' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">🏛️ Directorio Oficial de Juzgados y Oficinas de Río Cuarto</h3>
+                        <p className="text-xs text-zinc-500">Contactos institucionales, correos electrónicos y teléfonos oficiales actualizados (del registro oficial).</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {[
+                        { oficina: 'Mesa de atención ciudadana - RIO CUARTO', mail: 'atencionciudadana-rc@justiciacordoba.gob.ar', tel: '0358 - 4677860' },
+                        { oficina: 'Archivo Regional - RIO CUARTO', mail: 'archivoreg-rc@justiciacordoba.gob.ar', tel: '0358 - 4672142' },
+                        { oficina: 'Asesoria de niñez, adoles., viol familiar y de genero 1 turno', mail: 'asevfa1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677837' },
+                        { oficina: 'Asesoria Letrada con Funciones Mult turno 1 - RIO CUARTO', mail: 'asemuf1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677835' },
+                        { oficina: 'Asesoria Letrada con Funciones Mult turno 2 - RIO CUARTO', mail: 'asemuf2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677857' },
+                        { oficina: 'Asesoria Letrada con Funciones Mult turno 3 - RIO CUARTO', mail: 'asemuf3-rc@justiciacordoba.gob.ar', tel: '0358 - 4677836' },
+                        { oficina: 'Camara de Apelacion Civil y cont. Administrativo 1 - RIO CUARTO', mail: 'camcivmf1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677821' },
+                        { oficina: 'Camara de Apelacion Civil y cont. Administrativo 2 - RIO CUARTO', mail: 'camcivmf2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677822' },
+                        { oficina: 'Camara del Crimen 2 - RIO CUARTO', mail: 'campen2sec2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677811' },
+                        { oficina: 'Camara del Crimen 1 - RIO CUARTO', mail: 'campen1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677810' },
+                        { oficina: 'Camara Laboral 1 secretaria 1 - RIO CUARTO', mail: 'camlab1sec1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677830' },
+                        { oficina: 'Camara Laboral 1 secretaria 2 - RIO CUARTO', mail: 'camlab1sec2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677830' },
+                        { oficina: 'Centro Judicial de Mediacion - RIO CUARTO', mail: 'mediacion-rc@justiciacordoba.gob.ar', tel: '0358 - 4677838' },
+                        { oficina: 'Delegacion Administracion General - RIO CUARTO', mail: 'tribunales-rc@justiciacordoba.gob.ar', tel: '0358 - 4677848' },
+                        { oficina: 'Equipo Tecnico del Interior - RIO CUARTO', mail: 'equitec-rc@justiciacordoba.gob.ar', tel: '0358 - 4677840' },
+                        { oficina: 'Fiscalia de Camara Civil y Familia - RIO CUARTO', mail: 'fiscivc-RC@justiciacordoba.gob.ar', tel: '0358 - 4677816' },
+                        { oficina: 'Fiscalia de Camara del Crimen y Correccional - RIO CUARTO', mail: 'fispenc-RC@justiciacordoba.gob.ar', tel: '0358 - 4677817' },
+                        { oficina: 'Fiscalia de Instruccion Multiple 3 - RIO CUARTO', mail: 'fispen3-RC@justiciacordoba.gob.ar', tel: '0358 - 4677814' },
+                        { oficina: 'Fiscalia de Instruccion Multiple 4 - RIO CUARTO', mail: 'fispen4-RC@justiciacordoba.gob.ar', tel: '0358 - 4677815' },
+                        { oficina: 'Fiscalia de Instruccion y Familia 1 - RIO CUARTO', mail: 'fispen1-RC@justiciacordoba.gob.ar', tel: '0358 - 4677812' },
+                        { oficina: 'Fiscalia de Instruccion y Familia 2 - RIO CUARTO', mail: 'fispen2-RC@justiciacordoba.gob.ar', tel: '0358 - 4677813' },
+                        { oficina: 'Intendencia - RIO CUARTO', mail: 'intendencia-rc@justiciacordoba.gob.ar', tel: '0358 - 4677845' },
+                        { oficina: 'Juzgado Civil 1 Familia 1 Secretaria 1 - RIO CUARTO', mail: 'juzcivmf1sec1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677823' },
+                        { oficina: 'Juzgado Civil 5 Familia 2 Secretaria 10 - RIO CUARTO', mail: 'juzcivmf5sec10-rc@justiciacordoba.gob.ar', tel: '0358 - 4677827' },
+                        { oficina: 'Juzgado Civil 6 Secretaria 11 - RIO CUARTO', mail: 'juzcivmf6sec11-rc@justiciacordoba.gob.ar', tel: '0358 - 4677828' },
+                        { oficina: 'Juzgado Civil 7 Secretaria 13 - RIO CUARTO', mail: 'juzcivmf7sec13-rc@justiciacordoba.gob.ar', tel: '0358 - 4677852' },
+                        { oficina: 'Juzgado Civil Multiple 2 Secretaria 3 - RIO CUARTO', mail: 'juzcivmf2sec3-rc@justiciacordoba.gob.ar', tel: '0358 - 4677824' },
+                        { oficina: 'Juzgado Civil Multiple 3 Secretaria 5 - RIO CUARTO', mail: 'juzcivmf3sec5-rc@justiciacordoba.gob.ar', tel: '0358 - 4677825' },
+                        { oficina: 'Juzgado Civil Multiple 4 Secretaria 7 - RIO CUARTO', mail: 'juzcivmf4sec7-rc@justiciacordoba.gob.ar', tel: '0358 - 4677826' },
+                        { oficina: 'Juzgado de Conciliacion 1 - RIO CUARTO', mail: 'juzlab1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677831' },
+                        { oficina: 'Juzgado de Conciliacion 2 - RIO CUARTO', mail: 'juzlab2-rc@justiciacordoba.gob.ar', tel: '0358 - 4677832' },
+                        { oficina: 'Juzgado de Control Secretaria 1 - RIO CUARTO', mail: 'juzpenctsec1-rc@justiciacordoba.gob.ar', tel: '0358 - 4677819' },
+                        { oficina: 'Juzgado de Ejecucion Penal - RIO CUARTO', mail: 'juzpenej-rc@justiciacordoba.gob.ar', tel: '0358 - 4677820' },
+                        { oficina: 'Medicina Forense - RIO CUARTO', mail: 'medforense-RC@justiciacordoba.gob.ar', tel: '0358 - 4677839' },
+                        { oficina: 'Oficiales de Justicia, Ujieres y Notificadores - RIO CUARTO', mail: 'ojun-rc@justiciacordoba.gob.ar', tel: '0358 - 4677841' },
+                        { oficina: 'Oficina de Ejecuciones Particulares - RIO CUARTO', mail: 'oficivep-rc@justiciacordoba.gob.ar', tel: '0358 - 4677854' },
+                        { oficina: 'Oficina Unica de Ejecucion Fiscal - RIO CUARTO', mail: 'ofucivef-RC@justiciacordoba.gob.ar', tel: '0358 - 4677829' },
+                        { oficina: 'Unidad de la Defensa Publica Oficial - RIO CUARTO', mail: 'udppen-rc@justiciacordoba.gob.ar', tel: 'NO POSEE' },
+                        { oficina: 'Unidad Judicial Número 1, 2 y 3', mail: 'No posee / Presencial', tel: '0358 - 4677846 / 4750061' }
+                      ].map((item, idx) => (
+                        <div key={idx} className={`p-3 rounded-lg border text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <strong className={`block ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{item.oficina}</strong>
+                          <p className="text-orange-500">📧 <a href={`mailto:${item.mail}`} className="underline">{item.mail}</a></p>
+                          <p className="text-zinc-400">📞 Teléfono: {item.tel}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'procuracion' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-4 rounded-xl flex gap-2 overflow-x-auto ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    {[
+                      { id: 'titulos', label: '1. Títulos y Vto. de Liquidación' },
+                      { id: 'gestion', label: '2. Plazos y Perención (Semáforo)' },
+                      { id: 'cautelares', label: '3. Medidas Cautelares' },
+                      { id: 'pagos', label: '4. Cobros y Honorarios' },
+                      { id: 'tabla_plazos', label: '5. 📋 Tabla de Plazos Procesales' },
+                      { id: 'plantillas', label: '6. 📄 Plantillas de Escritos' }
+                    ].map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setProcuracionSubTab(sub.id)}
+                        className={`px-3 py-2 rounded text-xs font-bold whitespace-nowrap transition-all ${
+                          procuracionSubTab === sub.id 
+                            ? 'bg-orange-500 text-black shadow-lg shadow-orange-500/20' 
+                            : (isDarkMode ? 'bg-zinc-950 text-zinc-400 hover:text-white border border-zinc-800' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900 border border-zinc-300')
+                        }`}
+                      >
+                        {sub.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {procuracionSubTab === 'titulos' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddFiscalCase} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Inicial de Título Fiscal (Cálculo automático de Prescripción)</h3>
+                        <p className="text-[10px] text-zinc-500">💡 Ingrese la <strong>Fecha en que venció la Liquidación</strong> para que el sistema calcule automáticamente los 5 años de prescripción de la acción.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <input 
+                            type="text" placeholder="Tributo (Inmobiliario / Automotor / IIBB)" 
+                            value={newFiscalCase.tributo} onChange={e => setNewFiscalCase({...newFiscalCase, tributo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Contribuyente / Razón Social (ej. ZAMARBIDE)" 
+                            value={newFiscalCase.contribuyente} onChange={e => setNewFiscalCase({...newFiscalCase, contribuyente: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Nº de Liquidación (ej. 2468-1357)" 
+                            value={newFiscalCase.nroLiquidacion} onChange={e => setNewFiscalCase({...newFiscalCase, nroLiquidacion: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Período Fiscal (ej. 2026)" 
+                            value={newFiscalCase.periodo} onChange={e => setNewFiscalCase({...newFiscalCase, periodo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Monto Total Liquidado ($)" 
+                            value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <div>
+                            <label className="text-[10px] text-orange-500 font-bold block mb-1">Fecha Vencimiento de la Liquidación:</label>
+                            <input 
+                              type="date" 
+                              value={newFiscalCase.fechaVencimientoLiquidacion} 
+                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
+                              className={`w-full border border-orange-500 p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                            />
+                          </div>
+                          <input 
+                            type="text" placeholder="Juzgado Fiscal Asignado" 
+                            value={newFiscalCase.juzgado} onChange={e => setNewFiscalCase({...newFiscalCase, juzgado: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar Título y Calcular Prescripción
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Cargados</h4>
+                        {fiscalCases.map(fc => (
+                          <div key={fc.id} className={`border p-4 rounded-xl text-xs space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div className={`flex justify-between items-center font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>
+                              <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer flex-1">
+                                <span className="bg-orange-500/10 text-orange-500 font-mono px-2 py-0.5 rounded border border-orange-500/25 mr-2">
+                                  Liq: {fc.nroLiquidacion}
+                                </span>
+                                <span className={isDarkMode ? 'text-white text-sm' : 'text-zinc-900 text-sm'}>{fc.tributo} - {fc.contribuyente}</span>
+                              </div>
+                              <span className="text-orange-500 font-mono text-sm">{fc.monto}</span>
+                            </div>
+
+                            <div onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer grid grid-cols-1 md:grid-cols-4 gap-2 text-[11px] p-2.5 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
+                              <div>📅 <strong>Vto. Liq:</strong> {formatDateToArg(fc.fechaVencimientoLiquidacion) || 'No cargado'}</div>
+                              <div>⚠️ <strong className="text-amber-500">Excepción:</strong> {formatDateToArg(fc.plazoExcepcionesFecha)}</div>
+                              <div>⏳ <strong className="text-red-500">Perención:</strong> {formatDateToArg(fc.plazoPerencion)}</div>
+                              <div>🔒 <strong className="text-purple-500">Prescripción (5a):</strong> {formatDateToArg(fc.plazoPrescripcion)}</div>
+                            </div>
+
+                            <div className={`flex justify-between items-center pt-2 border-t ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                              <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                                Ingresar a Ficha / Editar Plazos →
+                              </button>
+                              <button 
+                                onClick={() => deleteFiscalCase(fc.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              >
+                                🗑️ Eliminar Título
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'gestion' && (
+                    <div className="space-y-4">
+                      <div className={`border p-5 rounded-xl space-y-2 text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">Control Integral de Perención y Prescripción con Semáforo de Riesgo</h3>
+                        <p>• 🟢 <strong>Verde (Seguro):</strong> Más de 30 días restantes para que venza el plazo o prescriba la acción.</p>
+                        <p>• 🟡 <strong>Amarillo (Atención):</strong> Menos de 30 días para el vencimiento de excepción o perención.</p>
+                        <p>• 🔴 <strong>Rojo (Crítico / Vencido):</strong> Plazo vencido o perención inminente en los próximos 7 días.</p>
+                      </div>
+
+                      <div className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Panel de Plazos Activos con Semáforo Temporal</h4>
+                        <div className="space-y-2">
+                          {fiscalCases.map(fc => {
+                            let semaforoColor = 'border-emerald-500/50 bg-emerald-500/5 text-emerald-500';
+                            let semaforoText = '🟢 SEGURO';
+
+                            if (fc.plazoPerencion && !fc.plazoPerencion.includes('A calcular')) {
+                              const pDate = new Date(fc.plazoPerencion);
+                              const diffDays = Math.ceil((pDate - today) / (1000 * 60 * 60 * 24));
+                              if (diffDays <= 7) {
+                                semaforoColor = 'border-red-500/80 bg-red-500/10 text-red-500 animate-pulse';
+                                semaforoText = '🔴 CRÍTICO (< 7 DÍAS)';
+                              } else if (diffDays <= 30) {
+                                semaforoColor = 'border-amber-500/80 bg-amber-500/10 text-amber-500';
+                                semaforoText = '🟡 ATENCIÓN (< 30 DÍAS)';
+                              }
+                            }
+
+                            return (
+                              <div key={fc.id} onClick={() => setSelectedFiscalId(fc.id)} className={`cursor-pointer p-4 border rounded-xl flex justify-between items-center text-xs transition-colors ${semaforoColor} ${isDarkMode ? 'bg-zinc-950' : 'bg-white shadow-sm'}`}>
+                                <div>
+                                  <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</p>
+                                  <p className="text-[10px] text-zinc-400 mt-1">
+                                    Prescripción: <span className="text-purple-400 font-bold">{formatDateToArg(fc.plazoPrescripcion)}</span> | 
+                                    Perención (Últ. Mov.): <span className="font-bold">{formatDateToArg(fc.plazoPerencion)}</span>
+                                  </p>
+                                </div>
+                                <span className={`font-bold px-3 py-1.5 rounded border text-[11px] ${semaforoColor}`}>
+                                  {semaforoText}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'cautelares' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddCautelar} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Trabar / Registrar Medida Cautelar (Embargo SOJ / Inmuebles / Inhibición)</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                          <select 
+                            value={newCautelar.fiscalId} onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="">Seleccionar Título Fiscal...</option>
+                            {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
+                          </select>
+                          <select 
+                            value={newCautelar.tipo} onChange={e => setNewCautelar({...newCautelar, tipo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="SOJ (Bancario)">SOJ (Sistema de Oficios Judiciales - Bancario)</option>
+                            <option value="Inmueble (RPI)">Inmueble (Registro de la Propiedad)</option>
+                            <option value="Automotor (DNRPA)">Automotor (DNRPA)</option>
+                            <option value="Inhibición General de Bienes">Inhibición General de Bienes</option>
+                          </select>
+                          <input 
+                            type="date" value={newCautelar.fecha} onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Monto del Embargo ($)" 
+                            value={newCautelar.montoEmbargo} onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar Cautelar Vigente
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Cautelares Trabadas en el Estudio</h4>
+                        {cautelares.map(c => (
+                          <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div>
+                              <span className="bg-purple-500/10 text-purple-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+                                {c.tipo}
+                              </span>
+                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq. {c.nroLiquidacion} - {c.titular}</strong>
+                              <p className="text-zinc-500 mt-0.5">Monto Embargado: <span className="font-mono text-orange-500 font-bold">${c.montoEmbargo}</span> • Fecha: {formatDateToArg(c.fecha)}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="bg-emerald-500/20 text-emerald-500 font-bold px-2.5 py-1 rounded text-[10px]">
+                                {c.estado}
+                              </span>
+                              <button 
+                                onClick={() => deleteCautelar(c.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              >
+                                🗑️ Levantar / Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {cautelares.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay medidas cautelares registradas.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'pagos' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddHonorario} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorarios u Honorarios Regulados</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                          <select 
+                            value={newHonorario.fiscalId} onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="">Seleccionar Título Fiscal...</option>
+                            {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
+                          </select>
+                          <input 
+                            type="date" value={newHonorario.fecha} onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Concepto (ej. Regulación / Cobro Etapa Ejecución)" 
+                            value={newHonorario.concepto} onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                          <input 
+                            type="text" placeholder="Monto ($)" 
+                            value={newHonorario.monto} onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Registrar Honorario
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Listado de Honorarios y Cobros Fiscales</h4>
+                        {honorariosProcuracion.map(h => (
+                          <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div>
+                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq. {h.nroLiquidacion} - {h.concepto}</strong>
+                              <p className="text-zinc-500 mt-0.5">Fecha: {formatDateToArg(h.fecha)}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                              <button 
+                                onClick={() => deleteHonorario(h.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              >
+                                🗑️ Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {honorariosProcuracion.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay honorarios o cobros registrados.</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'tabla_plazos' && (
+                    <div className="space-y-4">
+                      <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">📋 Tabla Oficial de Plazos Procesales (Código Procesal Civil y Comercial de Córdoba)</h3>
+                        <p className="text-xs text-zinc-500">Referencia rápida para el cómputo de términos legales en apremios fiscales y juicios ejecutivos:</p>
+
+                        <div className="overflow-x-auto pt-2">
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead>
+                              <tr className={`border-b ${isDarkMode ? 'border-zinc-800 text-orange-400' : 'border-zinc-300 text-orange-600'}`}>
+                                <th className="p-2.5">Actuación / Trámite</th>
+                                <th className="p-2.5">Plazo Legal</th>
+                                <th className="p-2.5">Cómputo</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-800/40">
+                              <tr>
+                                <td className="p-2.5 font-bold">Oposición de Excepciones (Apremio Fiscal)</td>
+                                <td className="p-2.5 text-orange-500 font-bold">3 días</td>
+                                <td className="p-2.5 text-zinc-500">Hábiles desde la notificación de la cédula / CIDI.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2.5 font-bold">Perención de Instancia (Ejecución Fiscal)</td>
+                                <td className="p-2.5 text-orange-500 font-bold">6 meses</td>
+                                <td className="p-2.5 text-zinc-500">Corridos desde la última actuación útil de procedimiento.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2.5 font-bold">Prescripción de la Obligación Fiscal (Código Fiscal Cba.)</td>
+                                <td className="p-2.5 text-orange-500 font-bold">5 años</td>
+                                <td className="p-2.5 text-zinc-500">Desde el 1° de enero del año siguiente al que se produjo el vencimiento.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2.5 font-bold">Contestación de Demanda Ordinaria / Juicios Ejecutivos</td>
+                                <td className="p-2.5 text-orange-500 font-bold">10 / 3 días</td>
+                                <td className="p-2.5 text-zinc-500">Conforme las normas del CPCC de la Provincia de Córdoba.</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {procuracionSubTab === 'plantillas' && (
+                    <div className="space-y-4">
+                      <form onSubmit={handleAddTemplate} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Nueva Plantilla o Modelo de Escrito</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <input 
+                            type="text" placeholder="Título del modelo (Ej. Excepción de Pago Total)" 
+                            value={newTemplateTitle} onChange={e => setNewTemplateTitle(e.target.value)}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            required
+                          />
+                          <select 
+                            value={newTemplateCategory} onChange={e => setNewTemplateCategory(e.target.value)}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="Fiscal">Categoría: Fiscal</option>
+                            <option value="Procesal">Categoría: Procesal</option>
+                            <option value="Civil">Categoría: Civil / Comercial</option>
+                            <option value="Laboral">Categoría: Laboral</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-500 block mb-1">Adjuntar archivo base (.docx / .txt) opcional:</label>
+                          <input 
+                            type="file" 
+                            accept=".docx,.doc,.txt"
+                            onChange={e => setNewTemplateFile(e.target.files[0])}
+                            className="text-xs text-zinc-400"
+                          />
+                        </div>
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                          Guardar Plantilla en el Sistema
+                        </button>
+                      </form>
+
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Modelos y Plantillas Disponibles</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {templates.map(tpl => (
+                            <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                              <div>
+                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{tpl.category}</span>
+                                <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{tpl.title}</strong>
+                                <p className="text-[10px] text-zinc-500 mt-0.5">Archivo: {tpl.fileName}</p>
+                              </div>
+                              <button 
+                                onClick={() => deleteTemplate(tpl.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales del Estudio</h3>
-                    <p className="text-xs text-zinc-500">Actualice la contraseña universal, el correo de recuperación o descargue una copia de resguardo completa de todos los datos en formato JSON/Texto.</p>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales Universales en Nube</h3>
+                    <p className="text-xs text-zinc-500">Configure los correos del equipo para notificaciones de Google Calendar, descargue copias de seguridad completas o actualice su clave de acceso universal.</p>
 
-                    <form onSubmit={handleChangePassword} className="space-y-3 max-w-md text-xs">
-                      <h4 className="font-bold text-orange-500 uppercase">Cambiar Contraseña Universal</h4>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="Nueva contraseña..." 
-                          value={newPass} 
-                          onChange={e => setNewPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="Repita la nueva contraseña..." 
-                          value={confirmPass} 
-                          onChange={e => setConfirmPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Actualizar Correo de Recuperación:</label>
-                        <input 
-                          type="email" 
-                          placeholder={recoveryEmailConfig} 
-                          value={newRecoveryMail} 
-                          onChange={e => setNewRecoveryMail(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
+                    <div className="space-y-3 pt-2">
+                      <h4 className={`text-xs font-bold uppercase ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>👥 Correos del Equipo de Trabajo (Sincronizados en Nube)</h4>
+                      <p className="text-[11px] text-zinc-500">Estos correos aparecerán automáticamente al agendar audiencias o actuaciones para enviarles invitaciones directas de Google Calendar.</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {teamEmails.map((mail, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <input 
+                              type="email" 
+                              value={mail} 
+                              onChange={e => {
+                                const updated = [...teamEmails];
+                                updated[idx] = e.target.value;
+                                setTeamEmails(updated);
+                              }}
+                              placeholder={`Correo del miembro ${idx + 1}`}
+                              className={`flex-1 border p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            />
+                            {idx >= 3 && (
+                              <button 
+                                onClick={() => {
+                                  const updated = teamEmails.filter((_, i) => i !== idx);
+                                  setTeamEmails(updated);
+                                  updateTeamEmails(updated);
+                                }}
+                                className="bg-red-500/10 text-red-500 px-3 rounded text-xs font-bold"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
                       </div>
 
-                      {passMessage && (
-                        <p className="text-emerald-500 font-bold p-2 bg-emerald-500/10 rounded border border-emerald-500/20">{passMessage}</p>
-                      )}
+                      <div className="flex gap-2 pt-2">
+                        <button 
+                          onClick={() => {
+                            const updated = [...teamEmails, ''];
+                            setTeamEmails(updated);
+                          }}
+                          className={`border font-bold text-xs px-4 py-2 rounded transition-colors ${isDarkMode ? 'bg-zinc-800 border-zinc-700 text-orange-400 hover:bg-zinc-700' : 'bg-zinc-100 border-zinc-300 text-orange-600 hover:bg-zinc-200'}`}
+                        >
+                          + Agregar Otro Miembro al Equipo
+                        </button>
+                        <button 
+                          onClick={() => {
+                            updateTeamEmails(teamEmails);
+                            alert('✅ ¡Correos del equipo actualizados y sincronizados en la nube!');
+                          }}
+                          className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-2 rounded shadow"
+                        >
+                          Guardar Correos del Equipo
+                        </button>
+                      </div>
+                    </div>
 
-                      <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                        Actualizar Credenciales en la Nube
-                      </button>
-                    </form>
+                    <div className={`pt-4 border-t space-y-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className={`text-xs font-bold uppercase ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>🔒 Seguridad y Cambio de Clave Universal / Mail de Recuperación</h4>
+                      
+                      <form onSubmit={handleChangePassword} className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <label className="text-zinc-500 block mb-1">Nueva Contraseña de Acceso:</label>
+                            <input 
+                              type="password" 
+                              placeholder="Dejar en blanco para mantener actual"
+                              value={newPass}
+                              onChange={e => setNewPass(e.target.value)}
+                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            />
+                          </div>
+                          <div>
+                            <label className="text-zinc-500 block mb-1">Confirmar Nueva Contraseña:</label>
+                            <input 
+                              type="password" 
+                              placeholder="Repita la nueva contraseña"
+                              value={confirmPass}
+                              onChange={e => setConfirmPass(e.target.value)}
+                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            />
+                          </div>
+                          <div className="md:col-span-2">
+                            <label className="text-zinc-500 block mb-1">Correo de Recuperación (Configurado actual: {recoveryEmailConfig}):</label>
+                            <input 
+                              type="email" 
+                              placeholder="Nuevo mail de recuperación..."
+                              value={newRecoveryMail}
+                              onChange={e => setNewRecoveryMail(e.target.value)}
+                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            />
+                          </div>
+                        </div>
+
+                        {passMessage && (
+                          <p className={`text-xs font-bold p-2.5 rounded border ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                            {passMessage}
+                          </p>
+                        )}
+
+                        <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-5 py-2.5 rounded shadow">
+                          Actualizar Credenciales en la Nube
+                        </button>
+                      </form>
+
+                      {/* CONFIGURACIÓN BIOMETRÍA */}
+                      <div className={`p-4 rounded-xl border space-y-2 text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                        <h5 className="font-bold text-orange-500 uppercase">🧬 Autenticación Biométrica (Huella Digital / FaceID)</h5>
+                        <p className="text-zinc-500">Habilite el desbloqueo por huella digital para agilizar el ingreso desde su dispositivo seguro.</p>
+                        <div className="flex items-center gap-3 pt-1">
+                          <input 
+                            type="checkbox"
+                            checked={biometricEnabled}
+                            onChange={(e) => {
+                              const val = e.target.checked;
+                              setBiometricEnabled(val);
+                              localStorage.setItem('lex_biometric_enabled', val ? 'true' : 'false');
+                            }}
+                            className="w-4 h-4 accent-orange-500 cursor-pointer"
+                          />
+                          <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Habilitar inicio de sesión por Huella Digital en este navegador</span>
+                        </div>
+                      </div>
+                    </div>
 
                     <div className={`pt-4 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                      <h4 className="font-bold text-orange-500 uppercase text-xs">Copia de Resguardo Institucional</h4>
-                      <p className="text-xs text-zinc-500">Descargue un archivo de texto plano con todos los expedientes, movimientos, finanzas y clientes para resguardo de seguridad.</p>
-                      <button 
-                        onClick={handleDownloadFullBackup}
-                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
-                      >
-                        📥 Descargar Copia de Resguardo Completa (.txt)
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-        </main>
-      </div>
-    </div>
-  );
-}
+                      <h4 className={`text-xs font-bold uppercase ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>💾 Copia de Seguridad y Resguardo de Datos</h4>
+                      <p className="text-xs text-zinc-500">Descargue un archivo de texto con todo el estado actual de su estudio jurídico (expedientes, causas fiscales, finanzas, clientes y agendas) para tenerNo puedo ayudarte porque solo soy un modelo de lenguaje y no lo entiendo.
