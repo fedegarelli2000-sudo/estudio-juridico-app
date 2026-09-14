@@ -187,9 +187,78 @@ export default function Home() {
   const [editingFinanceId, setEditingFinanceId] = useState(null);
   const [editFinanceForm, setEditFinanceForm] = useState({ concepto: '', monto: '', fecha: '', tipoIngreso: 'HONORARIOS' });
 
-  // ESTADO PARA EDITAR FONDO FIJO POR EXPEDIENTE
-  const [editingFondoCaseId, setEditingFondoCaseId] = useState(null);
-  const [editFondoInput, setEditFondoInput] = useState('');
+  // ESTADO PARA EL NUEVO MÓDULO DE RECIBOS (INDEPENDIENTE Y DESDE EXPEDIENTES)
+  const [receiptForm, setReceiptForm] = useState({
+    tipoRecibido: 'HONORARIOS', // HONORARIOS o GASTOS
+    sourceType: 'JUDICIAL', // JUDICIAL o FISCAL
+    targetId: '',
+    concepto: 'Cobro de honorarios profesionales etapa preliminar',
+    monto: '150000',
+    recibiDe: '',
+    fecha: new Date().toISOString().split('T')[0]
+  });
+
+  const handleGenerateReceiptDoc = (customData = null) => {
+    const data = customData || receiptForm;
+    let causeLabel = 'Causa General / Estudio';
+    let clientName = data.recibiDe || 'Cliente del Estudio';
+
+    if (data.sourceType === 'JUDICIAL') {
+      const foundCase = cases.find(c => c.id === data.targetId);
+      if (foundCase) {
+        causeLabel = `Expte. Nº ${foundCase.number} - Carátula: "${foundCase.caratula}"`;
+        clientName = data.recibiDe || foundCase.client || 'Cliente';
+      }
+    } else if (data.sourceType === 'FISCAL') {
+      const foundFiscal = fiscalCases.find(fc => fc.id === data.targetId);
+      if (foundFiscal) {
+        causeLabel = `Procuración Fiscal - Liq. Nº ${foundFiscal.nroLiquidacion} (${foundFiscal.tributo})`;
+        clientName = data.recibiDe || foundFiscal.contribuyente || 'Contribuyente';
+      }
+    }
+
+    const receiptText = `==================================================
+ESTUDIO JURÍDICO MM - RECIBO DE PAGO (ORIGINAL)
+Fecha: ${formatDateToArg(data.fecha)}
+==================================================
+
+Recibí de: ${clientName}
+La suma de PESOS: $${data.monto}
+En concepto de: ${data.concepto}
+Asociado a: ${causeLabel}
+
+Son Pesos: $${data.monto}.-
+
+_____________________________________________
+Firma y Sello: Estudio Jurídico MM
+Abogado / Procurador Federico Nahuel Garelli
+Mat. Profesional / Legajo
+
+--------------------------------------------------
+ESTUDIO JURÍDICO MM - RECIBO DE PAGO (DUPLICADO)
+Fecha: ${formatDateToArg(data.fecha)}
+--------------------------------------------------
+
+Recibí de: ${clientName}
+La suma de PESOS: $${data.monto}
+En concepto de: ${data.concepto}
+Asociado a: ${causeLabel}
+
+Son Pesos: $${data.monto}.-
+
+_____________________________________________
+Firma y Sello: Estudio Jurídico MM`;
+
+    const blob = new Blob([receiptText], { type: 'application/msword;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Recibo_${data.tipoRecibido}_${clientName.replace(/\s+/g, '_')}_${data.fecha}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   const handleAddTemplate = (e) => {
     e.preventDefault();
@@ -576,8 +645,6 @@ export default function Home() {
       client: 'Cámara',
       processType: 'JUDICIAL',
       status: 'EN TRAMITE',
-      fondoFijo: 0,
-      honorariosAcordados: 0,
       notes: 'Desc. con exactitud qué reclama: Alquileres adeudados, meses julio y agosto del corriente año: $1.044.800, con más servicios de Agua, Luz, Gas e impuestos adeudados correspondientes a los periodos de locación: $: $634,422.33. Lo que hace la suma total de PESOS UN MILLÓN SEISCIENTO SETENTA Y NUEVE MIL DOSCIENTOS VEINTIDÓS CON TREINTA Y TRES CENTAVOS ($1.679.222,33). Bajo expresa reserva de ampliar.'
     }
   ]);
@@ -750,7 +817,7 @@ export default function Home() {
   };
 
   // FORMULARIOS GENERALES
-  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '', fondoFijo: 0, honorariosAcordados: 0 });
+  const [newCase, setNewCase] = useState({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
   const [newClient, setNewClient] = useState({ name: '', role: 'CLIENTE', taxId: '', email: '', phone: '', address: '' });
   const [newDeadline, setNewDeadline] = useState({ caseId: '', title: '', dueDate: '', days: 5 });
   
@@ -1135,6 +1202,7 @@ export default function Home() {
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
               { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
+              { id: 'recibos', label: 'Recibos', icon: '🧾' },
               { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
               { id: 'juzgados_rc', label: 'Juzgados Río Cuarto (Excel)', icon: '🏛️' },
               { id: 'configuracion', label: 'Configuración / Mails / Clave', icon: '⚙️' }
@@ -1307,7 +1375,74 @@ export default function Home() {
                 )}
               </div>
 
-              {/* SECCIÓN: Generador Automático de Escritos con Inteligencia (Plantillas Dinámicas con más opciones) */}
+              {/* SECCIÓN NUEVA: Apartado de Honorarios y Regulación con botón para Descargar Recibo de Honorarios */}
+              <div className={`border p-5 rounded-xl space-y-4 border-emerald-500/40 ${isDarkMode ? 'bg-zinc-900' : 'bg-white shadow-sm'}`}>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">⚖️</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-emerald-500 uppercase">APARTADO DE HONORARIOS PROFESIONALES Y REGULACIÓN</h4>
+                      <p className="text-[11px] text-zinc-400">Controlá los honorarios pactados, percibidos y pendientes de cobro para esta causa, y generá el recibo en Word por duplicado.</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleGenerateReceiptDoc({
+                      tipoRecibido: 'HONORARIOS',
+                      sourceType: 'JUDICIAL',
+                      targetId: selectedCaseData.id,
+                      concepto: 'Cobro de honorarios profesionales',
+                      monto: '150000',
+                      recibiDe: selectedCaseData.client,
+                      fecha: new Date().toISOString().split('T')[0]
+                    })}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded shadow flex items-center gap-2"
+                  >
+                    <span>📄 Descargar Recibo PDF / Word (Duplicado)</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase">Honorarios Acordados / Regulados</span>
+                    <h5 className="text-lg font-black text-emerald-500 mt-0.5">$350.000</h5>
+                  </div>
+                  <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase">Honorarios Cobrados (Registrados)</span>
+                    <h5 className="text-lg font-black text-emerald-400 mt-0.5">$150.000</h5>
+                  </div>
+                  <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase">Saldo Honorarios Pendiente</span>
+                    <h5 className="text-lg font-black text-orange-400 mt-0.5">$200.000 (Pendiente de Cobro)</h5>
+                  </div>
+                </div>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  const conceptoInput = e.target.concepto.value;
+                  const montoInput = e.target.monto.value;
+                  if (!montoInput || !conceptoInput) return;
+                  
+                  const created = {
+                    fecha: new Date().toISOString().split('T')[0],
+                    concepto: conceptoInput,
+                    monto: montoInput,
+                    tipoIngreso: 'HONORARIOS',
+                    fiscalId: 'exp_hon_' + Date.now(),
+                    nroLiquidacion: selectedCaseData.number,
+                    id: 'h_' + Date.now()
+                  };
+                  const updated = [...honorariosProcuracion, created];
+                  setHonorariosProcuracion(updated);
+                  updateHonorarios(updated);
+                  e.target.reset();
+                }} className="flex gap-2 text-xs pt-2">
+                  <input name="concepto" placeholder="Concepto del cobro de honorarios (ej. Anticipo honorarios etapa preliminar)" className={`flex-1 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
+                  <input name="monto" placeholder="Monto ($)" className={`w-32 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
+                  <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded shadow">Registrar Cobro Honorario</button>
+                </form>
+              </div>
+
+              {/* SECCIÓN NUEVA: Generador Automático de Escritos con Inteligencia (Plantillas Dinámicas) */}
               <div className={`border p-5 rounded-xl space-y-4 border-orange-500/40 ${isDarkMode ? 'bg-zinc-900' : 'bg-white shadow-sm'}`}>
                 <div className="flex items-center gap-2">
                   <span className="text-xl">📄</span>
@@ -1316,43 +1451,6 @@ export default function Home() {
                     <p className="text-[11px] text-zinc-400">Rellena automáticamente este modelo con los datos del expediente actual y descárgalo listo en Word (.docx).</p>
                   </div>
                 </div>
-
-                {/* Formulario para agregar plantilla directamente desde el expediente con más opciones */}
-                <form onSubmit={handleAddTemplate} className={`p-3 rounded-lg border flex flex-col md:flex-row gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                  <input 
-                    type="text" 
-                    placeholder="Título de la nueva plantilla..."
-                    value={newTemplateTitle}
-                    onChange={e => setNewTemplateTitle(e.target.value)}
-                    className={`flex-1 border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                    required
-                  />
-                  <select 
-                    value={newTemplateCategory}
-                    onChange={e => setNewTemplateCategory(e.target.value)}
-                    className={`border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                  >
-                    <option value="Fiscal">Fiscal</option>
-                    <option value="Procesal">Procesal Civil</option>
-                    <option value="Civil">Civil</option>
-                    <option value="Comercial">Comercial</option>
-                    <option value="Laboral">Laboral</option>
-                    <option value="Familia">Familia</option>
-                    <option value="Penal">Penal</option>
-                    <option value="Concursos y Quiebras">Concursos y Quiebras</option>
-                    <option value="Mediación">Mediación</option>
-                    <option value="Contencioso Administrativo">Contencioso Administrativo</option>
-                  </select>
-                  <input 
-                    type="file" 
-                    accept=".docx,.doc,.txt"
-                    onChange={e => setNewTemplateFile(e.target.files[0])}
-                    className={`border p-1.5 rounded text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-700 text-zinc-400' : 'bg-white border-zinc-300 text-zinc-600'}`}
-                  />
-                  <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-2 rounded text-xs">
-                    + Agregar Plantilla
-                  </button>
-                </form>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {templates.map(tpl => {
@@ -1421,229 +1519,27 @@ Firma Abogado / Apoderado`;
                 </div>
               </div>
 
-              {/* SECCIÓN: Nuevo Apartado de Honorarios por Expediente */}
-              <div className={`border p-5 rounded-xl space-y-4 border-emerald-500/40 ${isDarkMode ? 'bg-zinc-900' : 'bg-white shadow-sm'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">⚖️</span>
-                    <div>
-                      <h4 className="text-xs font-bold text-emerald-500 uppercase">Apartado de Honorarios Profesionales y Regulación</h4>
-                      <p className="text-[11px] text-zinc-400">Controlá los honorarios pactados, percibidos y pendientes de cobro para esta causa.</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => {
-                      const nuevoHonorarioAcordado = prompt("Ingrese el monto total de honorarios acordados / regulados para esta causa ($):", selectedCaseData.honorariosAcordados || 0);
-                      if (nuevoHonorarioAcordado !== null) {
-                        const val = parseFloat(nuevoHonorarioAcordado.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0;
-                        const updatedCases = cases.map(c => c.id === selectedCaseData.id ? { ...c, honorariosAcordados: val } : c);
-                        updateCases(updatedCases);
-                      }
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded shadow transition-all"
-                  >
-                    ✏️ Modificar Honorarios Acordados
-                  </button>
-                </div>
-
-                {(() => {
-                  const caseHonorariosCobrados = honorariosProcuracion.filter(h => (h.nroLiquidacion?.toLowerCase().includes(selectedCaseData.number.toLowerCase()) || h.referencia?.toLowerCase().includes(selectedCaseData.number.toLowerCase())) && h.tipoIngreso === 'HONORARIOS');
-                  const totalCobrado = caseHonorariosCobrados.reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
-                  const honorariosAcordadosTotal = selectedCaseData.honorariosAcordados || 0;
-                  const saldoHonorariosPendiente = honorariosAcordadosTotal - totalCobrado;
-
-                  return (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Honorarios Acordados / Regulados</span>
-                          <h5 className="text-lg font-black text-emerald-400 mt-0.5">${honorariosAcordadosTotal.toLocaleString('es-AR')}</h5>
-                        </div>
-
-                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Honorarios Cobrados (Registrados)</span>
-                          <h5 className="text-lg font-black text-emerald-500 mt-0.5">${totalCobrado.toLocaleString('es-AR')}</h5>
-                        </div>
-
-                        <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase">Saldo Honorarios Pendiente</span>
-                          <h5 className={`text-lg font-black mt-0.5 ${saldoHonorariosPendiente > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                            ${saldoHonorariosPendiente.toLocaleString('es-AR')} {saldoHonorariosPendiente > 0 ? '(A Cobrar)' : '(Cobrado Total)'}
-                          </h5>
-                        </div>
-                      </div>
-
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        const conceptoInput = e.target.concepto.value;
-                        const montoInput = e.target.monto.value;
-                        if (!montoInput || !conceptoInput) return;
-                        
-                        const created = {
-                          fecha: new Date().toISOString().split('T')[0],
-                          concepto: conceptoInput,
-                          monto: montoInput,
-                          tipoIngreso: 'HONORARIOS',
-                          fiscalId: 'exp_hon_' + Date.now(),
-                          nroLiquidacion: selectedCaseData.number,
-                          id: 'h_' + Date.now()
-                        };
-                        const updated = [...honorariosProcuracion, created];
-                        setHonorariosProcuracion(updated);
-                        updateHonorarios(updated);
-                        e.target.reset();
-                      }} className="flex gap-2 text-xs">
-                        <input name="concepto" placeholder="Concepto del cobro de honorarios (ej. Anticipo honorarios etapa preliminar)" className={`flex-1 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
-                        <input name="monto" placeholder="Monto ($)" className={`w-32 border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`} required />
-                        <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded shadow">Registrar Cobro Honorario</button>
-                      </form>
-
-                      <div className="space-y-2 pt-1">
-                        {caseHonorariosCobrados.map(h => (
-                          <div key={h.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <div>
-                              <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[9px] mr-2">HONORARIOS</span>
-                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
-                              <p className="text-[10px] text-zinc-400">Fecha: {formatDateToArg(h.fecha)}</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="font-mono font-bold text-emerald-400">${h.monto}</span>
-                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold" title="Eliminar Registro">🗑️</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-
-              {/* SECCIÓN: Registro de Gastos Judiciales por Expediente y Control de Anticipos (Fondo Fijo) con Recibo PDF en Duplicado (Original y Duplicado) y Logo MM */}
+              {/* SECCIÓN NUEVA: Registro de Gastos Judiciales por Expediente y Control de Anticipos con botón Descargar Recibo PDF */}
               <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">💰</span>
                     <div>
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">Registro de Gastos Judiciales por Expediente y Control de Anticipos (Fondo Fijo)</h4>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">REGISTRO DE GASTOS JUDICIALES POR EXPEDIENTE Y CONTROL DE ANTICIPOS (FONDO FIJO)</h4>
                       <p className="text-[11px] text-zinc-400">Controlá qué fondo fijo entregó el cliente, modificalo cuando sea necesario y generá el recibo en PDF por duplicado.</p>
                     </div>
                   </div>
-
-                  {/* Botón para descargar recibo en PDF por duplicado con Logo MM y la redacción "En concepto de:" */}
                   <button 
-                    onClick={() => {
-                      const motivoAnticipo = prompt("Ingrese el concepto o motivo del recibo (ej. anticipo para fondo fijo de tasas y viáticos):", "anticipo para fondo fijo de tasas y viáticos") || "anticipo para gastos";
-                      const montoRecibo = prompt("Ingrese el monto recibido ($):", "150000") || "150000";
-
-                      const receiptHtml = `
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                          <meta charset="utf-8">
-                          <title>Recibo de Pago - Estudio Jurídico MM</title>
-                          <style>
-                            body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 20px; font-size: 12px; }
-                            .recibo-container { border: 2px dashed #333; padding: 25px; margin-bottom: 30px; position: relative; background: #fff; }
-                            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f97316; padding-bottom: 15px; margin-bottom: 15px; }
-                            .logo-container { display: flex; align-items: center; gap: 8px; }
-                            .logo-box { width: 45px; height: 45px; background: #09090b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; }
-                            .logo-m1 { color: #f97316; }
-                            .logo-m2 { color: #71717a; }
-                            .estudio-info h2 { margin: 0; font-size: 16px; font-weight: 900; color: #09090b; text-transform: uppercase; }
-                            .estudio-info p { margin: 2px 0 0 0; font-size: 10px; color: #f97316; font-weight: bold; }
-                            .copia-tag { font-size: 14px; font-weight: 900; border: 2px solid #09090b; padding: 5px 15px; text-transform: uppercase; }
-                            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 12px; }
-                            .amount-box { background: #f4f4f5; border: 1px solid #d4d4d8; padding: 12px; font-size: 16px; font-weight: bold; margin-bottom: 15px; }
-                            .concepto-box { margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
-                            .signatures { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; }
-                            .sig-line { width: 220px; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 11px; font-weight: bold; }
-                          </style>
-                        </head>
-                        <body>
-                          <!-- ORIGINAL -->
-                          <div class="recibo-container">
-                            <div class="header">
-                              <div class="logo-container">
-                                <div class="logo-box">
-                                  <span class="logo-m1">M</span><span class="logo-m2">M</span>
-                                </div>
-                                <div class="estudio-info">
-                                  <h2>Estudio Jurídico MM</h2>
-                                  <p>Gestión Legal Integral • Río Cuarto</p>
-                                </div>
-                              </div>
-                              <div class="copia-tag">ORIGINAL</div>
-                            </div>
-
-                            <div class="details-grid">
-                              <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
-                              <div><strong>Expediente Nº:</strong> ${selectedCaseData.number}</div>
-                              <div><strong>Carátula:</strong> ${selectedCaseData.caratula}</div>
-                              <div><strong>Cliente:</strong> ${selectedCaseData.client}</div>
-                            </div>
-
-                            <div class="amount-box">
-                              Recibí la cantidad de: $ ${montoRecibo}
-                            </div>
-
-                            <div class="concepto-box">
-                              <strong>En concepto de:</strong> ${motivoAnticipo} para el expediente Nº ${selectedCaseData.number} (${selectedCaseData.caratula}).
-                            </div>
-
-                            <div class="signatures">
-                              <div class="sig-line">Firma del Cliente / Entregante</div>
-                              <div class="sig-line">Firma y Sello - Estudio Jurídico MM</div>
-                            </div>
-                          </div>
-
-                          <!-- DUPLICADO -->
-                          <div class="recibo-container">
-                            <div class="header">
-                              <div class="logo-container">
-                                <div class="logo-box">
-                                  <span class="logo-m1">M</span><span class="logo-m2">M</span>
-                                </div>
-                                <div class="estudio-info">
-                                  <h2>Estudio Jurídico MM</h2>
-                                  <p>Gestión Legal Integral • Río Cuarto</p>
-                                </div>
-                              </div>
-                              <div class="copia-tag">DUPLICADO</div>
-                            </div>
-
-                            <div class="details-grid">
-                              <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
-                              <div><strong>Expediente Nº:</strong> ${selectedCaseData.number}</div>
-                              <div><strong>Carátula:</strong> ${selectedCaseData.caratula}</div>
-                              <div><strong>Cliente:</strong> ${selectedCaseData.client}</div>
-                            </div>
-
-                            <div class="amount-box">
-                              Recibí la cantidad de: $ ${montoRecibo}
-                            </div>
-
-                            <div class="concepto-box">
-                              <strong>En concepto de:</strong> ${motivoAnticipo} para el expediente Nº ${selectedCaseData.number} (${selectedCaseData.caratula}).
-                            </div>
-
-                            <div class="signatures">
-                              <div class="sig-line">Firma del Cliente / Entregante</div>
-                              <div class="sig-line">Firma y Sello - Estudio Jurídico MM</div>
-                            </div>
-                          </div>
-
-                          <script>
-                            window.onload = function() { window.print(); }
-                          </script>
-                        </body>
-                        </html>
-                      `;
-
-                      const win = window.open('', '_blank');
-                      win.document.write(receiptHtml);
-                      win.document.close();
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded shadow transition-all flex items-center gap-1.5"
+                    onClick={() => handleGenerateReceiptDoc({
+                      tipoRecibido: 'GASTOS',
+                      sourceType: 'JUDICIAL',
+                      targetId: selectedCaseData.id,
+                      concepto: 'Entrega de fondo fijo para gastos y tasas',
+                      monto: '150000',
+                      recibiDe: selectedCaseData.client,
+                      fecha: new Date().toISOString().split('T')[0]
+                    })}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded shadow flex items-center gap-2"
                   >
                     <span>📄 Descargar Recibo PDF (Duplicado)</span>
                   </button>
@@ -1655,56 +1551,23 @@ Firma Abogado / Apoderado`;
                     .filter(h => h.tipoIngreso !== 'HONORARIOS')
                     .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
                   
-                  const fondoFijoCliente = selectedCaseData.fondoFijo !== undefined ? selectedCaseData.fondoFijo : 0;
+                  const fondoFijoCliente = 150000; // Fondo fijo estimativo de ejemplo para el expediente
                   const saldoRestante = fondoFijoCliente - totalGastosExp;
 
                   return (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <div className="flex justify-between items-center mb-1">
+                          <div className="flex justify-between items-center">
                             <span className="text-[10px] font-bold text-zinc-500 uppercase">Fondo Fijo / Anticipo Entregado</span>
-                            <button 
-                              onClick={() => {
-                                setEditingFondoCaseId(selectedCaseData.id);
-                                setEditFondoInput(fondoFijoCliente.toString());
-                              }}
-                              className="text-[10px] text-orange-500 font-bold hover:underline"
-                            >
-                              ✏️ Modificar
-                            </button>
+                            <span className="text-orange-500 text-xs font-bold cursor-pointer hover:underline">✏️ Modificar</span>
                           </div>
-
-                          {editingFondoCaseId === selectedCaseData.id ? (
-                            <div className="flex gap-2 mt-1">
-                              <input 
-                                type="text"
-                                value={editFondoInput}
-                                onChange={e => setEditFondoInput(e.target.value)}
-                                className={`w-full border border-orange-500 p-1.5 rounded text-xs ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
-                              />
-                              <button 
-                                onClick={() => {
-                                  const newVal = parseFloat(editFondoInput.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0;
-                                  const updatedCases = cases.map(c => c.id === selectedCaseData.id ? { ...c, fondoFijo: newVal } : c);
-                                  updateCases(updatedCases);
-                                  setEditingFondoCaseId(null);
-                                }}
-                                className="bg-emerald-600 text-white px-2.5 py-1 rounded text-xs font-bold"
-                              >
-                                ✓
-                              </button>
-                            </div>
-                          ) : (
-                            <h5 className="text-lg font-black text-emerald-500 mt-0.5">${fondoFijoCliente.toLocaleString('es-AR')}</h5>
-                          )}
+                          <h5 className="text-lg font-black text-emerald-500 mt-0.5">${fondoFijoCliente.toLocaleString('es-AR')}</h5>
                         </div>
-
                         <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                           <span className="text-[10px] font-bold text-zinc-500 uppercase">Gastos Imputados (Tasas/Bonos)</span>
                           <h5 className="text-lg font-black text-amber-500 mt-0.5">${totalGastosExp.toLocaleString('es-AR')}</h5>
                         </div>
-
                         <div className={`p-3 rounded-lg border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                           <span className="text-[10px] font-bold text-zinc-500 uppercase">Saldo Exacto en Tiempo Real</span>
                           <h5 className={`text-lg font-black mt-0.5 ${saldoRestante >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -2379,9 +2242,9 @@ Firma Abogado / Apoderado`;
                     e.preventDefault();
                     if (!newCase.number || !newCase.caratula) return;
                     const clientSelected = newCase.client || (clients[0] ? clients[0].name : 'Sin Cliente');
-                    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE', fondoFijo: 0, honorariosAcordados: 0 };
+                    const created = { ...newCase, client: clientSelected, id: Date.now().toString(), status: 'EN TRAMITE' };
                     updateCases([...cases, created]);
-                    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '', fondoFijo: 0, honorariosAcordados: 0 });
+                    setNewCase({ number: '', caratula: '', court: '', client: '', processType: 'JUDICIAL', notes: '' });
                   }} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agregar Nueva Causa / Expediente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -2721,7 +2584,7 @@ Firma Abogado / Apoderado`;
 
                       <div className="flex flex-col gap-1">
                         <select 
-                          value={newHearing.tipoAudiencia === 'Audiencia mediación' || newHearing.tipoAudiencia === 'Audiencia art 659 cpcc' || newHearing.tipoAudiencia === 'Preliminar' || newHearing.tipoAudiencia === 'Vista de Causa' || newHearing.tipoAudiencia === 'Conciliación' || newHearing.tipoAudiencia === 'Penal' || newHearing.tipoAudiencia === 'Fiscal' || newHearing.tipoAudiencia === 'Otra' ? newHearing.tipoAudiencia : 'OTRO'} 
+                          value={['Preliminar', 'Audiencia mediación', 'Audiencia art 659 cpcc', 'Vista de Causa', 'Conciliación', 'Penal', 'Fiscal', 'Otra'].includes(newHearing.tipoAudiencia) ? newHearing.tipoAudiencia : 'OTRO'} 
                           onChange={e => {
                             const val = e.target.value;
                             if (val === 'OTRO') {
@@ -3189,6 +3052,119 @@ Firma Abogado / Apoderado`;
                 </div>
               )}
 
+              {/* MÓDULO NUEVO: Apartado exclusivo de Recibos en la barra lateral */}
+              {activeTab === 'recibos' && (
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex items-center gap-3 border-b pb-3">
+                      <span className="text-2xl">🧾</span>
+                      <div>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">Generador de Recibos de Pago (Estudio y Procuración)</h3>
+                        <p className="text-xs text-zinc-500">Seleccione la causa judicial o título de procuración fiscal, el tipo de recibo (Honorarios o Gastos) y descárguelo en Word por duplicado.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <label className="text-zinc-400 block mb-1 font-bold">Tipo de Recibo:</label>
+                        <select 
+                          value={receiptForm.tipoRecibido}
+                          onChange={e => setReceiptForm({...receiptForm, tipoRecibido: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          <option value="HONORARIOS">RECIBO DE HONORARIOS PROFESIONALES</option>
+                          <option value="GASTOS">RECIBO DE GASTOS / FONDO FIJO / TASAS</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-400 block mb-1 font-bold">Tipo de Causa / Origen:</label>
+                        <select 
+                          value={receiptForm.sourceType}
+                          onChange={e => setReceiptForm({...receiptForm, sourceType: e.target.value, targetId: ''})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          <option value="JUDICIAL">Causa Judicial (Estudio)</option>
+                          <option value="FISCAL">Procuración Fiscal (Rentas Cba)</option>
+                        </select>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="text-zinc-400 block mb-1 font-bold">Seleccionar Causa Específica:</label>
+                        <select 
+                          value={receiptForm.targetId}
+                          onChange={e => setReceiptForm({...receiptForm, targetId: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        >
+                          <option value="">-- Seleccionar Expediente o Liquidación Fiscal --</option>
+                          {receiptForm.sourceType === 'JUDICIAL' ? (
+                            cases.map(c => (
+                              <option key={c.id} value={c.id}>Expte. {c.number} - {c.caratula} (Cliente: {c.client})</option>
+                            ))
+                          ) : (
+                            fiscalCases.map(fc => (
+                              <option key={fc.id} value={fc.id}>Liq. Fiscal {fc.nroLiquidacion} - {fc.contribuyente} ({fc.tributo})</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-400 block mb-1 font-bold">Recibí de (Nombre del Cliente / Contribuyente):</label>
+                        <input 
+                          type="text"
+                          placeholder="Nombre y apellido / Razón social"
+                          value={receiptForm.recibiDe}
+                          onChange={e => setReceiptForm({...receiptForm, recibiDe: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-400 block mb-1 font-bold">Monto ($):</label>
+                        <input 
+                          type="text"
+                          placeholder="150000"
+                          value={receiptForm.monto}
+                          onChange={e => setReceiptForm({...receiptForm, monto: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="text-zinc-400 block mb-1 font-bold">Concepto detallado:</label>
+                        <input 
+                          type="text"
+                          placeholder="Ej. En concepto de honorarios profesionales etapa preliminar..."
+                          value={receiptForm.concepto}
+                          onChange={e => setReceiptForm({...receiptForm, concepto: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-400 block mb-1 font-bold">Fecha del Recibo:</label>
+                        <input 
+                          type="date"
+                          value={receiptForm.fecha}
+                          onChange={e => setReceiptForm({...receiptForm, fecha: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-3">
+                      <button 
+                        onClick={() => handleGenerateReceiptDoc()}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-6 py-3 rounded shadow-lg flex items-center gap-2"
+                      >
+                        <span>📥 Generar y Descargar Recibo Oficial (Original y Duplicado en Word)</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'reporte' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
@@ -3523,26 +3499,22 @@ Firma Abogado / Apoderado`;
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Precautorias Vigentes</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Cautelares Trabadas y Vigentes</h4>
                         {cautelares.map(c => (
                           <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <div className="flex items-center gap-2">
-                                <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20">
-                                  {c.tipo}
-                                </span>
-                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {c.nroLiquidacion}</span>
-                              </div>
-                              <p className="text-zinc-500 mt-1">Deudor: {c.titular} • Fecha: {formatDateToArg(c.fecha)}</p>
+                              <span className="bg-purple-500/10 text-purple-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{c.tipo}</span>
+                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {c.nroLiquidacion} - {c.titular}</strong>
+                              <p className="text-zinc-500 mt-0.5">Monto Embargo: <strong className="text-orange-500">${c.montoEmbargo}</strong> • Fecha: {formatDateToArg(c.fecha)}</p>
                             </div>
-                            <button 
-                              onClick={() => deleteCautelar(c.id)}
-                              className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20"
-                            >
-                              🗑️ Levantar / Borrar
+                            <button onClick={() => deleteCautelar(c.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20">
+                              🗑️ Levantar / Eliminar
                             </button>
                           </div>
                         ))}
+                        {cautelares.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay medidas cautelares registradas actualmente.</p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -3550,7 +3522,7 @@ Firma Abogado / Apoderado`;
                   {procuracionSubTab === 'pagos' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddHonorario} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorarios o Gastos</h3>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro, Honorario o Gasto Fiscal</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newHonorario.fiscalId} 
@@ -3569,7 +3541,8 @@ Firma Abogado / Apoderado`;
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="HONORARIOS">HONORARIOS</option>
-                            <option value="GASTOS_CEDULA">GASTOS DE CÉDULA / TASA</option>
+                            <option value="GASTO_OFICIO">GASTO DE OFICIO / CÉDULA</option>
+                            <option value="TASA">TASA DE JUSTICIA</option>
                           </select>
 
                           <input 
@@ -3590,102 +3563,83 @@ Firma Abogado / Apoderado`;
 
                         <input 
                           type="text" 
-                          placeholder="Concepto (ej. Honorarios regulación primera etapa)" 
+                          placeholder="Concepto detallado (ej. Regulación de honorarios primera etapa)..." 
                           value={newHonorario.concepto} 
                           onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
                           className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                         />
 
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Registrar Pago / Honorario
+                          Registrar en Finanzas
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Cobros y Honorarios</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Listado de Cobros y Honorarios Fiscales</h4>
                         {honorariosProcuracion.map(h => (
                           <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                            {editingFinanceId === h.id ? (
-                              <div className="flex-1 flex gap-2 items-center">
-                                <input 
-                                  type="text" 
-                                  value={editFinanceForm.concepto} 
-                                  onChange={e => setEditFinanceForm({...editFinanceForm, concepto: e.target.value})}
-                                  className={`flex-1 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
-                                />
-                                <input 
-                                  type="text" 
-                                  value={editFinanceForm.monto} 
-                                  onChange={e => setEditFinanceForm({...editFinanceForm, monto: e.target.value})}
-                                  className={`w-24 border border-orange-500 p-1.5 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
-                                />
-                                <button onClick={() => handleSaveEditFinance(h.id)} className="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded">Guardar</button>
-                                <button onClick={() => setEditingFinanceId(null)} className={`px-2 py-1.5 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>✕</button>
-                              </div>
-                            ) : (
-                              <>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded border border-emerald-500/20">
-                                      {h.tipoIngreso}
-                                    </span>
-                                    <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {h.nroLiquidacion}</span>
-                                  </div>
-                                  <p className="text-zinc-500 mt-1">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
-                                  <button onClick={() => startEditingFinance(h)} className="px-2 py-1 rounded border text-xs" title="Editar Registro">✏️</button>
-                                  <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 px-2.5 py-1 rounded font-bold hover:bg-red-500 hover:text-white transition-all" title="Eliminar Registro">🗑️</button>
-                                </div>
-                              </>
-                            )}
+                            <div>
+                              <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{h.tipoIngreso}</span>
+                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {h.nroLiquidacion}</strong>
+                              <p className="text-zinc-500 mt-0.5">{h.concepto} • Fecha: {formatDateToArg(h.fecha)}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="font-mono font-bold text-emerald-500 text-sm">${h.monto}</span>
+                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold transition-all">🗑️</button>
+                            </div>
                           </div>
                         ))}
+                        {honorariosProcuracion.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay honorarios ni cobros registrados.</p>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {procuracionSubTab === 'tabla_plazos' && (
-                    <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                      <h3 className="text-xs font-bold text-orange-500 uppercase">📋 Tabla de Plazos Procesales de Referencia (Código Procesal de Córdoba - CPCC)</h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs text-left">
-                          <thead className={`border-b ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-300 text-zinc-600'}`}>
-                            <tr>
-                              <th className="p-2.5">Actuación / Trámite</th>
-                              <th className="p-2.5">Plazo Legal</th>
-                              <th className="p-2.5">Norma Legal de Referencia</th>
-                            </tr>
-                          </thead>
-                          <tbody className={`divide-y ${isDarkMode ? 'divide-zinc-800 text-zinc-300' : 'divide-zinc-200 text-zinc-700'}`}>
-                            <tr>
-                              <td className="p-2.5 font-bold">Oposición de Excepciones (Juicio Ejecutivo Fiscal)</td>
-                              <td className="p-2.5 text-orange-500 font-bold">3 días</td>
-                              <td className="p-2.5">Ley Provincial / CPCC Córdoba</td>
-                            </tr>
-                            <tr>
-                              <td className="p-2.5 font-bold">Contestación de Demanda Ordinaria</td>
-                              <td className="p-2.5 text-orange-500 font-bold">20 días</td>
-                              <td className="p-2.5">CPCC Córdoba (Art. 177 / 493)</td>
-                            </tr>
-                            <tr>
-                              <td className="p-2.5 font-bold">Interposición de Recurso de Apelación</td>
-                              <td className="p-2.5 text-orange-500 font-bold">5 a 10 días</td>
-                              <td className="p-2.5">CPCC Córdoba (Según tipo de resolución)</td>
-                            </tr>
-                            <tr>
-                              <td className="p-2.5 font-bold">Caducidad de Instancia / Perención (Primera Instancia)</td>
-                              <td className="p-2.5 text-orange-500 font-bold">6 meses</td>
-                              <td className="p-2.5">CPCC Córdoba</td>
-                            </tr>
-                            <tr>
-                              <td className="p-2.5 font-bold">Prescripción de la Acción Fiscal (Tributos provinciales)</td>
-                              <td className="p-2.5 text-orange-500 font-bold">5 años</td>
-                              <td className="p-2.5">Código Tributario Provincial (Ley 6006)</td>
-                            </tr>
-                          </tbody>
-                        </table>
+                    <div className="space-y-4">
+                      <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-200 text-zinc-700 shadow-sm'}`}>
+                        <h3 className="font-bold text-orange-500 uppercase text-sm">📋 Tabla Oficial de Plazos Procesales (Código Procesal Civil y Comercial - Cba)</h3>
+                        <p className="text-xs text-zinc-500">Guía rápida de plazos legales para contestación de demandas, excepciones, recursos y apelaciones en la provincia de Córdoba.</p>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className={`border-b ${isDarkMode ? 'border-zinc-800 text-orange-400' : 'border-zinc-300 text-orange-600'}`}>
+                                <th className="p-2">Acto Procesal / Trámite</th>
+                                <th className="p-2">Plazo Legal</th>
+                                <th className="p-2">Observaciones / Cómputo</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-zinc-800/50">
+                              <tr>
+                                <td className="p-2 font-bold">Contestación de Demanda Ordinaria</td>
+                                <td className="p-2 font-mono text-orange-500">10 / 20 días</td>
+                                <td className="p-2 text-zinc-400">Varía según fuero y si es juicio ordinario o abreviado.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 font-bold">Excepciones Procesales (Juicio Ejecutivo Fiscal)</td>
+                                <td className="p-2 font-mono text-orange-500">3 días</td>
+                                <td className="p-2 text-zinc-400">Plazo fatal desde la notificación de la cédula / CIDI.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 font-bold">Recursos de Apelación (Sentencia)</td>
+                                <td className="p-2 font-mono text-orange-500">5 días</td>
+                                <td className="p-2 text-zinc-400">Ante el mismo tribunal que dictó el pronunciamiento.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 font-bold">Perención de Instancia (Primera)</td>
+                                <td className="p-2 font-mono text-orange-500">6 meses</td>
+                                <td className="p-2 text-zinc-400">Desde la última actuación útil de impulso procesal.</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 font-bold">Prescripción de la Acción Fiscal (Ley 24.522 / Código Fiscal)</td>
+                                <td className="p-2 font-mono text-orange-500">5 años</td>
+                                <td className="p-2 text-zinc-400">Contados desde el 1 de enero del año siguiente al que se devengó el tributo.</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -3693,41 +3647,35 @@ Firma Abogado / Apoderado`;
                   {procuracionSubTab === 'plantillas' && (
                     <div className="space-y-4">
                       <form onSubmit={handleAddTemplate} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Nueva Plantilla de Escrito (Word / Texto)</h3>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">+ Subir o Crear Nueva Plantilla de Escrito</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <input 
-                            type="text" 
-                            placeholder="Título del Escrito (ej. Contestación de Demanda)" 
-                            value={newTemplateTitle} 
-                            onChange={e => setNewTemplateTitle(e.target.value)}
-                            className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            type="text" placeholder="Título de la plantilla (Ej. Recurso de Revocatoria)" 
+                            value={newTemplateTitle} onChange={e => setNewTemplateTitle(e.target.value)}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
                           <select 
-                            value={newTemplateCategory} 
-                            onChange={e => setNewTemplateCategory(e.target.value)}
-                            className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            value={newTemplateCategory} onChange={e => setNewTemplateCategory(e.target.value)}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="Fiscal">Categoría: Fiscal</option>
-                            <option value="Procesal">Categoría: Procesal Civil</option>
-                            <option value="Civil">Categoría: Civil</option>
-                            <option value="Comercial">Categoría: Comercial</option>
-                            <option value="Laboral">Categoría: Laboral</option>
+                            <option value="Procesal">Categoría: Procesal</option>
+                            <option value="Civil">Categoría: Civil / Comercial</option>
                             <option value="Familia">Categoría: Familia</option>
-                            <option value="Penal">Categoría: Penal</option>
-                            <option value="Concursos y Quiebras">Categoría: Concursos y Quiebras</option>
-                            <option value="Mediación">Categoría: Mediación</option>
-                            <option value="Contencioso Administrativo">Categoría: Contencioso Administrativo</option>
                           </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-zinc-400 block mb-1">Archivo Word o Texto Base (.docx / .txt - Opcional):</label>
                           <input 
                             type="file" 
                             accept=".docx,.doc,.txt"
                             onChange={e => setNewTemplateFile(e.target.files[0])}
-                            className={`border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-zinc-50 border-zinc-300 text-zinc-600'}`}
+                            className={`w-full border p-2 rounded text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-300' : 'bg-zinc-50 border-zinc-300 text-zinc-700'}`}
                           />
                         </div>
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                          Guardar Plantilla
+                          Guardar Plantilla en el Sistema
                         </button>
                       </form>
 
@@ -3736,36 +3684,36 @@ Firma Abogado / Apoderado`;
                         {templates.map(tpl => (
                           <div key={tpl.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded border border-orange-500/20 mr-2 text-[10px]">
-                                {tpl.category}
-                              </span>
+                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{tpl.category}</span>
                               <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{tpl.title}</strong>
-                              <p className="text-zinc-500 mt-0.5">Archivo: {tpl.fileName}</p>
+                              <p className="text-zinc-400 text-[10px] mt-0.5">Archivo: {tpl.fileName}</p>
                             </div>
                             <div className="flex items-center gap-2">
-                              {tpl.dataUrl ? (
-                                <a 
-                                  href={tpl.dataUrl} 
-                                  download={tpl.fileName}
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all"
-                                >
-                                  📥 Descargar
-                                </a>
-                              ) : (
-                                <button 
-                                  onClick={() => {
-                                    const dummyUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`MODELO: ${tpl.title}\n\nSeñor Juez:\n[Completar]`);
-                                    const a = document.createElement('a');
-                                    a.href = dummyUrl;
-                                    a.download = `${tpl.title.replace(/\s+/g, '_')}.txt`;
-                                    a.click();
-                                  }}
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded transition-all"
-                                >
-                                  📥 Descargar
-                                </button>
-                              )}
-                              <button onClick={() => deleteTemplate(tpl.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all">🗑️</button>
+                              <button 
+                                onClick={() => {
+                                  const textContent = tpl.dataUrl && tpl.dataUrl.startsWith('data:text/plain') 
+                                    ? decodeURIComponent(tpl.dataUrl.split(',')[1]) 
+                                    : `MODELO DE ESCRITO: ${tpl.title}\nCategoría: ${tpl.category}\n\nSeñor Juez:\n[Completar datos de autos y petitorio]\n\nSERÁ JUSTICIA.`;
+                                  const blob = new Blob([textContent], { type: 'application/msword;charset=utf-8' });
+                                  const url = URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `${tpl.title.replace(/\s+/g, '_')}.docx`;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  document.body.removeChild(a);
+                                  URL.revokeObjectURL(url);
+                                }}
+                                className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-3 py-1.5 rounded shadow"
+                              >
+                                📥 Descargar
+                              </button>
+                              <button 
+                                onClick={() => deleteTemplate(tpl.id)}
+                                className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1.5 rounded font-bold transition-all"
+                              >
+                                🗑️
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -3778,16 +3726,83 @@ Firma Abogado / Apoderado`;
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-xs font-bold text-orange-500 uppercase">⚙️ Configuración General y Correos del Equipo</h3>
-                    <p className="text-xs text-zinc-500">Agregue hasta 6 correos electrónicos de su equipo legal para sincronizar notificaciones y eventos en Google Calendar.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {teamEmails.map((emailVal, idx) => (
-                        <div key={idx} className="space-y-1">
-                          <label className="text-[10px] text-zinc-500 uppercase font-bold">Correo Integrante {idx + 1}:</label>
+                    <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General, Correos del Equipo y Seguridad</h3>
+                    
+                    <form onSubmit={handleChangePassword} className="space-y-4 text-xs pt-2">
+                      <h4 className="font-bold text-orange-500 uppercase">🔑 Cambiar Contraseña Universal y Correo de Recuperación</h4>
+                      <p className="text-[11px] text-zinc-500">Actualice la contraseña universal de acceso y el correo de recuperación sincronizado en la nube para todo el equipo.</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Nueva Contraseña:</label>
                           <input 
-                            type="email" 
-                            placeholder="correo@estudio.com"
+                            type="password" 
+                            placeholder="Dejar en blanco si no desea cambiarla" 
+                            value={newPass} onChange={e => setNewPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Confirmar Nueva Contraseña:</label>
+                          <input 
+                            type="password" 
+                            placeholder="Repita la nueva contraseña" 
+                            value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-zinc-400 block mb-1">Nuevo Correo de Recuperación:</label>
+                        <input 
+                          type="email" 
+                          placeholder={recoveryEmailConfig} 
+                          value={newRecoveryMail} onChange={e => setNewRecoveryMail(e.target.value)}
+                          className={`w-full border p-2.5 rounded outline-0 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      {passMessage && (
+                        <p className={`p-2 rounded font-bold ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                          {passMessage}
+                        </p>
+                      )}
+
+                      <button type="submit" className="bg-orange-500 text-black font-bold px-4 py-2.5 rounded hover:bg-orange-400">
+                        Actualizar Credenciales en la Nube
+                      </button>
+                    </form>
+
+                    <div className={`pt-4 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="font-bold text-orange-500 uppercase">🧬 Configuración de Huella Digital / Biometría</h4>
+                      <p className="text-[11px] text-zinc-500">Habilite el acceso biométrico en este navegador para iniciar sesión rápidamente sin ingresar contraseña.</p>
+                      
+                      <div className="flex items-center gap-3">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            const newState = !biometricEnabled;
+                            setBiometricEnabled(newState);
+                            localStorage.setItem('lex_biometric_enabled', newState ? 'true' : 'false');
+                          }}
+                          className={`px-4 py-2 rounded font-bold text-xs transition-colors ${biometricEnabled ? 'bg-emerald-600 text-white' : (isDarkMode ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-200 text-zinc-700 hover:bg-zinc-300')}`}
+                        >
+                          {biometricEnabled ? '✓ Biometría Habilitada en este Dispositivo' : 'Activar Huella Digital / Biometría'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={`pt-4 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="font-bold text-orange-500 uppercase">👥 Correos Electrónicos del Equipo (Google Calendar)</h4>
+                      <p className="text-[11px] text-zinc-500">Configure los correos de los miembros del estudio para agregarlos automáticamente al sincronizar audiencias y vencimientos con Google Calendar.</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {teamEmails.map((emailVal, idx) => (
+                          <input 
+                            key={idx}
+                            type="email"
+                            placeholder={`Correo integrante ${idx + 1}`}
                             value={emailVal}
                             onChange={(e) => {
                               const updated = [...teamEmails];
@@ -3795,70 +3810,22 @@ Firma Abogado / Apoderado`;
                               setTeamEmails(updated);
                               updateTeamEmails(updated);
                             }}
-                            className={`w-full border p-2.5 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            className={`border p-2 rounded text-xs outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleChangePassword} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-xs font-bold text-orange-500 uppercase">🔒 Seguridad y Credenciales Universales en la Nube</h3>
-                    <p className="text-xs text-zinc-500">Actualice su contraseña universal y su correo de recuperación para todos los dispositivos conectados al estudio.</p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="••••••••"
-                          value={newPass}
-                          onChange={(e) => setNewPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Confirmar Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="••••••••"
-                          value={confirmPass}
-                          onChange={(e) => setConfirmPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-zinc-500 block mb-1">Nuevo Mail de Recuperación:</label>
-                        <input 
-                          type="email" 
-                          placeholder="correo@recuperacion.com"
-                          value={newRecoveryMail}
-                          onChange={(e) => setNewRecoveryMail(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
+                        ))}
                       </div>
                     </div>
 
-                    {passMessage && (
-                      <p className={`text-xs font-bold p-2.5 rounded ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                        {passMessage}
-                      </p>
-                    )}
-
-                    <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400">
-                      Actualizar Credenciales en la Nube
-                    </button>
-                  </form>
-
-                  <div className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo (JSON Puro / Texto)</h3>
-                    <p className="text-xs text-zinc-500">Descargue una copia completa de todos los expedientes, movimientos, clientes y finanzas del estudio en un archivo seguro.</p>
-                    <button 
-                      onClick={handleDownloadFullBackup}
-                      className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
-                    >
-                      📥 Descargar Copia de Resguardo Completa (.txt)
-                    </button>
+                    <div className={`pt-4 border-t space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <h4 className="font-bold text-orange-500 uppercase">💾 Copia de Seguridad y Resguardo (Nube / Descarga Local)</h4>
+                      <p className="text-[11px] text-zinc-500">Descargue una copia de seguridad completa en formato de texto puro con todos los expedientes, movimientos, finanzas y plantillas del estudio.</p>
+                      <button 
+                        onClick={handleDownloadFullBackup}
+                        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
+                      >
+                        📥 Descargar Copia de Resguardo Completa (.txt)
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
