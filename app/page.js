@@ -237,11 +237,14 @@ export default function Home() {
   const [editingFondoCaseId, setEditingFondoCaseId] = useState(null);
   const [editFondoInput, setEditFondoInput] = useState('');
 
-  // ESTADO PARA EL NUEVO MÓDULO DE RECIBOS EN LA BARRA LATERAL
+  // ESTADO PARA EL NUEVO MÓDULO DE RECIBOS EN LA BARRA LATERAL (CON PAGADOR PERSONALIZADO Y OPCIÓN DE PROCURACIÓN)
   const [reciboForm, setReciboForm] = useState({
     tipoRecibo: 'Anticipo para gastos / Fondo fijo',
     customTipo: '',
+    asociacionTipo: 'expediente', // 'expediente' o 'fiscal'
     causaId: '',
+    fiscalId: '',
+    pagadorNombre: '',
     monto: '',
     conceptoDetallado: ''
   });
@@ -708,7 +711,7 @@ export default function Home() {
       [`${year}-07-09`]: 'Día de la Independencia',
       [`${year}-08-17`]: 'Paso a la Inmortalidad del Gral. José de San Martín',
       [`${year}-10-12`]: 'Día del Respeto a la Diversidad Cultural',
-      [`${year}-11-20`]: 'Día de la Soberanía Nacional',
+      [`${year}-11-20`]: 'Día del Soberanía Nacional',
       [`${year}-12-08`]: 'Inmaculada Concepción de María',
       [`${year}-12-25`]: 'Navidad'
     };
@@ -1373,7 +1376,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Formulario para agregar plantilla directamente desde el expediente con más opciones */}
                 <form onSubmit={handleAddTemplate} className={`p-3 rounded-lg border flex flex-col md:flex-row gap-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                   <input 
                     type="text" 
@@ -1477,7 +1479,7 @@ Firma Abogado / Apoderado`;
                 </div>
               </div>
 
-              {/* SECCIÓN: Nuevo Apartado de Honorarios por Expediente */}
+              {/* SECCIÓN: Apartado de Honorarios por Expediente */}
               <div className={`border p-5 rounded-xl space-y-4 border-emerald-500/40 ${isDarkMode ? 'bg-zinc-900' : 'bg-white shadow-sm'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1578,7 +1580,6 @@ Firma Abogado / Apoderado`;
                             <div className="flex items-center gap-3">
                               <span className="font-mono font-bold text-emerald-400">${h.monto}</span>
                               
-                              {/* Botón de Recibo PDF para Honorarios */}
                               <button 
                                 onClick={() => {
                                   const receiptHtml = `
@@ -1625,7 +1626,7 @@ Firma Abogado / Apoderado`;
                                           <div><strong>Fecha:</strong> ${formatDateToArg(h.fecha)}</div>
                                           <div><strong>Expediente Nº:</strong> ${selectedCaseData.number}</div>
                                           <div><strong>Carátula:</strong> ${selectedCaseData.caratula}</div>
-                                          <div><strong>Cliente:</strong> ${selectedCaseData.client}</div>
+                                          <div><strong>Cliente / Pagador:</strong> ${selectedCaseData.client}</div>
                                         </div>
 
                                         <div class="amount-box">
@@ -1661,7 +1662,7 @@ Firma Abogado / Apoderado`;
                                           <div><strong>Fecha:</strong> ${formatDateToArg(h.fecha)}</div>
                                           <div><strong>Expediente Nº:</strong> ${selectedCaseData.number}</div>
                                           <div><strong>Carátula:</strong> ${selectedCaseData.caratula}</div>
-                                          <div><strong>Cliente:</strong> ${selectedCaseData.client}</div>
+                                          <div><strong>Cliente / Pagador:</strong> ${selectedCaseData.client}</div>
                                         </div>
 
                                         <div class="amount-box">
@@ -1764,7 +1765,7 @@ Firma Abogado / Apoderado`;
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
                               <div><strong>Expediente Nº:</strong> ${selectedCaseData.number}</div>
                               <div><strong>Carátula:</strong> ${selectedCaseData.caratula}</div>
-                              <div><strong>Cliente:</strong> ${selectedCaseData.client}</div>
+                              <div><strong>Cliente / Pagador:</strong> ${selectedCaseData.client}</div>
                             </div>
 
                             <div class="amount-box">
@@ -1800,7 +1801,7 @@ Firma Abogado / Apoderado`;
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
                               <div><strong>Expediente Nº:</strong> ${selectedCaseData.number}</div>
                               <div><strong>Carátula:</strong> ${selectedCaseData.caratula}</div>
-                              <div><strong>Cliente:</strong> ${selectedCaseData.client}</div>
+                              <div><strong>Cliente / Pagador:</strong> ${selectedCaseData.client}</div>
                             </div>
 
                             <div class="amount-box">
@@ -1923,7 +1924,6 @@ Firma Abogado / Apoderado`;
                         <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2.5 rounded shadow">Registrar Gasto</button>
                       </form>
 
-                      {/* Listado de gastos de este expediente con opción de editar y borrar */}
                       <div className="space-y-2 pt-2">
                         {caseHonorarios.map(h => (
                           <div key={h.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
@@ -2401,7 +2401,6 @@ Firma Abogado / Apoderado`;
             <>
               {activeTab === 'dashboard' && (
                 <div className="space-y-6 relative z-10">
-                  {/* --- NUEVO DISEÑO PREMIUM PARA LA CABECERA / FECHA --- */}
                   <div className={`border p-6 rounded-2xl shadow-xl backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${isDarkMode ? 'bg-gradient-to-r from-zinc-900 to-zinc-950 border-zinc-800/80' : 'bg-gradient-to-r from-white to-zinc-50 border-zinc-200'}`}>
                     <div>
                       <div className="flex items-center gap-2">
@@ -2421,7 +2420,6 @@ Firma Abogado / Apoderado`;
                       </p>
                     </div>
 
-                    {/* Tarjeta de Fecha Estilizada tipo Widget de Alta Gama */}
                     <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-inner ${isDarkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-300 text-zinc-800'}`}>
                       <div className="text-2xl">📅</div>
                       <div>
@@ -3427,7 +3425,27 @@ Firma Abogado / Apoderado`;
                       e.preventDefault();
                       if (!reciboForm.monto) return;
                       const tipoFinal = reciboForm.tipoRecibo === 'OTRO' ? reciboForm.customTipo : reciboForm.tipoRecibo;
-                      const causaAsociada = cases.find(c => c.id === reciboForm.causaId);
+                      
+                      let causaRefText = 'General / Estudio';
+                      let pagadorFinalText = reciboForm.pagadorNombre.trim() || 'A quien corresponda';
+
+                      if (reciboForm.asociacionTipo === 'expediente' && reciboForm.causaId) {
+                        const causaAsociada = cases.find(c => c.id === reciboForm.causaId);
+                        if (causaAsociada) {
+                          causaRefText = `Expediente Nº ${causaAsociada.number} — ${causaAsociada.caratula}`;
+                          if (!reciboForm.pagadorNombre.trim()) {
+                            pagadorFinalText = causaAsociada.client;
+                          }
+                        }
+                      } else if (reciboForm.asociacionTipo === 'fiscal' && reciboForm.fiscalId) {
+                        const fiscalAsociado = fiscalCases.find(fc => fc.id === reciboForm.fiscalId);
+                        if (fiscalAsociado) {
+                          causaRefText = `Liquidación Fiscal Nº ${fiscalAsociado.nroLiquidacion} (${fiscalAsociado.tributo})`;
+                          if (!reciboForm.pagadorNombre.trim()) {
+                            pagadorFinalText = fiscalAsociado.contribuyente;
+                          }
+                        }
+                      }
 
                       const receiptHtml = `
                         <!DOCTYPE html>
@@ -3472,8 +3490,8 @@ Firma Abogado / Apoderado`;
                             <div class="details-grid">
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
                               <div><strong>Comprobante en concepto de:</strong> ${tipoFinal}</div>
-                              <div><strong>Expediente / Causa:</strong> ${causaAsociada ? `${causaAsociada.number} - ${causaAsociada.caratula}` : 'General / Estudio'}</div>
-                              <div><strong>Cliente / Pagador:</strong> ${causaAsociada ? causaAsociada.client : 'A quien corresponda'}</div>
+                              <div><strong>Expediente / Causa / Ref:</strong> ${causaRefText}</div>
+                              <div><strong>Cliente / Pagador:</strong> ${pagadorFinalText}</div>
                             </div>
 
                             <div class="amount-box">
@@ -3508,8 +3526,8 @@ Firma Abogado / Apoderado`;
                             <div class="details-grid">
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
                               <div><strong>Comprobante en concepto de:</strong> ${tipoFinal}</div>
-                              <div><strong>Expediente / Causa:</strong> ${causaAsociada ? `${causaAsociada.number} - ${causaAsociada.caratula}` : 'General / Estudio'}</div>
-                              <div><strong>Cliente / Pagador:</strong> ${causaAsociada ? causaAsociada.client : 'A quien corresponda'}</div>
+                              <div><strong>Expediente / Causa / Ref:</strong> ${causaRefText}</div>
+                              <div><strong>Cliente / Pagador:</strong> ${pagadorFinalText}</div>
                             </div>
 
                             <div class="amount-box">
@@ -3566,17 +3584,55 @@ Firma Abogado / Apoderado`;
                       )}
 
                       <div>
-                        <label className="text-zinc-400 font-bold block mb-1">Asociar a Expediente (Opcional):</label>
-                        <select 
-                          value={reciboForm.causaId}
-                          onChange={e => setReciboForm({...reciboForm, causaId: e.target.value})}
+                        <label className="text-zinc-400 font-bold block mb-1">Nombre del Pagador / Cliente (Opcional - Reemplaza automático si está vacío):</label>
+                        <input 
+                          type="text"
+                          placeholder="Ej. Juan Pérez (Si se deja vacío, toma el del expediente/título)"
+                          value={reciboForm.pagadorNombre}
+                          onChange={e => setReciboForm({...reciboForm, pagadorNombre: e.target.value})}
                           className={`w-full border p-3 rounded-lg outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        >
-                          <option value="">Ninguno (Recibo General del Estudio)</option>
-                          {cases.map(c => (
-                            <option key={c.id} value={c.id}>{c.number} - {c.caratula} ({c.client})</option>
-                          ))}
-                        </select>
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-zinc-400 font-bold block mb-1">Vincular a:</label>
+                          <select 
+                            value={reciboForm.asociacionTipo}
+                            onChange={e => setReciboForm({...reciboForm, asociacionTipo: e.target.value, causaId: '', fiscalId: ''})}
+                            className={`w-full border p-3 rounded-lg outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="expediente">Expediente Judicial</option>
+                            <option value="fiscal">Procuración Fiscal</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-zinc-400 font-bold block mb-1">Seleccionar Causa / Título:</label>
+                          {reciboForm.asociacionTipo === 'expediente' ? (
+                            <select 
+                              value={reciboForm.causaId}
+                              onChange={e => setReciboForm({...reciboForm, causaId: e.target.value})}
+                              className={`w-full border p-3 rounded-lg outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            >
+                              <option value="">Ninguno (General del Estudio)</option>
+                              {cases.map(c => (
+                                <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <select 
+                              value={reciboForm.fiscalId}
+                              onChange={e => setReciboForm({...reciboForm, fiscalId: e.target.value})}
+                              className={`w-full border p-3 rounded-lg outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            >
+                              <option value="">Ninguno (General Fiscal)</option>
+                              {fiscalCases.map(fc => (
+                                <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
                       </div>
 
                       <div>
@@ -3640,7 +3696,6 @@ Firma Abogado / Apoderado`;
                       )}
                     </div>
 
-                    {/* Formulario de carga directa en Finanzas */}
                     <form onSubmit={handleAddDirectFinance} className={`p-4 rounded-xl border grid grid-cols-1 md:grid-cols-5 gap-3 text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <div>
                         <label className="text-zinc-500 block mb-1">Fecha:</label>
