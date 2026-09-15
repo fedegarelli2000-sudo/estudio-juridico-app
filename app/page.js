@@ -193,7 +193,7 @@ export default function Home() {
     return `PESOS ${resultado.trim()}.-`;
   };
 
-  // --- MÓDULO DE PROCURACIÓN DE RENTas (CBA) ---
+  // --- MÓDULO DE PROCURACIÓN DE RENTAS (CBA) ---
   const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
   
   const [fiscalCases, setFiscalCases] = useState([
@@ -3300,9 +3300,9 @@ Firma Abogado / Apoderado`;
 
                   {procuracionSubTab === 'cautelares' && (
                     <div className="space-y-6">
-                      <form onSubmit={handleAddCautelar} className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Trabar Medida Cautelar (SOJ / Embargo Preventivo)</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <form onSubmit={handleAddCautelar} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Trabar / Registrar Medida Cautelar (SOJ / Embargo)</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newCautelar.fiscalId} onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
@@ -3310,28 +3310,30 @@ Firma Abogado / Apoderado`;
                             <option value="">Seleccionar Título Fiscal...</option>
                             {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
                           </select>
+
                           <select 
                             value={newCautelar.tipo} onChange={e => setNewCautelar({...newCautelar, tipo: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="SOJ (Bancario)">SOJ (Sistema de Oficios Judiciales - Bancario)</option>
-                            <option value="Registro Propiedad Inmueble">Registro Propiedad Inmueble</option>
-                            <option value="Registro Propiedad Automotor">Registro Propiedad Automotor</option>
-                            <option value="Inhibición General de Bienes">Inhibición General de Bienes</option>
+                            <option value="Registro Propiedad Inmueble">Inhibición / Embargo Inmueble</option>
+                            <option value="Registro Automotor">Embargo Automotor (DNRPA)</option>
+                            <option value="Secuestro">Secuestro de Bienes</option>
                           </select>
+
                           <input 
                             type="date" value={newCautelar.fecha} onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            required
                           />
+
                           <input 
-                            type="text" placeholder="Monto del Embargo (Ej. $1.800.000)" 
+                            type="text" placeholder="Monto Embargado ($)" 
                             value={newCautelar.montoEmbargo} onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
-                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            required
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
                           Registrar Medida Cautelar
                         </button>
                       </form>
@@ -3341,24 +3343,27 @@ Firma Abogado / Apoderado`;
                         {cautelares.map(c => (
                           <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-purple-500/10 text-purple-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{c.tipo}</span>
+                              <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{c.tipo}</span>
                               <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {c.nroLiquidacion} - {c.titular}</strong>
-                              <p className="text-zinc-500 mt-1">Fecha traba: {formatDateToArg(c.fecha)} • Monto: <strong className="text-orange-500">{c.montoEmbargo}</strong></p>
+                              <p className="text-zinc-500 mt-1">Trabada el: {formatDateToArg(c.fecha)} • Monto: <strong className="text-orange-500">${c.montoEmbargo || 'N/A'}</strong></p>
                             </div>
-                            <button onClick={() => deleteCautelar(c.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold transition-all border border-red-500/20">
+                            <button onClick={() => deleteCautelar(c.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20">
                               🗑️ Levantar / Eliminar
                             </button>
                           </div>
                         ))}
+                        {cautelares.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay medidas cautelares registradas.</p>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {procuracionSubTab === 'honorarios' && (
                     <div className="space-y-6">
-                      <form onSubmit={handleAddHonorario} className={`border p-5 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorarios o Gastos</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <form onSubmit={handleAddHonorario} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorario o Gasto Judicial Fiscal</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
                           <select 
                             value={newHonorario.fiscalId} onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
@@ -3366,25 +3371,24 @@ Firma Abogado / Apoderado`;
                             <option value="">Seleccionar Título Fiscal...</option>
                             {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
                           </select>
+
                           <select 
                             value={newHonorario.tipoIngreso} onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
-                            <option value="HONORARIOS">Tipo: Honorarios Profesionales</option>
-                            <option value="GASTO_JUDICIAL">Tipo: Gasto Judicial (Tasas / Oficios)</option>
-                            <option value="FONDO_FIJO">Tipo: Fondo Fijo</option>
+                            <option value="HONORARIOS">Concepto: Honorarios Profesionales</option>
+                            <option value="TASA_JUSTICIA">Concepto: Tasa de Justicia / Contribución</option>
+                            <option value="BONO_LEY">Concepto: Bono de Ley / Casillero</option>
+                            <option value="VIATICOS">Concepto: Viáticos / Diligenciamiento</option>
                           </select>
+
                           <input 
-                            type="date" value={newHonorario.fecha} onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
+                            type="text" placeholder="Concepto detallado (ej. Honorarios primera etapa)" 
+                            value={newHonorario.concepto} onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
-                          <input 
-                            type="text" placeholder="Concepto (ej. Regulación de honorarios / Tasa de justicia)" 
-                            value={newHonorario.concepto} onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
-                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            required
-                          />
+
                           <input 
                             type="text" placeholder="Monto ($)" 
                             value={newHonorario.monto} onChange={e => setNewHonorario({...newHonorario, monto: e.target.value})}
@@ -3392,24 +3396,24 @@ Firma Abogado / Apoderado`;
                             required
                           />
                         </div>
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
                           Registrar en Caja
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Registro de Cobros y Gastos</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Caja y Cobros de Procuración Fiscal</h4>
                         {honorariosProcuracion.map(h => (
                           <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{h.tipoIngreso || 'HONORARIOS'}</span>
-                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
-                              <p className="text-zinc-500 mt-1">Liquidación: {h.nroLiquidacion || 'General'} • Fecha: {formatDateToArg(h.fecha)}</p>
+                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{h.tipoIngreso || 'HONORARIOS'}</span>
+                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {h.nroLiquidacion} - {h.concepto}</strong>
+                              <p className="text-zinc-500 mt-1">Fecha: {formatDateToArg(h.fecha)} • Monto: <strong className="text-emerald-500">${h.monto}</strong></p>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className="font-mono font-bold text-emerald-400">${h.monto}</span>
-                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold">🗑️</button>
-                            </div>
+                            <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20">
+                              🗑️ Eliminar
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -3420,31 +3424,30 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'recibos' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                    <div className="flex items-center gap-3 border-b pb-3">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex items-center gap-2">
                       <span className="text-2xl">🧾</span>
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">Generador Profesional de Recibos de Pago (Original y Duplicado)</h3>
-                        <p className="text-xs text-zinc-400">Emita recibos oficiales del Estudio Jurídico MM con conversión automática de montos a letras y formato listo para imprimir o guardar en PDF.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">Generador Oficial de Recibos (Original y Duplicado)</h3>
+                        <p className="text-xs text-zinc-400">Genere recibos con numeración legal y conversión automática de montos a letras para clientes o procuración.</p>
                       </div>
                     </div>
 
                     <form onSubmit={(e) => {
                       e.preventDefault();
-                      if (!reciboForm.pagadorNombre || !reciboForm.monto) {
-                        alert('Por favor complete el nombre del pagador y el monto.');
-                        return;
-                      }
+                      if (!reciboForm.monto || !reciboForm.pagadorNombre) return;
 
-                      const tipoFinal = reciboForm.tipoRecibo === 'OTRO' ? (reciboForm.customTipo || 'Recibo general') : reciboForm.tipoRecibo;
-                      let referenciaTexto = 'General / Estudio';
+                      const finalTipo = reciboForm.tipoRecibo === 'OTRO' 
+                        ? (reciboForm.customTipo.trim() || 'Recibo General') 
+                        : reciboForm.tipoRecibo;
 
+                      let refAsociada = 'Sin asociar';
                       if (reciboForm.asociacionTipo === 'expediente' && reciboForm.causaId) {
-                        const cData = cases.find(c => c.id === reciboForm.causaId);
-                        if (cData) referenciaTexto = `Expte. Nº ${cData.number} (${cData.caratula})`;
+                        const c = cases.find(item => item.id === reciboForm.causaId);
+                        if (c) refAsociada = `Expediente Nº ${c.number} (${c.caratula})`;
                       } else if (reciboForm.asociacionTipo === 'fiscal' && reciboForm.fiscalId) {
-                        const fData = fiscalCases.find(fc => fc.id === reciboForm.fiscalId);
-                        if (fData) referenciaTexto = `Procuración de Rentas - Liq. Nº ${fData.nroLiquidacion} (${fData.contribuyente})`;
+                        const fc = fiscalCases.find(item => item.id === reciboForm.fiscalId);
+                        if (fc) refAsociada = `Título Fiscal Liq. Nº ${fc.nroLiquidacion} (${fc.contribuyente})`;
                       }
 
                       const receiptHtml = `
@@ -3489,9 +3492,9 @@ Firma Abogado / Apoderado`;
 
                             <div class="details-grid">
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
-                              <div><strong>Pagador / Cliente:</strong> ${reciboForm.pagadorNombre}</div>
-                              <div><strong>Tipo de Recibo:</strong> ${tipoFinal}</div>
-                              <div><strong>Referencia / Causa:</strong> ${referenciaTexto}</div>
+                              <div><strong>Comprobante:</strong> ${finalTipo}</div>
+                              <div><strong>Recibí de:</strong> ${reciboForm.pagadorNombre}</div>
+                              <div><strong>Referencia:</strong> ${refAsociada}</div>
                             </div>
 
                             <div class="amount-box">
@@ -3499,11 +3502,11 @@ Firma Abogado / Apoderado`;
                             </div>
 
                             <div class="concepto-box">
-                              <strong>Concepto detallado:</strong> ${reciboForm.conceptoDetallado || tipoFinal} correspondiente a ${referenciaTexto}.
+                              <strong>En concepto de:</strong> ${reciboForm.conceptoDetallado || finalTipo} (${refAsociada}).
                             </div>
 
                             <div class="signatures">
-                              <div class="sig-line">Firma del Pagador / Entregante</div>
+                              <div class="sig-line">Firma del Pagador</div>
                               <div class="sig-line">Firma y Sello - Estudio Jurídico MM</div>
                             </div>
                           </div>
@@ -3525,9 +3528,9 @@ Firma Abogado / Apoderado`;
 
                             <div class="details-grid">
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
-                              <div><strong>Pagador / Cliente:</strong> ${reciboForm.pagadorNombre}</div>
-                              <div><strong>Tipo de Recibo:</strong> ${tipoFinal}</div>
-                              <div><strong>Referencia / Causa:</strong> ${referenciaTexto}</div>
+                              <div><strong>Comprobante:</strong> ${finalTipo}</div>
+                              <div><strong>Recibí de:</strong> ${reciboForm.pagadorNombre}</div>
+                              <div><strong>Referencia:</strong> ${refAsociada}</div>
                             </div>
 
                             <div class="amount-box">
@@ -3535,11 +3538,11 @@ Firma Abogado / Apoderado`;
                             </div>
 
                             <div class="concepto-box">
-                              <strong>Concepto detallado:</strong> ${reciboForm.conceptoDetallado || tipoFinal} correspondiente a ${referenciaTexto}.
+                              <strong>En concepto de:</strong> ${reciboForm.conceptoDetallado || finalTipo} (${refAsociada}).
                             </div>
 
                             <div class="signatures">
-                              <div class="sig-line">Firma del Pagador / Entregante</div>
+                              <div class="sig-line">Firma del Pagador</div>
                               <div class="sig-line">Firma y Sello - Estudio Jurídico MM</div>
                             </div>
                           </div>
@@ -3555,24 +3558,104 @@ Firma Abogado / Apoderado`;
                       win.document.write(receiptHtml);
                       win.document.close();
                     }} className="space-y-4 text-xs">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <label className="block font-bold text-zinc-400 mb-1">Nombre del Pagador / Cliente:</label>
+                          <label className="text-zinc-400 block mb-1">Tipo de Recibo:</label>
+                          <select 
+                            value={reciboForm.tipoRecibo}
+                            onChange={e => setReciboForm({...reciboForm, tipoRecibo: e.target.value})}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="Anticipo para gastos / Fondo fijo">Anticipo para gastos / Fondo fijo</option>
+                            <option value="Cobro de honorarios profesionales">Cobro de honorarios profesionales</option>
+                            <option value="Pago de tasa de justicia / Tasa fiscal">Pago de tasa de justicia / Tasa fiscal</option>
+                            <option value="Seña / Entrega de dinero">Seña / Entrega de dinero</option>
+                            <option value="OTRO">Otro (Escribir personalizado)</option>
+                          </select>
+                        </div>
+
+                        {reciboForm.tipoRecibo === 'OTRO' && (
+                          <div>
+                            <label className="text-orange-500 block mb-1 font-bold">Especifique el Tipo de Recibo:</label>
+                            <input 
+                              type="text"
+                              placeholder="Ej. Recibo por diligenciamiento de cédula"
+                              value={reciboForm.customTipo}
+                              onChange={e => setReciboForm({...reciboForm, customTipo: e.target.value})}
+                              className={`w-full border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                            />
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Nombre / Razón Social del Pagador:</label>
                           <input 
-                            type="text" 
-                            placeholder="Ej. Roberto García / Contribuyente..." 
+                            type="text"
+                            placeholder="Ej. Roberto García / Contribuyente"
                             value={reciboForm.pagadorNombre}
                             onChange={e => setReciboForm({...reciboForm, pagadorNombre: e.target.value})}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
                         </div>
 
                         <div>
-                          <label className="block font-bold text-zinc-400 mb-1">Monto en Pesos ($):</label>
+                          <label className="text-zinc-400 block mb-1">Asociar a:</label>
+                          <div className="flex gap-4 pt-1">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name="asocTipo" 
+                                checked={reciboForm.asociacionTipo === 'expediente'} 
+                                onChange={() => setReciboForm({...reciboForm, asociacionTipo: 'expediente'})}
+                                className="accent-orange-500"
+                              />
+                              <span>Expediente Judicial</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name="asocTipo" 
+                                checked={reciboForm.asociacionTipo === 'fiscal'} 
+                                onChange={() => setReciboForm({...reciboForm, asociacionTipo: 'fiscal'})}
+                                className="accent-orange-500"
+                              />
+                              <span>Título de Procuración (Fiscal)</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {reciboForm.asociacionTipo === 'expediente' ? (
+                          <div>
+                            <label className="text-zinc-400 block mb-1">Seleccionar Expediente:</label>
+                            <select 
+                              value={reciboForm.causaId}
+                              onChange={e => setReciboForm({...reciboForm, causaId: e.target.value})}
+                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            >
+                              <option value="">Seleccione Expediente...</option>
+                              {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                            </select>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="text-zinc-400 block mb-1">Seleccionar Título Fiscal:</label>
+                            <select 
+                              value={reciboForm.fiscalId}
+                              onChange={e => setReciboForm({...reciboForm, fiscalId: e.target.value})}
+                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            >
+                              <option value="">Seleccione Título Fiscal...</option>
+                              {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
+                            </select>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Monto a Recibir ($):</label>
                           <input 
-                            type="text" 
-                            placeholder="Ej. 250000" 
+                            type="text"
+                            placeholder="Ej. 250000"
                             value={reciboForm.monto}
                             onChange={e => {
                               const val = e.target.value;
@@ -3580,96 +3663,25 @@ Firma Abogado / Apoderado`;
                               const hintEl = document.getElementById('hint_recibo_letras');
                               if (hintEl) hintEl.innerText = val ? numeroALetras(val) : '';
                             }}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
                           <div id="hint_recibo_letras" className="text-[10px] text-orange-500 font-bold italic mt-1"></div>
                         </div>
 
-                        <div>
-                          <label className="block font-bold text-zinc-400 mb-1">Tipo de Concepto / Recibo:</label>
-                          <select 
-                            value={reciboForm.tipoRecibo}
-                            onChange={e => setReciboForm({...reciboForm, tipoRecibo: e.target.value})}
-                            className={`w-full border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          >
-                            <option value="Anticipo para gastos / Fondo fijo">Anticipo para gastos / Fondo fijo</option>
-                            <option value="Cobro de honorarios profesionales">Cobro de honorarios profesionales</option>
-                            <option value="Pago de tasa de justicia / Bonos">Pago de tasa de justicia / Bonos</option>
-                            <option value="Pago de viáticos y diligencias">Pago de viáticos y diligencias</option>
-                            <option value="OTRO">Otro concepto (Personalizado)</option>
-                          </select>
-
-                          {reciboForm.tipoRecibo === 'OTRO' && (
-                            <input 
-                              type="text" 
-                              placeholder="Escriba el concepto personalizado..."
-                              value={reciboForm.customTipo}
-                              onChange={e => setReciboForm({...reciboForm, customTipo: e.target.value})}
-                              className={`w-full border border-orange-500 p-2 rounded outline-none mt-2 ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
-                            />
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="block font-bold text-zinc-400 mb-1">Asociar a:</label>
-                          <div className="flex gap-4 mb-2">
-                            <label className="flex items-center gap-1.5 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name="asocTipo" 
-                                checked={reciboForm.asociacionTipo === 'expediente'}
-                                onChange={() => setReciboForm({...reciboForm, asociacionTipo: 'expediente'})}
-                                className="accent-orange-500"
-                              />
-                              <span>Expediente Judicial</span>
-                            </label>
-                            <label className="flex items-center gap-1.5 cursor-pointer">
-                              <input 
-                                type="radio" 
-                                name="asocTipo" 
-                                checked={reciboForm.asociacionTipo === 'fiscal'}
-                                onChange={() => setReciboForm({...reciboForm, asociacionTipo: 'fiscal'})}
-                                className="accent-orange-500"
-                              />
-                              <span>Procuración de Rentas</span>
-                            </label>
-                          </div>
-
-                          {reciboForm.asociacionTipo === 'expediente' ? (
-                            <select 
-                              value={reciboForm.causaId}
-                              onChange={e => setReciboForm({...reciboForm, causaId: e.target.value})}
-                              className={`w-full border p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            >
-                              <option value="">Seleccionar Expediente...</option>
-                              {cases.map(c => <option key={c.id} value={c.id}>Expte: {c.number} - {c.caratula}</option>)}
-                            </select>
-                          ) : (
-                            <select 
-                              value={reciboForm.fiscalId}
-                              onChange={e => setReciboForm({...reciboForm, fiscalId: e.target.value})}
-                              className={`w-full border p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            >
-                              <option value="">Seleccionar Título Fiscal...</option>
-                              {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
-                            </select>
-                          )}
+                        <div className="md:col-span-2">
+                          <label className="text-zinc-400 block mb-1">Concepto Detallado (Descripción para el cuerpo del recibo):</label>
+                          <textarea 
+                            placeholder="Ej. Recibo en concepto de anticipo para cubrir gastos de tasa de justicia y bonos ley en autos..."
+                            value={reciboForm.conceptoDetallado}
+                            onChange={e => setReciboForm({...reciboForm, conceptoDetallado: e.target.value})}
+                            className={`w-full border p-2.5 rounded outline-none h-20 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block font-bold text-zinc-400 mb-1">Descripción / Observación Adicional en el Recibo:</label>
-                        <textarea 
-                          placeholder="Detalles adicionales sobre el pago recibido..."
-                          value={reciboForm.conceptoDetallado}
-                          onChange={e => setReciboForm({...reciboForm, conceptoDetallado: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none h-20 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      <button type="submit" className="w-full bg-orange-500 hover:bg-orange-400 text-black font-bold py-3 rounded-lg shadow-lg shadow-orange-500/20 text-xs uppercase tracking-wider">
-                        🖨️ Generar y Descargar Recibo PDF (Original y Duplicado)
+                      <button type="submit" className="bg-orange-500 text-black font-bold px-6 py-3 rounded hover:bg-orange-400 shadow-lg shadow-orange-500/20">
+                        🖨️ Generar y Descargar / Imprimir Recibo Oficial (Original y Duplicado)
                       </button>
                     </form>
                   </div>
@@ -3679,154 +3691,176 @@ Firma Abogado / Apoderado`;
               {activeTab === 'finanzas' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-xs font-bold text-orange-500 uppercase">+ Carga Directa en Caja / Finanzas del Estudio</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">💰</span>
+                      <div>
+                        <h3 className="text-xs font-bold text-orange-500 uppercase">Caja General del Estudio y Control Financiero</h3>
+                        <p className="text-[11px] text-zinc-400">Controla el balance general de ingresos por honorarios y gastos operativos del estudio.</p>
+                      </div>
                     </div>
 
-                    <form onSubmit={handleAddDirectFinance} className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                      <div>
-                        <label className="block text-zinc-500 mb-1">Fecha:</label>
-                        <input 
-                          type="date" 
-                          value={newDirectFinance.fecha} 
-                          onChange={e => setNewDirectFinance({...newDirectFinance, fecha: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          required
-                        />
-                      </div>
+                    <form onSubmit={handleAddDirectFinance} className={`p-4 rounded-xl border space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Ingreso o Gasto Directo en Caja</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Tipo de Movimiento:</label>
+                          <select 
+                            value={newDirectFinance.tipoIngreso}
+                            onChange={e => setNewDirectFinance({...newDirectFinance, tipoIngreso: e.target.value})}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                          >
+                            <option value="HONORARIOS">Ingreso: Cobro de Honorarios</option>
+                            <option value="GASTO_JUDICIAL">Gasto: Gasto Judicial / Tasas</option>
+                            <option value="GASTO_OPERATIVO">Gasto: Gasto Operativo Estudio</option>
+                            <option value="OTRO">Otro Concepto Personalizado</option>
+                          </select>
+                        </div>
 
-                      <div>
-                        <label className="block text-zinc-500 mb-1">Tipo de Ingreso / Gasto:</label>
-                        <select 
-                          value={newDirectFinance.tipoIngreso} 
-                          onChange={e => setNewDirectFinance({...newDirectFinance, tipoIngreso: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        >
-                          <option value="HONORARIOS">HONORARIOS (Ingreso)</option>
-                          <option value="GASTO_OPERATIVO">GASTO OPERATIVO (Egreso)</option>
-                          <option value="OTRO">OTRO (Personalizado)</option>
-                        </select>
-                      </div>
+                        {newDirectFinance.tipoIngreso === 'OTRO' ? (
+                          <div>
+                            <label className="text-orange-500 block mb-1 font-bold">Concepto Personalizado:</label>
+                            <input 
+                              type="text"
+                              placeholder="Ej. Asesoramiento externo"
+                              value={newDirectFinance.customConcepto}
+                              onChange={e => setNewDirectFinance({...newDirectFinance, customConcepto: e.target.value})}
+                              className={`w-full border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                              required
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="text-zinc-400 block mb-1">Concepto:</label>
+                            <input 
+                              type="text"
+                              placeholder={newDirectFinance.tipoIngreso === 'HONORARIOS' ? 'Ej. Honorarios etapa juicio' : 'Ej. Pago luz / insumos'}
+                              value={newDirectFinance.concepto}
+                              onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
+                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                            />
+                          </div>
+                        )}
 
-                      <div>
-                        <label className="block text-zinc-500 mb-1">Monto ($):</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ej. 350000" 
-                          value={newDirectFinance.monto} 
-                          onChange={e => setNewDirectFinance({...newDirectFinance, monto: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-zinc-500 mb-1">Referencia / Causa:</label>
-                        <input 
-                          type="text" 
-                          value={newDirectFinance.referencia} 
-                          onChange={e => setNewDirectFinance({...newDirectFinance, referencia: e.target.value})}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      {newDirectFinance.tipoIngreso === 'OTRO' ? (
-                        <div className="md:col-span-4">
-                          <label className="block text-zinc-500 mb-1">Concepto Personalizado:</label>
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Monto ($):</label>
                           <input 
-                            type="text" 
-                            placeholder="Escriba el concepto detallado..." 
-                            value={newDirectFinance.customConcepto} 
-                            onChange={e => setNewDirectFinance({...newDirectFinance, customConcepto: e.target.value})}
-                            className={`w-full border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                            type="text"
+                            placeholder="Ej. 180000"
+                            value={newDirectFinance.monto}
+                            onChange={e => {
+                              const val = e.target.value;
+                              setNewDirectFinance({...newDirectFinance, monto: val});
+                              const hintEl = document.getElementById('hint_finanzas_letras');
+                              if (hintEl) hintEl.innerText = val ? numeroALetras(val) : '';
+                            }}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
                             required
                           />
                         </div>
-                      ) : (
-                        <div className="md:col-span-4">
-                          <label className="block text-zinc-500 mb-1">Concepto:</label>
+
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Fecha:</label>
                           <input 
-                            type="text" 
-                            placeholder="Ej. Cobro de honorarios por mediación / Pago de alquiler oficina" 
-                            value={newDirectFinance.concepto} 
-                            onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            type="date"
+                            value={newDirectFinance.fecha}
+                            onChange={e => setNewDirectFinance({...newDirectFinance, fecha: e.target.value})}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
                           />
                         </div>
-                      )}
-
-                      <div className="md:col-span-4 pt-2">
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400">
-                          Guardar en Caja del Estudio
-                        </button>
                       </div>
+
+                      <div id="hint_finanzas_letras" className="text-[10px] text-orange-500 font-bold italic"></div>
+
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
+                        Registrar Movimiento Financiero
+                      </button>
                     </form>
-                  </div>
 
-                  <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">Resumen Financiero y Caja del Estudio</h3>
-                        <p className="text-[11px] text-zinc-400">Seleccioná múltiples registros para calcular la suma automática en tiempo real.</p>
+                    {(() => {
+                      const totalIngresos = honorariosProcuracion
+                        .filter(h => h.tipoIngreso === 'HONORARIOS')
+                        .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
+
+                      const totalGastos = honorariosProcuracion
+                        .filter(h => h.tipoIngreso !== 'HONORARIOS')
+                        .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
+
+                      const balanceNeto = totalIngresos - totalGastos;
+
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Ingresos Honorarios</span>
+                            <h5 className="text-2xl font-black text-emerald-500 mt-1">${totalIngresos.toLocaleString('es-AR')}</h5>
+                          </div>
+
+                          <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Gastos / Egresos</span>
+                            <h5 className="text-2xl font-black text-amber-500 mt-1">${totalGastos.toLocaleString('es-AR')}</h5>
+                          </div>
+
+                          <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Balance Neto de Caja</span>
+                            <h5 className={`text-2xl font-black mt-1 ${balanceNeto >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              ${balanceNeto.toLocaleString('es-AR')}
+                            </h5>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="space-y-3 pt-2">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos Financieros y Caja</h4>
+                        {selectedFinanceIds.length > 0 && (
+                          <div className="bg-orange-500/10 border border-orange-500/30 px-3 py-1 rounded text-xs font-bold text-orange-500 flex items-center gap-3">
+                            <span>Seleccionados ({selectedFinanceIds.length}) — Autosuma: ${selectedFinanceIds.reduce((acc, id) => {
+                              const item = honorariosProcuracion.find(h => h.id === id);
+                              return acc + (item ? (parseFloat(item.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0) : 0);
+                            }, 0).toLocaleString('es-AR')}</span>
+                            <button onClick={() => setSelectedFinanceIds([])} className="text-zinc-400 hover:text-white">✕</button>
+                          </div>
+                        )}
                       </div>
 
-                      {selectedFinanceIds.length > 0 && (
-                        <div className="bg-orange-500/10 border border-orange-500/30 px-3 py-1.5 rounded-lg flex items-center gap-3">
-                          <span className="text-xs font-bold text-orange-500">
-                            Suma Selección ({selectedFinanceIds.length}): $
-                            {selectedFinanceIds.reduce((sum, id) => {
-                              const item = honorariosProcuracion.find(h => h.id === id);
-                              if (!item) return sum;
-                              const val = parseFloat(item.monto.toString().replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0;
-                              return sum + val;
-                            }, 0).toLocaleString('es-AR')}
-                          </span>
-                          <button onClick={() => setSelectedFinanceIds([])} className="text-xs text-zinc-400 hover:text-white">✕ Limpiar</button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      {honorariosProcuracion.map(h => {
-                        const isSelected = selectedFinanceIds.includes(h.id);
-                        return (
-                          <div 
-                            key={h.id} 
-                            className={`p-3 border rounded-lg flex justify-between items-center text-xs transition-all ${
-                              isSelected ? 'border-orange-500 bg-orange-500/5' : isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <input 
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedFinanceIds([...selectedFinanceIds, h.id]);
-                                  } else {
-                                    setSelectedFinanceIds(selectedFinanceIds.filter(itemId => itemId !== h.id));
-                                  }
-                                }}
-                                className="w-4 h-4 accent-orange-500 cursor-pointer"
-                              />
-                              <div>
-                                <span className={`font-bold px-2 py-0.5 rounded text-[9px] mr-2 ${h.tipoIngreso === 'HONORARIOS' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                  {h.tipoIngreso || 'HONORARIOS'}
-                                </span>
-                                <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
-                                <p className="text-[10px] text-zinc-400 mt-0.5">Fecha: {formatDateToArg(h.fecha)} • Ref: {h.nroLiquidacion || h.referencia || 'General'}</p>
+                      <div className="space-y-2">
+                        {honorariosProcuracion.map(h => {
+                          const isSelected = selectedFinanceIds.includes(h.id);
+                          return (
+                            <div key={h.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs ${isSelected ? 'border-orange-500 bg-orange-500/5' : (isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}`}>
+                              <div className="flex items-center gap-3">
+                                <input 
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={e => {
+                                    if (e.target.checked) {
+                                      setSelectedFinanceIds([...selectedFinanceIds, h.id]);
+                                    } else {
+                                      setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
+                                    }
+                                  }}
+                                  className="w-4 h-4 accent-orange-500 cursor-pointer"
+                                />
+                                <div>
+                                  <span className={`font-bold px-2 py-0.5 rounded text-[9px] mr-2 ${h.tipoIngreso === 'HONORARIOS' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                    {h.tipoIngreso || 'HONORARIOS'}
+                                  </span>
+                                  <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
+                                  <p className="text-[10px] text-zinc-400">Fecha: {formatDateToArg(h.fecha)} • Ref: {h.nroLiquidacion || h.referencia || 'General'}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className={`font-mono font-bold ${h.tipoIngreso === 'HONORARIOS' ? 'text-emerald-500' : 'text-amber-500'}`}>${h.monto}</span>
+                                <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold" title="Eliminar">🗑️</button>
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <span className={`font-mono font-bold ${h.tipoIngreso === 'HONORARIOS' ? 'text-emerald-400' : 'text-amber-500'}`}>${h.monto}</span>
-                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold">🗑️</button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {honorariosProcuracion.length === 0 && (
-                        <p className="text-xs text-zinc-500 italic p-4 text-center">No hay registros financieros o de honorarios en la caja del estudio.</p>
-                      )}
+                          );
+                        })}
+                        {honorariosProcuracion.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay movimientos financieros registrados.</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3834,51 +3868,52 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'reporte' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <div className="flex justify-between items-center border-b pb-3">
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria para el Equipo</h3>
-                        <p className="text-xs text-zinc-400">Resumen ejecutivo con todas las audiencias, plazos pendientes y tareas urgentes del día.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria del Estudio</h3>
+                        <p className="text-xs text-zinc-400">Resumen integral operativo para la jornada de hoy.</p>
                       </div>
-                      <button 
-                        onClick={() => window.print()}
-                        className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded shadow"
-                      >
-                        🖨️ Imprimir / Guardar PDF
+                      <button onClick={() => window.print()} className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
+                        🖨️ Imprimir Reporte / PDF
                       </button>
                     </div>
 
                     <div className="space-y-4 text-xs">
                       <div>
-                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚖️ Audiencias para Hoy ({new Date().toLocaleDateString('es-AR')})</h4>
-                        {hearings.filter(h => h.date.startsWith(new Date().toISOString().split('T')[0])).length > 0 ? (
-                          hearings.filter(h => h.date.startsWith(new Date().toISOString().split('T')[0])).map(h => (
-                            <div key={h.id} className={`p-3 border rounded mb-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                              <strong>{h.title}</strong> — {h.tipoAudiencia} ({h.modalidad}) • 📍 {h.location}
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">1. Plazos Procesales Pendientes</h4>
+                        <div className="space-y-1">
+                          {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                            <div key={d.id} className={`p-2.5 rounded border flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <span>• {d.title}</span>
+                              <span className="font-bold text-orange-500">Vence: {formatDateToArg(d.dueDate)}</span>
                             </div>
-                          ))
-                        ) : (
-                          <p className="text-zinc-500 italic">No hay audiencias programadas para el día de hoy.</p>
-                        )}
+                          ))}
+                        </div>
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚡ Plazos Procesales Pendientes</h4>
-                        {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
-                          <div key={d.id} className={`p-3 border rounded mb-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <strong>{d.title}</strong> — Vence: {formatDateToArg(d.dueDate)} ({d.days} días hábiles)
-                          </div>
-                        ))}
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">2. Audiencias de la Jornada / Próximas</h4>
+                        <div className="space-y-1">
+                          {hearings.filter(h => h.status === 'PENDIENTE').map(h => (
+                            <div key={h.id} className={`p-2.5 rounded border flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <span>• [{h.tipoAudiencia}] {h.title} ({h.modalidad})</span>
+                              <span className="font-bold text-orange-500">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-orange-500 uppercase mb-2">✅ Tareas Urgentes</h4>
-                        {tasks.filter(t => !t.completed).map(t => (
-                          <div key={t.id} className={`p-3 border rounded mb-2 flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <span>{t.title}</span>
-                            <span className="font-bold text-orange-500">{t.priority}</span>
-                          </div>
-                        ))}
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">3. Tareas Prioritarias</h4>
+                        <div className="space-y-1">
+                          {tasks.filter(t => !t.completed).map(t => (
+                            <div key={t.id} className={`p-2.5 rounded border flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <span>• {t.title}</span>
+                              <span className="font-bold text-red-500">{t.priority}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -3887,39 +3922,32 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'juzgados_rc' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                    <div className="flex justify-between items-center border-b pb-3">
+                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🏛️</span>
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">🏛️ Juzgados y Tribunales de Río Cuarto (Directorio Oficial)</h3>
-                        <p className="text-xs text-zinc-400">Listado completo de fueros, secretarías, domicilios y teléfonos oficiales de la Segunda Circunscripción Judicial.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">Directorios y Enlaces de Juzgados de Río Cuarto</h3>
+                        <p className="text-xs text-zinc-400">Acceso rápido a fueros Civil, Comercial, Laboral, Familia y Fiscales de la 2ª Circunscripción.</p>
                       </div>
-                      <a 
-                        href="https://www.justiciacordoba.gob.ar" 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded shadow"
-                      >
-                        🌐 Portal Oficial TSJ
-                      </a>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       {[
-                        { fuero: 'Fuero Civil y Comercial', juzgados: ['Juzgado Civil y Comercial Nº 1', 'Juzgado Civil y Comercial Nº 2', 'Juzgado Civil y Comercial Nº 3', 'Juzgado Civil y Comercial Nº 4', 'Juzgado Civil y Comercial Nº 5', 'Juzgado Civil y Comercial Nº 6', 'Juzgado Civil y Comercial Nº 12'] },
-                        { fuero: 'Fuero Laboral', juzgados: ['Tribunales de Conciliación y Trabajo - Sala I', 'Tribunales de Conciliación y Trabajo - Sala II', 'Tribunales de Conciliación y Trabajo - Sala III'] },
-                        { fuero: 'Fuero de Familia', juzgados: ['Juzgado de Familia Nº 1', 'Juzgado de Familia Nº 2'] },
-                        { fuero: 'Fuero Penal y Fiscal', juzgados: ['Cámara Criminal y Correccional', 'Juzgado de Control', 'Juzgado Fiscal / Ejecuciones Fiscales Río Cuarto'] }
-                      ].map((f, idx) => (
-                        <div key={idx} className={`p-4 border rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <h4 className="font-bold text-orange-500 uppercase">{f.fuero}</h4>
-                          <ul className="space-y-1">
-                            {f.juzgados.map((j, jIdx) => (
-                              <li key={jIdx} className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                                <span className={isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}>{j}</span>
-                              </li>
-                            ))}
-                          </ul>
+                        { title: 'Juzgados Civiles y Comerciales', desc: 'Secretarías y Mesa de Entradas Río Cuarto', url: 'https://www.justiciacordoba.gob.ar' },
+                        { title: 'Cámara de Acusación / Criminal y Correccional', desc: 'Fuero Penal Río Cuarto', url: 'https://www.justiciacordoba.gob.ar' },
+                        { title: 'Juzgados de Familia', desc: 'Protección Integral y Violencia Familiar', url: 'https://www.justiciacordoba.gob.ar' },
+                        { title: 'Juzgados de Conciliación y Trabajo', desc: 'Fuero Laboral Río Cuarto', url: 'https://www.justiciacordoba.gob.ar' },
+                        { title: 'Juzgado Fiscal / Procuración de Rentas', desc: 'Ejecuciones Fiscales Provincia de Córdoba', url: 'https://www.rentascordoba.gob.ar' },
+                        { title: 'Portal de Notificaciones CIDI / Student / Portal Oficial', desc: 'Acceso directo a cédulas electrónicas', url: 'https://cidi.cba.gov.ar' }
+                      ].map((j, i) => (
+                        <div key={i} className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <div>
+                            <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{j.title}</strong>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">{j.desc}</p>
+                          </div>
+                          <a href={j.url} target="_blank" rel="noreferrer" className="bg-orange-500 text-black font-bold px-3 py-1.5 rounded text-[11px] hover:bg-orange-400">
+                            Abrir Portal →
+                          </a>
                         </div>
                       ))}
                     </div>
@@ -3928,88 +3956,91 @@ Firma Abogado / Apoderado`;
               )}
 
               {activeTab === 'configuracion' && (
-                <div className="space-y-6 relative z-10 max-w-2xl">
-                  <div className={`border p-6 rounded-xl space-y-6 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                    <div className="border-b pb-3">
-                      <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales en Nube</h3>
-                      <p className="text-xs text-zinc-400">Actualice la contraseña universal de acceso, correos del equipo y gestione copias de seguridad.</p>
+                <div className="space-y-6 relative z-10">
+                  <div className={`border p-6 rounded-xl space-y-6 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div>
+                      <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales del Estudio</h3>
+                      <p className="text-xs text-zinc-400">Configure los correos del equipo para notificaciones de Google Calendar y modifique la contraseña universal de acceso.</p>
                     </div>
 
-                    <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
-                      <h4 className="font-bold text-orange-500 uppercase">Cambiar Contraseña Universal y Correo de Recuperación</h4>
-                      
-                      <div>
-                        <label className="block font-bold text-zinc-400 mb-1">Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="Nueva contraseña en la nube..."
-                          value={newPass}
-                          onChange={e => setNewPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-zinc-400 mb-1">Confirmar Nueva Contraseña:</label>
-                        <input 
-                          type="password" 
-                          placeholder="Repita la nueva contraseña..."
-                          value={confirmPass}
-                          onChange={e => setConfirmPass(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block font-bold text-zinc-400 mb-1">Nuevo Correo de Recuperación:</label>
-                        <input 
-                          type="email" 
-                          placeholder={recoveryEmailConfig}
-                          value={newRecoveryMail}
-                          onChange={e => setNewRecoveryMail(e.target.value)}
-                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                        />
-                      </div>
-
-                      {passMessage && (
-                        <p className="font-bold text-emerald-500 bg-emerald-500/10 p-2 rounded border border-emerald-500/20">{passMessage}</p>
-                      )}
-
-                      <button type="submit" className="bg-orange-500 text-black font-bold px-4 py-2.5 rounded hover:bg-orange-400">
-                        Actualizar Credenciales en la Nube
-                      </button>
-                    </form>
-
-                    <div className={`border-t pt-6 space-y-4 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                      <h4 className="font-bold text-orange-500 uppercase text-xs">Correos Electrónicos del Equipo (Google Calendar y Alertas)</h4>
-                      <div className="space-y-2 text-xs">
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">Correos del Equipo (Sincronización Google Calendar)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {teamEmails.map((mail, idx) => (
                           <div key={idx} className="flex gap-2">
                             <input 
-                              type="email" 
+                              type="email"
+                              placeholder={`Correo colaborador ${idx + 1}`}
                               value={mail}
-                              placeholder={`Correo del equipo #${idx + 1}`}
-                              onChange={(e) => {
+                              onChange={e => {
                                 const updated = [...teamEmails];
                                 updated[idx] = e.target.value;
                                 setTeamEmails(updated);
                                 updateTeamEmails(updated);
                               }}
-                              className={`flex-1 border p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                              className={`flex-1 border p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             />
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className={`border-t pt-6 space-y-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-                      <h4 className="font-bold text-orange-500 uppercase text-xs">Copia de Seguridad y Resguardo</h4>
-                      <p className="text-xs text-zinc-400">Descargue un archivo de texto con absolutamente toda la base de datos de su estudio jurídico para respaldo de seguridad.</p>
-                      <button 
-                        onClick={handleDownloadFullBackup}
-                        className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400 shadow flex items-center gap-2"
-                      >
-                        <span>📥 Descargar Copia de Resguardo Completa (.txt)</span>
+                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+
+                    <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
+                      <h4 className="font-bold text-orange-500 uppercase">Cambiar Contraseña Universal y Correo de Recuperación</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Nueva Contraseña:</label>
+                          <input 
+                            type="password"
+                            placeholder="Dejar en blanco para no cambiar"
+                            value={newPass}
+                            onChange={e => setNewPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Confirmar Contraseña:</label>
+                          <input 
+                            type="password"
+                            placeholder="Repita la nueva contraseña"
+                            value={confirmPass}
+                            onChange={e => setConfirmPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-zinc-400 block mb-1">Nuevo Mail de Recuperación:</label>
+                          <input 
+                            type="email"
+                            placeholder={recoveryEmailConfig}
+                            value={newRecoveryMail}
+                            onChange={e => setNewRecoveryMail(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                      </div>
+
+                      {passMessage && (
+                        <p className="font-bold text-emerald-500 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">{passMessage}</p>
+                      )}
+
+                      <button type="submit" className="bg-orange-500 text-black font-bold px-5 py-2.5 rounded hover:bg-orange-400">
+                        Actualizar Credenciales en la Nube
+                      </button>
+                    </form>
+
+                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">Resguardo y Copia de Seguridad</h4>
+                      <p className="text-xs text-zinc-400">Descargue un archivo de texto con toda la base de datos del estudio (expedientes, plazos, finanzas y procuración) para respaldo absoluto.</p>
+                      <button onClick={handleDownloadFullBackup} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-3 rounded shadow">
+                        💾 Descargar Copia de Resguardo Completa (Backup .txt)
                       </button>
                     </div>
                   </div>
@@ -4017,6 +4048,7 @@ Firma Abogado / Apoderado`;
               )}
             </>
           )}
+
         </main>
       </div>
     </div>
