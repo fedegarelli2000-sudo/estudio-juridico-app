@@ -193,7 +193,7 @@ export default function Home() {
     return `PESOS ${resultado.trim()}.-`;
   };
 
-  // --- MÓDULO DE PROCURACIÓN DE RENTAS (CBA) ---
+  // --- MÓDULO DE PROCURACIÓN FISCAL (CBA) ---
   const [procuracionSubTab, setProcuracionSubTab] = useState('titulos');
   
   const [fiscalCases, setFiscalCases] = useState([
@@ -1191,7 +1191,7 @@ export default function Home() {
               { id: 'tareas', label: 'Tareas y Pendientes', icon: '✅' },
               { id: 'clientes', label: 'Clientes y Contactos', icon: '👥' },
               { id: 'audiencias', label: 'Audiencias y Calendario', icon: '📅' },
-              { id: 'procuracion', label: 'Procuración de Rentas', icon: '⚖️' },
+              { id: 'procuracion', label: 'Procuración de Rentas (Cba)', icon: '⚖️' },
               { id: 'recibos', label: 'Recibos', icon: '🧾' },
               { id: 'finanzas', label: 'Finanzas y Caja Estudio', icon: '💰' },
               { id: 'reporte', label: 'Reporte y Agenda Diaria', icon: '📋' },
@@ -2473,7 +2473,7 @@ Firma Abogado / Apoderado`;
                   </div>
 
                   <div className={`border p-5 rounded-xl space-y-3 backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración de Rentas (Próximos Vencimientos)</h4>
+                    <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
                     {urgentFiscalAlerts.length > 0 ? (
                       <div className="space-y-2">
                         {urgentFiscalAlerts.map(fc => (
@@ -3238,59 +3238,53 @@ Firma Abogado / Apoderado`;
                           />
 
                           <input 
-                            type="text" placeholder="Periodo (Ej. 2026)" 
+                            type="text" placeholder="Período Fiscal (Ej. 2026)" 
                             value={newFiscalCase.periodo} onChange={e => setNewFiscalCase({...newFiscalCase, periodo: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           />
 
                           <input 
-                            type="text" placeholder="Monto Total (Ej. $1.500.000)" 
+                            type="text" placeholder="Monto total (Ej. $99.800.000)" 
                             value={newFiscalCase.monto} onChange={e => setNewFiscalCase({...newFiscalCase, monto: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
 
                           <div>
-                            <label className="block mb-1 font-bold text-orange-500">Fecha Vto. Liquidación (Inicia Prescripción):</label>
+                            <label className="text-[10px] text-orange-500 font-bold block mb-1">Fecha Vto. Liq. (Inicia Prescripción 5 Años):</label>
                             <input 
                               type="date" 
-                              value={newFiscalCase.fechaVencimientoLiquidacion} 
-                              onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
-                              className={`w-full border border-orange-500 p-2 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                              value={newFiscalCase.fechaVencimientoLiquidacion} onChange={e => setNewFiscalCase({...newFiscalCase, fechaVencimientoLiquidacion: e.target.value})}
+                              className={`w-full border p-2 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             />
                           </div>
                         </div>
 
-                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400">
-                          Guardar Título Fiscal y Calcular Prescripción (5 Años)
+                        <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
+                          Guardar Título Fiscal y Calcular Plazos
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Listado de Títulos Ejecutivos Fiscales</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Registrados</h4>
                         {fiscalCases.map(fc => (
-                          <div key={fc.id} className={`border p-4 rounded-xl space-y-2 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                            <div className="flex justify-between items-start">
-                              <div onClick={() => setSelectedFiscalId(fc.id)} className="cursor-pointer flex-1">
-                                <span className="bg-purple-500/10 text-purple-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-                                  Liq: {fc.nroLiquidacion}
-                                </span>
-                                <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{fc.contribuyente}</span>
-                                <p className="text-xs text-zinc-500 mt-1">Tributo: {fc.tributo} • Monto: <strong className="text-orange-500">{fc.monto}</strong> • Estado: {fc.estadoFiscal}</p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2 text-[11px] text-zinc-400 border-t pt-2">
-                                  <div>📅 Vto. Liq: {formatDateToArg(fc.fechaVencimientoLiquidacion) || 'N/A'}</div>
-                                  <div>⚠️ Vto. Excepción (3d): <strong className="text-amber-500">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong></div>
-                                  <div>🔒 Prescripción (5 Años): <strong className="text-purple-400">{formatDateToArg(fc.plazoPrescripcion)}</strong></div>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
-                                  Gestionar →
-                                </button>
-                                <button onClick={() => deleteFiscalCase(fc.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20">
-                                  🗑️
-                                </button>
-                              </div>
+                          <div key={fc.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                            <div>
+                              <span className="bg-purple-500/10 text-purple-500 font-bold px-2.5 py-0.5 rounded text-[10px] mr-2">
+                                Liq: {fc.nroLiquidacion}
+                              </span>
+                              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{fc.contribuyente} ({fc.tributo})</span>
+                              <p className="text-[11px] text-zinc-500 mt-1">
+                                Monto: <strong className="text-orange-500">{fc.monto}</strong> • Estado: {fc.estadoFiscal}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => setSelectedFiscalId(fc.id)} className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded">
+                                Gestionar Fiscal →
+                              </button>
+                              <button onClick={() => deleteFiscalCase(fc.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs border border-red-500/20">
+                                🗑️
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -3301,13 +3295,14 @@ Firma Abogado / Apoderado`;
                   {procuracionSubTab === 'cautelares' && (
                     <div className="space-y-6">
                       <form onSubmit={handleAddCautelar} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Trabar / Registrar Medida Cautelar (SOJ / Embargo)</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Medida Cautelar (Embargo SOJ / Registro Propiedad)</h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <select 
                             value={newCautelar.fiscalId} onChange={e => setNewCautelar({...newCautelar, fiscalId: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
-                            <option value="">Seleccionar Título Fiscal...</option>
+                            <option value="">Seleccionar Título Fiscal / Liquidación...</option>
                             {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
                           </select>
 
@@ -3316,20 +3311,23 @@ Firma Abogado / Apoderado`;
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="SOJ (Bancario)">SOJ (Sistema de Oficios Judiciales - Bancario)</option>
-                            <option value="Registro Propiedad Inmueble">Inhibición / Embargo Inmueble</option>
-                            <option value="Registro Automotor">Embargo Automotor (DNRPA)</option>
-                            <option value="Secuestro">Secuestro de Bienes</option>
+                            <option value="Registro Propiedad Inmueble">Registro Propiedad Inmueble</option>
+                            <option value="Registro Propiedad Automotor">Registro Propiedad Automotor</option>
+                            <option value="Inhibición General de Bienes">Inhibición General de Bienes</option>
                           </select>
 
                           <input 
-                            type="date" value={newCautelar.fecha} onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
+                            type="date" 
+                            value={newCautelar.fecha} onChange={e => setNewCautelar({...newCautelar, fecha: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            required
                           />
 
                           <input 
-                            type="text" placeholder="Monto Embargado ($)" 
+                            type="text" placeholder="Monto del Embargo (Ej. $15.000.000)" 
                             value={newCautelar.montoEmbargo} onChange={e => setNewCautelar({...newCautelar, montoEmbargo: e.target.value})}
-                            className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            required
                           />
                         </div>
 
@@ -3339,21 +3337,25 @@ Firma Abogado / Apoderado`;
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Cautelares Vigentes</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Medidas Cautelares Vigentes en Procuración</h4>
                         {cautelares.map(c => (
                           <div key={c.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{c.tipo}</span>
-                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {c.nroLiquidacion} - {c.titular}</strong>
-                              <p className="text-zinc-500 mt-1">Trabada el: {formatDateToArg(c.fecha)} • Monto: <strong className="text-orange-500">${c.montoEmbargo || 'N/A'}</strong></p>
+                              <span className="bg-emerald-500/10 text-emerald-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+                                {c.estado}
+                              </span>
+                              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{c.tipo} — Liq: {c.nroLiquidacion} ({c.titular})</span>
+                              <p className="text-[11px] text-zinc-500 mt-1">
+                                Monto Embargo: <strong className="text-orange-500">{c.montoEmbargo}</strong> • Fecha Traba: {formatDateToArg(c.fecha)}
+                              </p>
                             </div>
-                            <button onClick={() => deleteCautelar(c.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20">
+                            <button onClick={() => deleteCautelar(c.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs border border-red-500/20">
                               🗑️ Levantar / Eliminar
                             </button>
                           </div>
                         ))}
                         {cautelares.length === 0 && (
-                          <p className="text-xs text-zinc-500 italic">No hay medidas cautelares registradas.</p>
+                          <p className="text-xs text-zinc-500 italic">No hay medidas cautelares registradas actualmente.</p>
                         )}
                       </div>
                     </div>
@@ -3362,13 +3364,14 @@ Firma Abogado / Apoderado`;
                   {procuracionSubTab === 'honorarios' && (
                     <div className="space-y-6">
                       <form onSubmit={handleAddHonorario} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorario o Gasto Judicial Fiscal</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">+ Registrar Cobro de Honorarios / Gastos Fiscales</h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                           <select 
                             value={newHonorario.fiscalId} onChange={e => setNewHonorario({...newHonorario, fiscalId: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
-                            <option value="">Seleccionar Título Fiscal...</option>
+                            <option value="">Seleccionar Título Fiscal / Liquidación...</option>
                             {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
                           </select>
 
@@ -3376,16 +3379,22 @@ Firma Abogado / Apoderado`;
                             value={newHonorario.tipoIngreso} onChange={e => setNewHonorario({...newHonorario, tipoIngreso: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
-                            <option value="HONORARIOS">Concepto: Honorarios Profesionales</option>
-                            <option value="TASA_JUSTICIA">Concepto: Tasa de Justicia / Contribución</option>
-                            <option value="BONO_LEY">Concepto: Bono de Ley / Casillero</option>
-                            <option value="VIATICOS">Concepto: Viáticos / Diligenciamiento</option>
+                            <option value="HONORARIOS">Tipo: Cobro de Honorarios</option>
+                            <option value="GASTO_JUDICIAL">Tipo: Gasto Judicial (Tasa/Bono)</option>
+                            <option value="COSTAS">Tipo: Costas Procesales</option>
                           </select>
 
                           <input 
-                            type="text" placeholder="Concepto detallado (ej. Honorarios primera etapa)" 
-                            value={newHonorario.concepto} onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
+                            type="date" 
+                            value={newHonorario.fecha} onChange={e => setNewHonorario({...newHonorario, fecha: e.target.value})}
                             className={`border p-2.5 rounded outline-none focus:border-orange-500 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                            required
+                          />
+
+                          <input 
+                            type="text" placeholder="Concepto (Ej. Regulación de honorarios etapa principal)" 
+                            value={newHonorario.concepto} onChange={e => setNewHonorario({...newHonorario, concepto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none focus:border-orange-500 md:col-span-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
 
@@ -3398,24 +3407,31 @@ Firma Abogado / Apoderado`;
                         </div>
 
                         <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-4 py-2.5 rounded hover:bg-orange-400">
-                          Registrar en Caja
+                          Registrar en Caja Fiscal
                         </button>
                       </form>
 
                       <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Caja y Cobros de Procuración Fiscal</h4>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">Registros Financieros de Procuración Fiscal</h4>
                         {honorariosProcuracion.map(h => (
                           <div key={h.id} className={`border p-4 rounded-xl flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                             <div>
-                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">{h.tipoIngreso || 'HONORARIOS'}</span>
-                              <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>Liq: {h.nroLiquidacion} - {h.concepto}</strong>
-                              <p className="text-zinc-500 mt-1">Fecha: {formatDateToArg(h.fecha)} • Monto: <strong className="text-emerald-500">${h.monto}</strong></p>
+                              <span className="bg-orange-500/10 text-orange-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+                                {h.tipoIngreso || 'HONORARIOS'}
+                              </span>
+                              <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{h.concepto} (Liq: {h.nroLiquidacion})</span>
+                              <p className="text-[11px] text-zinc-500 mt-1">
+                                Monto: <strong className="text-emerald-400">${h.monto}</strong> • Fecha: {formatDateToArg(h.fecha)}
+                              </p>
                             </div>
-                            <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs transition-all border border-red-500/20">
-                              🗑️ Eliminar
+                            <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded font-bold text-xs border border-red-500/20">
+                              🗑️
                             </button>
                           </div>
                         ))}
+                        {honorariosProcuracion.length === 0 && (
+                          <p className="text-xs text-zinc-500 italic">No hay registros financieros de procuración fiscal cargados.</p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -3424,30 +3440,33 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'recibos' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                  <div className={`border p-5 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">🧾</span>
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">Generador Oficial de Recibos (Original y Duplicado)</h3>
-                        <p className="text-xs text-zinc-400">Genere recibos con numeración legal y conversión automática de montos a letras para clientes o procuración.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">Generador Oficial de Recibos (Original y Duplicado) — Estudio Jurídico MM</h3>
+                        <p className="text-xs text-zinc-500">Emita recibos profesionales con conversión automática a letras, diseño corporativo de doble cuerpo y selección de expediente o título fiscal.</p>
                       </div>
                     </div>
 
                     <form onSubmit={(e) => {
                       e.preventDefault();
-                      if (!reciboForm.monto || !reciboForm.pagadorNombre) return;
+                      if (!reciboForm.monto || !reciboForm.pagadorNombre) {
+                        alert('Por favor complete al menos el pagador y el monto.');
+                        return;
+                      }
 
                       const finalTipo = reciboForm.tipoRecibo === 'OTRO' 
                         ? (reciboForm.customTipo.trim() || 'Recibo General') 
                         : reciboForm.tipoRecibo;
 
-                      let refAsociada = 'Sin asociar';
+                      let refAsociada = 'General / Estudio';
                       if (reciboForm.asociacionTipo === 'expediente' && reciboForm.causaId) {
-                        const c = cases.find(item => item.id === reciboForm.causaId);
-                        if (c) refAsociada = `Expediente Nº ${c.number} (${c.caratula})`;
+                        const cFound = cases.find(c => c.id === reciboForm.causaId);
+                        if (cFound) refAsociada = `Expte. Nº ${cFound.number} (${cFound.caratula})`;
                       } else if (reciboForm.asociacionTipo === 'fiscal' && reciboForm.fiscalId) {
-                        const fc = fiscalCases.find(item => item.id === reciboForm.fiscalId);
-                        if (fc) refAsociada = `Título Fiscal Liq. Nº ${fc.nroLiquidacion} (${fc.contribuyente})`;
+                        const fFound = fiscalCases.find(fc => fc.id === reciboForm.fiscalId);
+                        if (fFound) refAsociada = `Liq. Fiscal Nº ${fFound.nroLiquidacion} - Contribuyente: ${fFound.contribuyente}`;
                       }
 
                       const receiptHtml = `
@@ -3460,18 +3479,18 @@ Firma Abogado / Apoderado`;
                             body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 20px; font-size: 12px; }
                             .recibo-container { border: 2px dashed #333; padding: 25px; margin-bottom: 30px; position: relative; background: #fff; }
                             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f97316; padding-bottom: 15px; margin-bottom: 15px; }
-                            .logo-container { display: flex; align-items: center; gap: 8px; }
-                            .logo-box { width: 45px; height: 45px; background: #09090b; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 24px; }
+                            .logo-container { display: flex; align-items: center; gap: 10px; }
+                            .logo-box { width: 50px; height: 50px; background: #09090b; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 26px; }
                             .logo-m1 { color: #f97316; }
                             .logo-m2 { color: #71717a; }
-                            .estudio-info h2 { margin: 0; font-size: 16px; font-weight: 900; color: #09090b; text-transform: uppercase; }
-                            .estudio-info p { margin: 2px 0 0 0; font-size: 10px; color: #f97316; font-weight: bold; }
-                            .copia-tag { font-size: 14px; font-weight: 900; border: 2px solid #09090b; padding: 5px 15px; text-transform: uppercase; }
-                            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 12px; }
-                            .amount-box { background: #f4f4f5; border: 1px solid #d4d4d8; padding: 12px; font-size: 15px; font-weight: bold; margin-bottom: 15px; }
-                            .concepto-box { margin-bottom: 20px; font-size: 13px; line-height: 1.5; }
-                            .signatures { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 20px; }
-                            .sig-line { width: 220px; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 11px; font-weight: bold; }
+                            .estudio-info h2 { margin: 0; font-size: 17px; font-weight: 900; color: #09090b; text-transform: uppercase; }
+                            .estudio-info p { margin: 2px 0 0 0; font-size: 11px; color: #f97316; font-weight: bold; }
+                            .copia-tag { font-size: 14px; font-weight: 900; border: 2px solid #09090b; padding: 6px 16px; text-transform: uppercase; background: #f4f4f5; }
+                            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; font-size: 12px; }
+                            .amount-box { background: #f4f4f5; border: 1px solid #d4d4d8; padding: 14px; font-size: 16px; font-weight: bold; margin-bottom: 15px; }
+                            .concepto-box { margin-bottom: 25px; font-size: 13px; line-height: 1.6; }
+                            .signatures { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 20px; }
+                            .sig-line { width: 240px; border-top: 1px solid #000; text-align: center; padding-top: 6px; font-size: 11px; font-weight: bold; }
                           </style>
                         </head>
                         <body>
@@ -3484,7 +3503,7 @@ Firma Abogado / Apoderado`;
                                 </div>
                                 <div class="estudio-info">
                                   <h2>Estudio Jurídico MM</h2>
-                                  <p>Gestión Legal Integral • Río Cuarto</p>
+                                  <p>Gestión Legal Integral • Río Cuarto, Córdoba</p>
                                 </div>
                               </div>
                               <div class="copia-tag">ORIGINAL</div>
@@ -3492,9 +3511,9 @@ Firma Abogado / Apoderado`;
 
                             <div class="details-grid">
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
-                              <div><strong>Comprobante:</strong> ${finalTipo}</div>
+                              <div><strong>Recibo Tipo:</strong> ${finalTipo}</div>
                               <div><strong>Recibí de:</strong> ${reciboForm.pagadorNombre}</div>
-                              <div><strong>Referencia:</strong> ${refAsociada}</div>
+                              <div><strong>Referencia Asociada:</strong> ${refAsociada}</div>
                             </div>
 
                             <div class="amount-box">
@@ -3502,11 +3521,11 @@ Firma Abogado / Apoderado`;
                             </div>
 
                             <div class="concepto-box">
-                              <strong>En concepto de:</strong> ${reciboForm.conceptoDetallado || finalTipo} (${refAsociada}).
+                              <strong>En concepto de:</strong> ${reciboForm.conceptoDetallado.trim() || finalTipo} correspondiente a la gestión profesional del Estudio Jurídico MM (${refAsociada}).
                             </div>
 
                             <div class="signatures">
-                              <div class="sig-line">Firma del Pagador</div>
+                              <div class="sig-line">Firma del Pagador / Cliente</div>
                               <div class="sig-line">Firma y Sello - Estudio Jurídico MM</div>
                             </div>
                           </div>
@@ -3520,7 +3539,7 @@ Firma Abogado / Apoderado`;
                                 </div>
                                 <div class="estudio-info">
                                   <h2>Estudio Jurídico MM</h2>
-                                  <p>Gestión Legal Integral • Río Cuarto</p>
+                                  <p>Gestión Legal Integral • Río Cuarto, Córdoba</p>
                                 </div>
                               </div>
                               <div class="copia-tag">DUPLICADO</div>
@@ -3528,9 +3547,9 @@ Firma Abogado / Apoderado`;
 
                             <div class="details-grid">
                               <div><strong>Fecha:</strong> ${new Date().toLocaleDateString('es-AR')}</div>
-                              <div><strong>Comprobante:</strong> ${finalTipo}</div>
+                              <div><strong>Recibo Tipo:</strong> ${finalTipo}</div>
                               <div><strong>Recibí de:</strong> ${reciboForm.pagadorNombre}</div>
-                              <div><strong>Referencia:</strong> ${refAsociada}</div>
+                              <div><strong>Referencia Asociada:</strong> ${refAsociada}</div>
                             </div>
 
                             <div class="amount-box">
@@ -3538,11 +3557,11 @@ Firma Abogado / Apoderado`;
                             </div>
 
                             <div class="concepto-box">
-                              <strong>En concepto de:</strong> ${reciboForm.conceptoDetallado || finalTipo} (${refAsociada}).
+                              <strong>En concepto de:</strong> ${reciboForm.conceptoDetallado.trim() || finalTipo} correspondiente a la gestión profesional del Estudio Jurídico MM (${refAsociada}).
                             </div>
 
                             <div class="signatures">
-                              <div class="sig-line">Firma del Pagador</div>
+                              <div class="sig-line">Firma del Pagador / Cliente</div>
                               <div class="sig-line">Firma y Sello - Estudio Jurídico MM</div>
                             </div>
                           </div>
@@ -3558,40 +3577,37 @@ Firma Abogado / Apoderado`;
                       win.document.write(receiptHtml);
                       win.document.close();
                     }} className="space-y-4 text-xs">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="text-zinc-400 block mb-1">Tipo de Recibo:</label>
+                          <label className={`font-bold block mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Tipo de Recibo:</label>
                           <select 
                             value={reciboForm.tipoRecibo}
                             onChange={e => setReciboForm({...reciboForm, tipoRecibo: e.target.value})}
                             className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                           >
                             <option value="Anticipo para gastos / Fondo fijo">Anticipo para gastos / Fondo fijo</option>
-                            <option value="Cobro de honorarios profesionales">Cobro de honorarios profesionales</option>
-                            <option value="Pago de tasa de justicia / Tasa fiscal">Pago de tasa de justicia / Tasa fiscal</option>
-                            <option value="Seña / Entrega de dinero">Seña / Entrega de dinero</option>
-                            <option value="OTRO">Otro (Escribir personalizado)</option>
+                            <option value="Honorarios profesionales">Honorarios profesionales</option>
+                            <option value="Pago de tasa de justicia / Bonos">Pago de tasa de justicia / Bonos</option>
+                            <option value="Cancelación total de deuda / honorarios">Cancelación total de deuda / honorarios</option>
+                            <option value="OTRO">Otro concepto (Personalizado)</option>
                           </select>
-                        </div>
 
-                        {reciboForm.tipoRecibo === 'OTRO' && (
-                          <div>
-                            <label className="text-orange-500 block mb-1 font-bold">Especifique el Tipo de Recibo:</label>
+                          {reciboForm.tipoRecibo === 'OTRO' && (
                             <input 
                               type="text"
-                              placeholder="Ej. Recibo por diligenciamiento de cédula"
+                              placeholder="Especifique el concepto del recibo..."
                               value={reciboForm.customTipo}
                               onChange={e => setReciboForm({...reciboForm, customTipo: e.target.value})}
-                              className={`w-full border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
+                              className={`w-full border border-orange-500 p-2.5 rounded mt-2 outline-none ${isDarkMode ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}
                             />
-                          </div>
-                        )}
+                          )}
+                        </div>
 
                         <div>
-                          <label className="text-zinc-400 block mb-1">Nombre / Razón Social del Pagador:</label>
+                          <label className={`font-bold block mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Nombre del Pagador / Cliente:</label>
                           <input 
                             type="text"
-                            placeholder="Ej. Roberto García / Contribuyente"
+                            placeholder="Ej. Roberto García / ZAMARBIDE S.A."
                             value={reciboForm.pagadorNombre}
                             onChange={e => setReciboForm({...reciboForm, pagadorNombre: e.target.value})}
                             className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
@@ -3600,9 +3616,9 @@ Firma Abogado / Apoderado`;
                         </div>
 
                         <div>
-                          <label className="text-zinc-400 block mb-1">Asociar a:</label>
-                          <div className="flex gap-4 pt-1">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                          <label className={`font-bold block mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Asociar a:</label>
+                          <div className="flex gap-4 mb-2">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
                               <input 
                                 type="radio" 
                                 name="asocTipo" 
@@ -3610,9 +3626,9 @@ Firma Abogado / Apoderado`;
                                 onChange={() => setReciboForm({...reciboForm, asociacionTipo: 'expediente'})}
                                 className="accent-orange-500"
                               />
-                              <span>Expediente Judicial</span>
+                              <span>Expediente Judicial / Civil</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
                               <input 
                                 type="radio" 
                                 name="asocTipo" 
@@ -3620,68 +3636,63 @@ Firma Abogado / Apoderado`;
                                 onChange={() => setReciboForm({...reciboForm, asociacionTipo: 'fiscal'})}
                                 className="accent-orange-500"
                               />
-                              <span>Título de Procuración (Fiscal)</span>
+                              <span>Procuración Fiscal (CBA)</span>
                             </label>
                           </div>
-                        </div>
 
-                        {reciboForm.asociacionTipo === 'expediente' ? (
-                          <div>
-                            <label className="text-zinc-400 block mb-1">Seleccionar Expediente:</label>
+                          {reciboForm.asociacionTipo === 'expediente' ? (
                             <select 
                               value={reciboForm.causaId}
                               onChange={e => setReciboForm({...reciboForm, causaId: e.target.value})}
                               className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             >
-                              <option value="">Seleccione Expediente...</option>
-                              {cases.map(c => <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>)}
+                              <option value="">Seleccione Expediente Asociado...</option>
+                              {cases.map(c => (
+                                <option key={c.id} value={c.id}>{c.number} - {c.caratula}</option>
+                              ))}
                             </select>
-                          </div>
-                        ) : (
-                          <div>
-                            <label className="text-zinc-400 block mb-1">Seleccionar Título Fiscal:</label>
+                          ) : (
                             <select 
                               value={reciboForm.fiscalId}
                               onChange={e => setReciboForm({...reciboForm, fiscalId: e.target.value})}
                               className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             >
-                              <option value="">Seleccione Título Fiscal...</option>
-                              {fiscalCases.map(fc => <option key={fc.id} value={fc.id}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</option>)}
+                              <option value="">Seleccione Liquidación Fiscal Asociada...</option>
+                              {fiscalCases.map(fc => (
+                                <option key={fc.id} value={fc.id}>Liq. {fc.nroLiquidacion} - {fc.contribuyente}</option>
+                              ))}
                             </select>
-                          </div>
-                        )}
+                          )}
+                        </div>
 
                         <div>
-                          <label className="text-zinc-400 block mb-1">Monto a Recibir ($):</label>
+                          <label className={`font-bold block mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Monto en Pesos ($):</label>
                           <input 
                             type="text"
-                            placeholder="Ej. 250000"
+                            placeholder="Ej. 150000"
                             value={reciboForm.monto}
-                            onChange={e => {
-                              const val = e.target.value;
-                              setReciboForm({...reciboForm, monto: val});
-                              const hintEl = document.getElementById('hint_recibo_letras');
-                              if (hintEl) hintEl.innerText = val ? numeroALetras(val) : '';
-                            }}
+                            onChange={e => setReciboForm({...reciboForm, monto: e.target.value})}
                             className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
                             required
                           />
-                          <div id="hint_recibo_letras" className="text-[10px] text-orange-500 font-bold italic mt-1"></div>
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <label className="text-zinc-400 block mb-1">Concepto Detallado (Descripción para el cuerpo del recibo):</label>
-                          <textarea 
-                            placeholder="Ej. Recibo en concepto de anticipo para cubrir gastos de tasa de justicia y bonos ley en autos..."
-                            value={reciboForm.conceptoDetallado}
-                            onChange={e => setReciboForm({...reciboForm, conceptoDetallado: e.target.value})}
-                            className={`w-full border p-2.5 rounded outline-none h-20 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
+                          {reciboForm.monto && (
+                            <p className="text-[10px] text-orange-500 font-bold mt-1 italic">{numeroALetras(reciboForm.monto)}</p>
+                          )}
                         </div>
                       </div>
 
-                      <button type="submit" className="bg-orange-500 text-black font-bold px-6 py-3 rounded hover:bg-orange-400 shadow-lg shadow-orange-500/20">
-                        🖨️ Generar y Descargar / Imprimir Recibo Oficial (Original y Duplicado)
+                      <div>
+                        <label className={`font-bold block mb-1 ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Concepto Detallado / Observaciones para el Recibo:</label>
+                        <textarea 
+                          placeholder="Detalle adicional que figurará en el cuerpo del recibo..."
+                          value={reciboForm.conceptoDetallado}
+                          onChange={e => setReciboForm({...reciboForm, conceptoDetallado: e.target.value})}
+                          className={`w-full border p-2.5 rounded outline-none h-20 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-6 py-3 rounded text-xs shadow-lg shadow-orange-500/20">
+                        🖨️ Generar e Imprimir Recibo PDF (Original y Duplicado)
                       </button>
                     </form>
                   </div>
@@ -3691,176 +3702,142 @@ Firma Abogado / Apoderado`;
               {activeTab === 'finanzas' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">💰</span>
+                    <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="text-xs font-bold text-orange-500 uppercase">Caja General del Estudio y Control Financiero</h3>
-                        <p className="text-[11px] text-zinc-400">Controla el balance general de ingresos por honorarios y gastos operativos del estudio.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">💰 Caja General del Estudio y Control Financiero (Honorarios y Gastos)</h3>
+                        <p className="text-xs text-zinc-500">Gestione ingresos de honorarios, gastos operativos y calcule balances globales en tiempo real.</p>
+                      </div>
+
+                      <div className="flex gap-2">
+                        {selectedFinanceIds.length > 0 && (
+                          <button 
+                            onClick={() => {
+                              const totalSeleccionado = honorariosProcuracion
+                                .filter(h => selectedFinanceIds.includes(h.id))
+                                .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
+                              alert(`📊 Autosuma de los ${selectedFinanceIds.length} elementos seleccionados: $ ${totalSeleccionado.toLocaleString('es-AR')} (${numeroALetras(totalSeleccionado)})`);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded shadow"
+                          >
+                            🧮 Autosuma Seleccionados ({selectedFinanceIds.length})
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => {
+                            const totalGeneral = honorariosProcuracion.reduce((acc, curr) => {
+                              const m = parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0;
+                              return curr.tipoIngreso === 'GASTO_JUDICIAL' ? acc - m : acc + m;
+                            }, 0);
+                            alert(`💰 Balance Neto General de Caja: $ ${totalGeneral.toLocaleString('es-AR')}`);
+                          }}
+                          className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-3 py-2 rounded shadow"
+                        >
+                          📊 Balance Neto General
+                        </button>
                       </div>
                     </div>
 
                     <form onSubmit={handleAddDirectFinance} className={`p-4 rounded-xl border space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Ingreso o Gasto Directo en Caja</h4>
-                      
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Ingreso o Gasto Directo a Caja</h4>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-                        <div>
-                          <label className="text-zinc-400 block mb-1">Tipo de Movimiento:</label>
-                          <select 
-                            value={newDirectFinance.tipoIngreso}
-                            onChange={e => setNewDirectFinance({...newDirectFinance, tipoIngreso: e.target.value})}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                          >
-                            <option value="HONORARIOS">Ingreso: Cobro de Honorarios</option>
-                            <option value="GASTO_JUDICIAL">Gasto: Gasto Judicial / Tasas</option>
-                            <option value="GASTO_OPERATIVO">Gasto: Gasto Operativo Estudio</option>
-                            <option value="OTRO">Otro Concepto Personalizado</option>
-                          </select>
-                        </div>
+                        <select 
+                          value={newDirectFinance.tipoIngreso}
+                          onChange={e => setNewDirectFinance({...newDirectFinance, tipoIngreso: e.target.value})}
+                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                        >
+                          <option value="HONORARIOS">Ingreso: Cobro de Honorarios</option>
+                          <option value="GASTO_JUDICIAL">Gasto: Operativo / Judicial</option>
+                          <option value="OTRO">Otro concepto (Personalizado)</option>
+                        </select>
+
+                        <input 
+                          type="date"
+                          value={newDirectFinance.fecha}
+                          onChange={e => setNewDirectFinance({...newDirectFinance, fecha: e.target.value})}
+                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                          required
+                        />
 
                         {newDirectFinance.tipoIngreso === 'OTRO' ? (
-                          <div>
-                            <label className="text-orange-500 block mb-1 font-bold">Concepto Personalizado:</label>
-                            <input 
-                              type="text"
-                              placeholder="Ej. Asesoramiento externo"
-                              value={newDirectFinance.customConcepto}
-                              onChange={e => setNewDirectFinance({...newDirectFinance, customConcepto: e.target.value})}
-                              className={`w-full border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
-                              required
-                            />
-                          </div>
-                        ) : (
-                          <div>
-                            <label className="text-zinc-400 block mb-1">Concepto:</label>
-                            <input 
-                              type="text"
-                              placeholder={newDirectFinance.tipoIngreso === 'HONORARIOS' ? 'Ej. Honorarios etapa juicio' : 'Ej. Pago luz / insumos'}
-                              value={newDirectFinance.concepto}
-                              onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
-                              className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
-                            />
-                          </div>
-                        )}
-
-                        <div>
-                          <label className="text-zinc-400 block mb-1">Monto ($):</label>
                           <input 
                             type="text"
-                            placeholder="Ej. 180000"
-                            value={newDirectFinance.monto}
-                            onChange={e => {
-                              const val = e.target.value;
-                              setNewDirectFinance({...newDirectFinance, monto: val});
-                              const hintEl = document.getElementById('hint_finanzas_letras');
-                              if (hintEl) hintEl.innerText = val ? numeroALetras(val) : '';
-                            }}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                            placeholder="Especifique el concepto..."
+                            value={newDirectFinance.customConcepto}
+                            onChange={e => setNewDirectFinance({...newDirectFinance, customConcepto: e.target.value})}
+                            className={`border border-orange-500 p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
                             required
                           />
-                        </div>
-
-                        <div>
-                          <label className="text-zinc-400 block mb-1">Fecha:</label>
+                        ) : (
                           <input 
-                            type="date"
-                            value={newDirectFinance.fecha}
-                            onChange={e => setNewDirectFinance({...newDirectFinance, fecha: e.target.value})}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                            type="text"
+                            placeholder={newDirectFinance.tipoIngreso === 'HONORARIOS' ? 'Concepto (ej. Anticipo honorarios)' : 'Concepto (ej. Compra insumos)'}
+                            value={newDirectFinance.concepto}
+                            onChange={e => setNewDirectFinance({...newDirectFinance, concepto: e.target.value})}
+                            className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
                           />
-                        </div>
+                        )}
+
+                        <input 
+                          type="text"
+                          placeholder="Monto ($)"
+                          value={newDirectFinance.monto}
+                          onChange={e => setNewDirectFinance({...newDirectFinance, monto: e.target.value})}
+                          className={`border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                          required
+                        />
                       </div>
-
-                      <div id="hint_finanzas_letras" className="text-[10px] text-orange-500 font-bold italic"></div>
-
-                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
-                        Registrar Movimiento Financiero
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2 rounded text-xs shadow">
+                        Registrar Movimiento en Caja
                       </button>
                     </form>
 
-                    {(() => {
-                      const totalIngresos = honorariosProcuracion
-                        .filter(h => h.tipoIngreso === 'HONORARIOS')
-                        .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
-
-                      const totalGastos = honorariosProcuracion
-                        .filter(h => h.tipoIngreso !== 'HONORARIOS')
-                        .reduce((acc, curr) => acc + (parseFloat(curr.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0), 0);
-
-                      const balanceNeto = totalIngresos - totalGastos;
-
-                      return (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Ingresos Honorarios</span>
-                            <h5 className="text-2xl font-black text-emerald-500 mt-1">${totalIngresos.toLocaleString('es-AR')}</h5>
-                          </div>
-
-                          <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Total Gastos / Egresos</span>
-                            <h5 className="text-2xl font-black text-amber-500 mt-1">${totalGastos.toLocaleString('es-AR')}</h5>
-                          </div>
-
-                          <div className={`p-4 rounded-xl border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase">Balance Neto de Caja</span>
-                            <h5 className={`text-2xl font-black mt-1 ${balanceNeto >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                              ${balanceNeto.toLocaleString('es-AR')}
-                            </h5>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-center">
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Movimientos Financieros y Caja</h4>
-                        {selectedFinanceIds.length > 0 && (
-                          <div className="bg-orange-500/10 border border-orange-500/30 px-3 py-1 rounded text-xs font-bold text-orange-500 flex items-center gap-3">
-                            <span>Seleccionados ({selectedFinanceIds.length}) — Autosuma: ${selectedFinanceIds.reduce((acc, id) => {
-                              const item = honorariosProcuracion.find(h => h.id === id);
-                              return acc + (item ? (parseFloat(item.monto.replace(/[^0-9,.-]+/g, "").replace(",", ".")) || 0) : 0);
-                            }, 0).toLocaleString('es-AR')}</span>
-                            <button onClick={() => setSelectedFinanceIds([])} className="text-zinc-400 hover:text-white">✕</button>
-                          </div>
-                        )}
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-xs font-bold text-zinc-400 px-2">
+                        <span>Seleccionar / Registro</span>
+                        <span>Concepto y Referencia</span>
+                        <span>Monto y Acciones</span>
                       </div>
 
-                      <div className="space-y-2">
-                        {honorariosProcuracion.map(h => {
-                          const isSelected = selectedFinanceIds.includes(h.id);
-                          return (
-                            <div key={h.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs ${isSelected ? 'border-orange-500 bg-orange-500/5' : (isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}`}>
-                              <div className="flex items-center gap-3">
-                                <input 
-                                  type="checkbox"
-                                  checked={isSelected}
-                                  onChange={e => {
-                                    if (e.target.checked) {
-                                      setSelectedFinanceIds([...selectedFinanceIds, h.id]);
-                                    } else {
-                                      setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
-                                    }
-                                  }}
-                                  className="w-4 h-4 accent-orange-500 cursor-pointer"
-                                />
-                                <div>
-                                  <span className={`font-bold px-2 py-0.5 rounded text-[9px] mr-2 ${h.tipoIngreso === 'HONORARIOS' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                                    {h.tipoIngreso || 'HONORARIOS'}
-                                  </span>
-                                  <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
-                                  <p className="text-[10px] text-zinc-400">Fecha: {formatDateToArg(h.fecha)} • Ref: {h.nroLiquidacion || h.referencia || 'General'}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className={`font-mono font-bold ${h.tipoIngreso === 'HONORARIOS' ? 'text-emerald-500' : 'text-amber-500'}`}>${h.monto}</span>
-                                <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold" title="Eliminar">🗑️</button>
+                      {honorariosProcuracion.map(h => {
+                        const isSelected = selectedFinanceIds.includes(h.id);
+                        const isGasto = h.tipoIngreso === 'GASTO_JUDICIAL';
+                        return (
+                          <div key={h.id} className={`p-3 rounded-lg border flex justify-between items-center text-xs transition-all ${isSelected ? 'border-orange-500 bg-orange-500/10' : (isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200')}`}>
+                            <div className="flex items-center gap-3">
+                              <input 
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedFinanceIds([...selectedFinanceIds, h.id]);
+                                  } else {
+                                    setSelectedFinanceIds(selectedFinanceIds.filter(id => id !== h.id));
+                                  }
+                                }}
+                                className="w-4 h-4 accent-orange-500 cursor-pointer"
+                              />
+                              <div>
+                                <span className={`font-bold px-2 py-0.5 rounded text-[9px] mr-2 ${isGasto ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                  {h.tipoIngreso || 'HONORARIOS'}
+                                </span>
+                                <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{h.concepto}</strong>
+                                <p className="text-[10px] text-zinc-400">Fecha: {formatDateToArg(h.fecha)} • Ref: {h.nroLiquidacion || 'General'}</p>
                               </div>
                             </div>
-                          );
-                        })}
-                        {honorariosProcuracion.length === 0 && (
-                          <p className="text-xs text-zinc-500 italic">No hay movimientos financieros registrados.</p>
-                        )}
-                      </div>
+
+                            <div className="flex items-center gap-3">
+                              <span className={`font-mono font-bold ${isGasto ? 'text-amber-500' : 'text-emerald-400'}`}>
+                                {isGasto ? '-' : '+'}${h.monto}
+                              </span>
+                              <button onClick={() => deleteHonorario(h.id)} className="bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white px-2.5 py-1 rounded font-bold" title="Eliminar">🗑️</button>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {honorariosProcuracion.length === 0 && (
+                        <p className="text-xs text-zinc-500 italic p-4 text-center">No hay registros financieros cargados en la caja del estudio.</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3868,52 +3845,56 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'reporte' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className="flex justify-between items-center border-b pb-3">
+                  <div className={`border p-6 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    <div className="flex justify-between items-center border-b pb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria del Estudio</h3>
-                        <p className="text-xs text-zinc-400">Resumen integral operativo para la jornada de hoy.</p>
+                        <h3 className="text-base font-bold text-orange-500 uppercase">📋 Reporte y Agenda Diaria del Estudio</h3>
+                        <p className="text-xs text-zinc-500">Resumen ejecutivo con todas las actividades, audiencias y vencimientos programados para la fecha.</p>
                       </div>
-                      <button onClick={() => window.print()} className="bg-orange-500 text-black font-bold text-xs px-4 py-2 rounded hover:bg-orange-400">
-                        🖨️ Imprimir Reporte / PDF
+                      <button onClick={() => window.print()} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2 rounded shadow">
+                        🖨️ Imprimir Reporte Diario
                       </button>
                     </div>
 
                     <div className="space-y-4 text-xs">
                       <div>
-                        <h4 className="font-bold text-orange-500 uppercase mb-2">1. Plazos Procesales Pendientes</h4>
-                        <div className="space-y-1">
-                          {deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
-                            <div key={d.id} className={`p-2.5 rounded border flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                              <span>• {d.title}</span>
-                              <span className="font-bold text-orange-500">Vence: {formatDateToArg(d.dueDate)}</span>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚖️ Audiencias para Hoy:</h4>
+                        {hearings.filter(h => h.date?.startsWith(new Date().toISOString().split('T')[0])).length > 0 ? (
+                          hearings.filter(h => h.date?.startsWith(new Date().toISOString().split('T')[0])).map(h => (
+                            <div key={h.id} className={`p-3 rounded border mb-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <strong>{h.title}</strong> — {h.tipoAudiencia} ({h.modalidad}) en {h.location}
                             </div>
-                          ))}
-                        </div>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 italic">No hay audiencias agendadas para el día de hoy.</p>
+                        )}
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-orange-500 uppercase mb-2">2. Audiencias de la Jornada / Próximas</h4>
-                        <div className="space-y-1">
-                          {hearings.filter(h => h.status === 'PENDIENTE').map(h => (
-                            <div key={h.id} className={`p-2.5 rounded border flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                              <span>• [{h.tipoAudiencia}] {h.title} ({h.modalidad})</span>
-                              <span className="font-bold text-orange-500">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1]}</span>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">⚡ Plazos Procesales Pendientes:</h4>
+                        {deadlines.filter(d => d.status === 'PENDIENTE').length > 0 ? (
+                          deadlines.filter(d => d.status === 'PENDIENTE').map(d => (
+                            <div key={d.id} className={`p-3 rounded border mb-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <strong>{d.title}</strong> — Vence el {formatDateToArg(d.dueDate)} ({d.days} días)
                             </div>
-                          ))}
-                        </div>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 italic">No hay plazos pendientes.</p>
+                        )}
                       </div>
 
                       <div>
-                        <h4 className="font-bold text-orange-500 uppercase mb-2">3. Tareas Prioritarias</h4>
-                        <div className="space-y-1">
-                          {tasks.filter(t => !t.completed).map(t => (
-                            <div key={t.id} className={`p-2.5 rounded border flex justify-between ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                              <span>• {t.title}</span>
-                              <span className="font-bold text-red-500">{t.priority}</span>
+                        <h4 className="font-bold text-orange-500 uppercase mb-2">✅ Tareas de Mayor Urgencia:</h4>
+                        {tasks.filter(t => !t.completed).length > 0 ? (
+                          tasks.filter(t => !t.completed).map(t => (
+                            <div key={t.id} className={`p-3 rounded border mb-2 flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                              <span>{t.title}</span>
+                              <span className="text-orange-500 font-bold">{t.priority}</span>
                             </div>
-                          ))}
-                        </div>
+                          ))
+                        ) : (
+                          <p className="text-zinc-500 italic">No hay tareas pendientes.</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3922,34 +3903,63 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'juzgados_rc' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">🏛️</span>
+                  <div className={`border p-6 rounded-xl space-y-4 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    <div className="flex justify-between items-center border-b pb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-orange-500 uppercase">Directorios y Enlaces de Juzgados de Río Cuarto</h3>
-                        <p className="text-xs text-zinc-400">Acceso rápido a fueros Civil, Comercial, Laboral, Familia y Fiscales de la 2ª Circunscripción.</p>
+                        <h3 className="text-sm font-bold text-orange-500 uppercase">🏛️ Directorio de Juzgados y Tribunales — Río Cuarto</h3>
+                        <p className="text-xs text-zinc-500">Listado institucional de dependencias judiciales de la Segunda Circunscripción Judicial.</p>
                       </div>
+                      <button 
+                        onClick={() => {
+                          const csvContent = "data:text/csv;charset=utf-8," + [
+                            ["Dependencia", "Fuero", "Teléfono", "Domicilio"],
+                            ["Juzgado Civil y Comercial Nº 1", "Civil y Comercial", "(0358) 4678100", "Pje. Concep. del Uruguay 650"],
+                            ["Juzgado Civil y Comercial Nº 2", "Civil y Comercial", "(0358) 4678102", "Pje. Concep. del Uruguay 650"],
+                            ["Juzgado Fiscal Río Cuarto", "Fiscal / Tributario", "(0358) 4678200", "Tribunales Provinciales"],
+                            ["Cámara del Trabajo", "Laboral", "(0358) 4678300", "Pje. Concep. del Uruguay 650"]
+                          ].map(e => e.join(",")).join("\n");
+                          const encodedUri = encodeURI(csvContent);
+                          const link = document.createElement("a");
+                          link.setAttribute("href", encodedUri);
+                          link.setAttribute("download", "Juzgados_Rio_Cuarto.csv");
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-2 rounded shadow"
+                      >
+                        📥 Descargar Excel (.csv)
+                      </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                      {[
-                        { title: 'Juzgados Civiles y Comerciales', desc: 'Secretarías y Mesa de Entradas Río Cuarto', url: 'https://www.justiciacordoba.gob.ar' },
-                        { title: 'Cámara de Acusación / Criminal y Correccional', desc: 'Fuero Penal Río Cuarto', url: 'https://www.justiciacordoba.gob.ar' },
-                        { title: 'Juzgados de Familia', desc: 'Protección Integral y Violencia Familiar', url: 'https://www.justiciacordoba.gob.ar' },
-                        { title: 'Juzgados de Conciliación y Trabajo', desc: 'Fuero Laboral Río Cuarto', url: 'https://www.justiciacordoba.gob.ar' },
-                        { title: 'Juzgado Fiscal / Procuración de Rentas', desc: 'Ejecuciones Fiscales Provincia de Córdoba', url: 'https://www.rentascordoba.gob.ar' },
-                        { title: 'Portal de Notificaciones CIDI / Student / Portal Oficial', desc: 'Acceso directo a cédulas electrónicas', url: 'https://cidi.cba.gov.ar' }
-                      ].map((j, i) => (
-                        <div key={i} className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                          <div>
-                            <strong className={isDarkMode ? 'text-white' : 'text-zinc-900'}>{j.title}</strong>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">{j.desc}</p>
-                          </div>
-                          <a href={j.url} target="_blank" rel="noreferrer" className="bg-orange-500 text-black font-bold px-3 py-1.5 rounded text-[11px] hover:bg-orange-400">
-                            Abrir Portal →
-                          </a>
-                        </div>
-                      ))}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className={`border-b ${isDarkMode ? 'border-zinc-800 text-orange-400' : 'border-zinc-200 text-orange-600'}`}>
+                            <th className="p-3">Dependencia Judicial</th>
+                            <th className="p-3">Fuero</th>
+                            <th className="p-3">Teléfono de Contacto</th>
+                            <th className="p-3">Dirección</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/50">
+                          {[
+                            { dep: 'Juzgado Civil y Comercial Nº 1', fuero: 'Civil y Comercial', tel: '(0358) 4678100', dir: 'Pje. Concep. del Uruguay 650' },
+                            { dep: 'Juzgado Civil y Comercial Nº 2', fuero: 'Civil y Comercial', tel: '(0358) 4678102', dir: 'Pje. Concep. del Uruguay 650' },
+                            { dep: 'Juzgado Civil y Comercial Nº 12', fuero: 'Civil y Comercial', tel: '(0358) 4678124', dir: 'Pje. Concep. del Uruguay 650' },
+                            { dep: 'Juzgado Fiscal Río Cuarto', fuero: 'Fiscal / Tributario', tel: '(0358) 4678200', dir: 'Tribunales Provinciales' },
+                            { dep: 'Cámara del Trabajo - Sala Unica', fuero: 'Laboral', tel: '(0358) 4678300', dir: 'Pje. Concep. del Uruguay 650' },
+                            { dep: 'Juzgado de Familia Nº 1', fuero: 'Familia', tel: '(0358) 4678400', dir: 'Constitución 770' }
+                          ].map((row, idx) => (
+                            <tr key={idx} className={`hover:bg-orange-500/5 transition-colors ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                              <td className="p-3 font-bold">{row.dep}</td>
+                              <td className="p-3">{row.fuero}</td>
+                              <td className="p-3 font-mono">{row.tel}</td>
+                              <td className="p-3">{row.dir}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -3957,91 +3967,108 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'configuracion' && (
                 <div className="space-y-6 relative z-10">
-                  <div className={`border p-6 rounded-xl space-y-6 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                  <div className={`border p-6 rounded-xl space-y-6 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
                     <div>
-                      <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales del Estudio</h3>
-                      <p className="text-xs text-zinc-400">Configure los correos del equipo para notificaciones de Google Calendar y modifique la contraseña universal de acceso.</p>
+                      <h3 className="text-sm font-bold text-orange-500 uppercase">⚙️ Configuración General y Credenciales Universales en Nube</h3>
+                      <p className="text-xs text-zinc-500">Actualice la contraseña de acceso, configure los correos del equipo para notificaciones de calendario y gestione copias de seguridad.</p>
                     </div>
 
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">Correos del Equipo (Sincronización Google Calendar)</h4>
+                    <form onSubmit={handleChangePassword} className={`p-4 rounded-xl border space-y-4 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">🔒 Cambiar Contraseña Universal de Acceso</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Nueva Contraseña:</label>
+                          <input 
+                            type="password"
+                            placeholder="Nueva contraseña..."
+                            value={newPass}
+                            onChange={e => setNewPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Confirmar Contraseña:</label>
+                          <input 
+                            type="password"
+                            placeholder="Repita nueva contraseña..."
+                            value={confirmPass}
+                            onChange={e => setConfirmPass(e.target.value)}
+                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className={`block mb-1 font-bold ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>Correo de Recuperación:</label>
+                        <input 
+                          type="email"
+                          placeholder={recoveryEmailConfig}
+                          value={newRecoveryMail}
+                          onChange={e => setNewRecoveryMail(e.target.value)}
+                          className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                        />
+                      </div>
+
+                      {passMessage && (
+                        <p className={`text-xs font-bold p-2.5 rounded border ${passMessage.startsWith('✅') ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`}>
+                          {passMessage}
+                        </p>
+                      )}
+
+                      <button type="submit" className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-4 py-2.5 rounded text-xs shadow">
+                        Actualizar Credenciales en Nube
+                      </button>
+                    </form>
+
+                    <div className={`p-4 rounded-xl border space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">👥 Correos Electrónicos del Equipo (Sincronización Google Calendar)</h4>
+                      <p className="text-xs text-zinc-500">Configura hasta 6 correos que se precargarán automáticamente al agendar audiencias o actuaciones.</p>
+                      
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {teamEmails.map((mail, idx) => (
-                          <div key={idx} className="flex gap-2">
-                            <input 
-                              type="email"
-                              placeholder={`Correo colaborador ${idx + 1}`}
-                              value={mail}
-                              onChange={e => {
-                                const updated = [...teamEmails];
-                                updated[idx] = e.target.value;
-                                setTeamEmails(updated);
-                                updateTeamEmails(updated);
-                              }}
-                              className={`flex-1 border p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                            />
-                          </div>
+                          <input 
+                            key={idx}
+                            type="email"
+                            placeholder={`Correo ${idx + 1}...`}
+                            value={mail}
+                            onChange={(e) => {
+                              const updated = [...teamEmails];
+                              updated[idx] = e.target.value;
+                              setTeamEmails(updated);
+                              updateTeamEmails(updated);
+                            }}
+                            className={`border p-2.5 rounded text-xs outline-none ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'}`}
+                          />
                         ))}
                       </div>
                     </div>
 
-                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
+                    <div className={`p-4 rounded-xl border space-y-3 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <h4 className="text-xs font-bold text-orange-500 uppercase">🧬 Biometría y Resguardo de Datos</h4>
+                      <div className="flex flex-wrap gap-3">
+                        {biometricSupported && (
+                          <button 
+                            onClick={() => {
+                              const newVal = !biometricEnabled;
+                              setBiometricEnabled(newVal);
+                              localStorage.setItem('lex_biometric_enabled', newVal ? 'true' : 'false');
+                              alert(newVal ? '✅ Autenticación biométrica activada en este navegador.' : '❌ Autenticación biométrica desactivada.');
+                            }}
+                            className={`font-bold text-xs px-4 py-2.5 rounded border transition-colors ${biometricEnabled ? 'bg-emerald-600 text-white border-emerald-500' : (isDarkMode ? 'bg-zinc-800 text-zinc-300 border-zinc-700' : 'bg-zinc-200 text-zinc-800 border-zinc-300')}`}
+                          >
+                            {biometricEnabled ? '🧬 Huella Digital Activa (Desactivar)' : '🧬 Activar Inicio con Huella Digital'}
+                          </button>
+                        )}
 
-                    <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
-                      <h4 className="font-bold text-orange-500 uppercase">Cambiar Contraseña Universal y Correo de Recuperación</h4>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                          <label className="text-zinc-400 block mb-1">Nueva Contraseña:</label>
-                          <input 
-                            type="password"
-                            placeholder="Dejar en blanco para no cambiar"
-                            value={newPass}
-                            onChange={e => setNewPass(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-zinc-400 block mb-1">Confirmar Contraseña:</label>
-                          <input 
-                            type="password"
-                            placeholder="Repita la nueva contraseña"
-                            value={confirmPass}
-                            onChange={e => setConfirmPass(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-zinc-400 block mb-1">Nuevo Mail de Recuperación:</label>
-                          <input 
-                            type="email"
-                            placeholder={recoveryEmailConfig}
-                            value={newRecoveryMail}
-                            onChange={e => setNewRecoveryMail(e.target.value)}
-                            className={`w-full border p-2.5 rounded outline-none ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
-                          />
-                        </div>
+                        <button 
+                          onClick={handleDownloadFullBackup}
+                          className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow"
+                        >
+                          💾 Descargar Copia de Resguardo Completa (.txt)
+                        </button>
                       </div>
-
-                      {passMessage && (
-                        <p className="font-bold text-emerald-500 bg-emerald-500/10 p-2.5 rounded border border-emerald-500/20">{passMessage}</p>
-                      )}
-
-                      <button type="submit" className="bg-orange-500 text-black font-bold px-5 py-2.5 rounded hover:bg-orange-400">
-                        Actualizar Credenciales en la Nube
-                      </button>
-                    </form>
-
-                    <hr className={isDarkMode ? 'border-zinc-800' : 'border-zinc-200'} />
-
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-orange-500 uppercase">Resguardo y Copia de Seguridad</h4>
-                      <p className="text-xs text-zinc-400">Descargue un archivo de texto con toda la base de datos del estudio (expedientes, plazos, finanzas y procuración) para respaldo absoluto.</p>
-                      <button onClick={handleDownloadFullBackup} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-5 py-3 rounded shadow">
-                        💾 Descargar Copia de Resguardo Completa (Backup .txt)
-                      </button>
                     </div>
                   </div>
                 </div>
