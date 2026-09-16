@@ -1049,17 +1049,25 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vtoLiquidacion) return false;
     
-    // Leemos la fecha manejando el formato con barras (DD/MM/YYYY)
-    let fechaVenc;
-    const partesBarra = fc.vtoLiquidacion.split('/');
-    if (partesBarra.length === 3) {
-      fechaVenc = new Date(partesBarra[2], partesBarra[1] - 1, partesBarra[0]);
-    } else {
-      fechaVenc = new Date(fc.vtoLiquidacion);
+    // Extracción segura de Día, Mes y Año separados por barra o guion
+    let partes = [];
+    if (fc.vtoLiquidacion.includes('/')) {
+      partes = fc.vtoLiquidacion.split('/');
+    } else if (fc.vtoLiquidacion.includes('-')) {
+      partes = fc.vtoLiquidacion.split('-');
     }
     
+    if (partes.length !== 3) return false;
+
+    // Asumimos formato DD/MM/YYYY
+    const dia = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10) - 1;
+    const anio = parseInt(partes[2], 10);
+
+    const fechaVenc = new Date(anio, mes, dia);
     if (isNaN(fechaVenc)) return false;
 
+    // Sumamos los 5 años de prescripción fiscal
     const fechaPrescripcion = new Date(fechaVenc);
     fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
     
@@ -1069,6 +1077,7 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     const diffTime = fechaPrescripcion - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    // Retorna si faltan 60 días o menos, o si ya está vencida
     return diffDays <= 60 || diffDays < 0;
   });    
     
