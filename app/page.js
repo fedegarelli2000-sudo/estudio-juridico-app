@@ -1041,10 +1041,10 @@ export default function Home() {
     return diffDays <= 10;
   });
 const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() => {
+    if (typeof window === 'undefined') return [];
     const saved = localStorage.getItem('lex_prescripciones_cumplidas');
     return saved ? JSON.parse(saved) : [];
   });
-
   const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vencimientoLiquidacion) return false;
