@@ -1040,7 +1040,15 @@ export default function Home() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays <= 10;
   });
-
+const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
+    if (!fc.vencimientoLiquidacion) return false;
+    const fechaVenc = new Date(fc.vencimientoLiquidacion);
+    const fechaPrescripcion = new Date(fechaVenc);
+    fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
+    const diffTime = fechaPrescripcion - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 30;
+  });
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
@@ -3054,7 +3062,97 @@ Firma Abogado / Apoderado`;
                           Registrar Título Fiscal
                         </button>
                       </form>
+{/* --- CUADRO DE PLAZOS DE PROCURACIÓN --- */}
+<div className={`p-5 rounded-2xl border my-4 shadow-md ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-100' : 'bg-white border-zinc-200 text-zinc-900'}`}>
+  <h4 className="text-sm font-black uppercase text-orange-500 mb-3">
+    🏛️ Cuadro de Plazos y Proceso de Ejecución Fiscal (Ley 9024 y D.R. 2445/2023)
+  </h4>
+  <div className="overflow-x-auto">
+    <table className="w-full text-left text-xs border-collapse">
+      <thead>
+        <tr className={`border-b ${isDarkMode ? 'border-zinc-800 text-orange-400' : 'border-zinc-200 text-orange-600'}`}>
+          <th className="p-2">Etapa / Momento Procesal</th>
+          <th className="p-2">Acciones y Plazos del Procurador Fiscal</th>
+          <th className="p-2">Acciones y Plazos de la Contraparte</th>
+          <th className="p-2">Base Legal</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-zinc-800/50">
+        <tr>
+          <td className="p-2 font-bold">1. Gestión Extrajudicial</td>
+          <td className="p-2">Intimación fehaciente dentro de los 30 días corridos de recibidos los títulos.</td>
+          <td className="p-2">Abonar en el término perentorio de 10 días corridos.</td>
+          <td className="p-2 text-[10px] text-zinc-400">Dec. 2445/23: Art. 118 y 119</td>
+        </tr>
+        <tr>
+          <td className="p-2 font-bold">2. Inicio de Demanda</td>
+          <td className="p-2">Iniciar cobro judicial dentro de las 48 hs de vencido el plazo anterior.</td>
+          <td className="p-2">Sin actuaciones en esta fase inicial.</td>
+          <td className="p-2 text-[10px] text-zinc-400">Ley 9024: Art. 2</td>
+        </tr>
+        <tr>
+          <td className="p-2 font-bold">3. Notificación y Citación</td>
+          <td className="p-2">Notificar al demandado en un plazo máximo de 90 días corridos.</td>
+          <td className="p-2">Citado a estar a derecho por el término de 3 días.</td>
+          <td className="p-2 text-[10px] text-zinc-400">Ley 9024: Art. 2, 4</td>
+        </tr>
+        <tr>
+          <td className="p-2 font-bold">4. Oposición de Excepciones</td>
+          <td className="p-2">Producir pruebas en plazo fatal de 15 días hábiles.</td>
+          <td className="p-2">Oponer excepciones en 3 días. Producir prueba en 15 días hábiles.</td>
+          <td className="p-2 text-[10px] text-zinc-400">Ley 9024: Art. 6, 7</td>
+        </tr>
+        <tr>
+          <td className="p-2 font-bold">5. Ejecución y Liquidación</td>
+          <td className="p-2">Llevar el juicio a estado de ejecución en 150 días corridos.</td>
+          <td className="p-2">Impugnar liquidación o pedir regulación de honorarios en 3 días.</td>
+          <td className="p-2 text-[10px] text-zinc-400">Ley 9024: Art. 7, 7 bis</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
+{/* --- GESTOR DE PLANTILLAS EDITABLES --- */}
+<div className={`p-5 rounded-2xl border my-4 shadow-md ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-100' : 'bg-white border-zinc-200 text-zinc-900'}`}>
+  <h4 className="text-sm font-black uppercase text-orange-500 mb-3">
+    📝 Plantillas de Demandas y Cédulas (Guardado Local)
+  </h4>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-2">
+      <label className="text-xs font-bold">Seleccionar Modelo:</label>
+      <div className="space-y-1">
+        <button
+          onClick={() => alert('Seleccionado modelo de Demanda')}
+          className="w-full text-left px-3 py-2 text-xs rounded font-bold bg-orange-500 text-black"
+        >
+          Demanda de Apremio (CBA)
+        </button>
+        <button
+          onClick={() => alert('Seleccionado modelo de Cédula')}
+          className="w-full text-left px-3 py-2 text-xs rounded font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+        >
+          Cédula de Notificación
+        </button>
+      </div>
+    </div>
+    <div className="md:col-span-2 space-y-2">
+      <label className="text-xs font-bold">Contenido Personalizable:</label>
+      <textarea
+        defaultValue="Señor Juez de Ejecución Fiscal:\n\n[Procurador], por la Procuración de Rentas de la Provincia de Córdoba, constituyendo domicilio en...\n\nOBJETO: Promover ejecución fiscal contra [Contribuyente] por la suma de $[Monto] con más sus intereses y costas..."
+        rows={6}
+        className={`w-full p-3 text-xs rounded border outline-none font-mono ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+      />
+      <button
+        onClick={() => alert('¡Plantilla guardada con éxito en este dispositivo!')}
+        className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2 rounded shadow transition-all"
+      >
+        💾 Guardar Cambios de la Plantilla
+      </button>
+    </div>
+  </div>
+</div>
+                              
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-orange-500 uppercase">Títulos Ejecutivos Fiscales Activos</h4>
                         {fiscalCases.map(fc => (
