@@ -2520,52 +2520,19 @@ Firma Abogado / Apoderado`;
   <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Prescripciones a 5 Años)</h4>
   
   {urgentPrescriptionAlerts.length > 0 ? (
-  <div className="space-y-2">
-    {urgentPrescriptionAlerts.map(fc => {
-      const fechaCruda = fc.vtoLiquidacion || fc.fechaVencimientoLiquidacion || fc.vencimientoLiquidacion || fc.vtoLiq;
-      let diffDays = 0;
-      if (fechaCruda) {
-        let partes = fechaCruda.includes('/') ? fechaCruda.split('/') : fechaCruda.split('-');
-        if (partes.length === 3) {
-          let dia, mes, anio;
-          if (partes[0].length === 4) {
-            anio = parseInt(partes[0], 10);
-            mes = parseInt(partes[1], 10) - 1;
-            dia = parseInt(partes[2], 10);
-          } else {
-            dia = parseInt(partes[0], 10);
-            mes = parseInt(partes[1], 10) - 1;
-            anio = parseInt(partes[2], 10);
-          }
-          const fechaVenc = new Date(anio, mes, dia);
-          if (!isNaN(fechaVenc)) {
-            const fechaPrescripcion = new Date(fechaVenc);
-            fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
-            const hoy = new Date();
-            hoy.setHours(0, 0, 0, 0);
-            diffDays = Math.ceil((fechaPrescripcion - hoy) / (1000 * 60 * 60 * 24));
-          }
-        }
-      }
-
-      return (
+    <div className="space-y-2">
+      {urgentPrescriptionAlerts.map(fc => (
         <div 
-          key={fc.id}
+          key={fc.id} 
           className="p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs bg-amber-500/10"
         >
           <div>
-            {diffDays < 0 ? (
-              <span className="bg-red-900 text-red-200 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-                ⚠️ ¡PRESCRIPTO!
-              </span>
-            ) : (
-              <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-                ⚠️ PRESCRIPCIÓN PRÓXIMA
-              </span>
-            )}
+            <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+              ⚠️ PRESCRIPCIÓN PRÓXIMA
+            </span>
             <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
             <p className="text-[11px] text-zinc-400 mt-1">
-              Vto. Liquidación: <strong className="text-amber-500">{fechaCruda}</strong>
+              Vto. Liquidación: <strong className="text-amber-500">{fc.vtoLiquidacion}</strong>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -2588,14 +2555,15 @@ Firma Abogado / Apoderado`;
             </button>
           </div>
         </div>
-      );
-    })}
-  </div>
-) : (
-  <div className="text-zinc-400 text-xs italic py-2">
-    No hay causas fiscales próximas a prescribir en los siguientes 60 días. Todo al día.
-  </div>
-)}
+      ))}
+    </div>
+  ) : (
+    <div className="text-zinc-400 text-xs italic py-2">
+      No hay causas fiscales próximas a prescribir en los siguientes 60 días. Todo al día.
+    </div>
+  )}
+</div>
+
 {/* --- TARJETA VISUAL DE PRESCRIPCIÓN EN EL DASHBOARD --- */}
 {urgentPrescriptionAlerts.map(fc => {
   if (!fc.vencimientoLiquidacion) return null;
@@ -2730,6 +2698,7 @@ Firma Abogado / Apoderado`;
                     </div>
                   </div>
                 </div>
+              )}
 
               {activeTab === 'expedientes' && (
                 <div className="space-y-6 relative z-10">
@@ -4068,19 +4037,21 @@ Firma Abogado / Apoderado`;
                     </form>
 
                     <div className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-        <div>
-          <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Resguardo Completa (Backup Descargable)</h4>
-          <p className="text-[11px] text-zinc-400">Descargue un archivo de texto/JSON puro con todos los expedientes, clientes, movimientos y finanzas.</p>
-        </div>
-        <button onClick={handleDownloadFullBackup} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
-          Descargar Backup .txt
-        </button>
-<button onClick={handleDownloadFullBackup} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
-          Descargar Backup .txt
-        </button>
+                      <div>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Resguardo Completa (Backup Descargable)</h4>
+                        <p className="text-[11px] text-zinc-400">Descargue un archivo de texto/JSON puro con todos los expedientes, clientes, movimientos y finanzas.</p>
+                      </div>
+                      <button onClick={handleDownloadFullBackup} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
+                        Descargar Backup .txt
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </main>
       </div>
     </div>
-  </main>
-);
-}  );
+  );
 }
