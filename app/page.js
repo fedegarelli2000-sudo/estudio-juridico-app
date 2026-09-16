@@ -1045,7 +1045,7 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     const saved = localStorage.getItem('lex_prescripciones_cumplidas');
     return saved ? JSON.parse(saved) : [];
   });
-  const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
+  const urgentFiscalAlerts = fiscalCases.filter(fc => {
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vtoLiquidacion) return false;
     
