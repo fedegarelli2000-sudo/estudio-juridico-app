@@ -1046,6 +1046,9 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     return saved ? JSON.parse(saved) : [];
   });
   const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
+    // PRUEBA DE RAYOS X EN LA CONSOLA:
+    console.log("Causa:", fc.nroLiquidacion, "| Vto Liq:", fc.vencimientoLiquidacion, "| ID:", fc.id);
+
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vencimientoLiquidacion) return false;
     
@@ -1060,6 +1063,8 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     
     const diffTime = fechaPrescripcion - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    console.log("-> Días restantes para prescribir:", diffDays);
     
     return diffDays <= 60 || diffDays < 0;
   });
