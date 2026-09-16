@@ -1046,10 +1046,13 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     return saved ? JSON.parse(saved) : [];
   });
   const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
+    // IMPRIMIMOS EN LA CONSOLA DEL NAVEGADOR PARA VER QUÉ TIENE LA CAUSA
+    console.log("Causa analizada:", fc);
+    console.log("vtoLiquidacion detectado:", fc.vtoLiquidacion);
+
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vtoLiquidacion) return false;
     
-    // Extracción segura de Día, Mes y Año separados por barra o guion
     let partes = [];
     if (fc.vtoLiquidacion.includes('/')) {
       partes = fc.vtoLiquidacion.split('/');
@@ -1059,7 +1062,6 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     
     if (partes.length !== 3) return false;
 
-    // Asumimos formato DD/MM/YYYY
     const dia = parseInt(partes[0], 10);
     const mes = parseInt(partes[1], 10) - 1;
     const anio = parseInt(partes[2], 10);
@@ -1067,7 +1069,6 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     const fechaVenc = new Date(anio, mes, dia);
     if (isNaN(fechaVenc)) return false;
 
-    // Sumamos los 5 años de prescripción fiscal
     const fechaPrescripcion = new Date(fechaVenc);
     fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
     
@@ -1077,10 +1078,8 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     const diffTime = fechaPrescripcion - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    // Retorna si faltan 60 días o menos, o si ya está vencida
     return diffDays <= 60 || diffDays < 0;
   });    
-    
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
