@@ -1046,13 +1046,18 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     return saved ? JSON.parse(saved) : [];
   });
   const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
-    // PRUEBA DE RAYOS X EN LA CONSOLA:
-    console.log("Causa:", fc.nroLiquidacion, "| Vto Liq:", fc.vencimientoLiquidacion, "| ID:", fc.id);
-
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vtoLiquidacion) return false;
     
-    const fechaVenc = new Date(fc.vtoLiquidacion);
+    // Leemos la fecha manejando el formato con barras (DD/MM/YYYY)
+    let fechaVenc;
+    const partesBarra = fc.vtoLiquidacion.split('/');
+    if (partesBarra.length === 3) {
+      fechaVenc = new Date(partesBarra[2], partesBarra[1] - 1, partesBarra[0]);
+    } else {
+      fechaVenc = new Date(fc.vtoLiquidacion);
+    }
+    
     if (isNaN(fechaVenc)) return false;
 
     const fechaPrescripcion = new Date(fechaVenc);
@@ -1064,10 +1069,9 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     const diffTime = fechaPrescripcion - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    console.log("-> Días restantes para prescribir:", diffDays);
-    
     return diffDays <= 60 || diffDays < 0;
-  });
+  });    
+    
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
