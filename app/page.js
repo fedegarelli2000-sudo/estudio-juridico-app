@@ -2535,10 +2535,22 @@ Firma Abogado / Apoderado`;
 
 {/* --- TARJETA VISUAL DE PRESCRIPCIÓN EN EL DASHBOARD --- */}
 {urgentPrescriptionAlerts.map(fc => {
-  const fechaVenc = new Date(fc.vencimientoLiquidacion);
+  if (!fc.vencimientoLiquidacion) return null;
+  const partes = fc.vencimientoLiquidacion.split('T')[0].split('-');
+  let fechaVenc;
+  if (partes.length === 3) {
+    fechaVenc = new Date(partes[0], partes[1] - 1, partes[2]);
+  } else {
+    fechaVenc = new Date(fc.vencimientoLiquidacion);
+  }
+  if (isNaN(fechaVenc)) return null;
+
   const fechaPresc = new Date(fechaVenc);
   fechaPresc.setFullYear(fechaPresc.getFullYear() + 5);
-  const diffDays = Math.ceil((fechaPresc - new Date()) / (1000 * 60 * 60 * 24));
+  
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const diffDays = Math.ceil((fechaPresc - hoy) / (1000 * 60 * 60 * 24));
   
   return (
     <div key={fc.id} className="p-4 rounded-xl border border-orange-500/50 bg-orange-500/10 mb-3 flex items-center justify-between">
@@ -2569,8 +2581,7 @@ Firma Abogado / Apoderado`;
       </div>
     </div>
   );
-})}
-                    
+})}                    
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
