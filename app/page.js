@@ -1045,7 +1045,7 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     const saved = localStorage.getItem('lex_prescripciones_cumplidas');
     return saved ? JSON.parse(saved) : [];
   });
-  const urgentFiscalAlerts = fiscalCases.filter(fc => {
+  const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vtoLiquidacion) return false;
     
@@ -2505,9 +2505,9 @@ Firma Abogado / Apoderado`;
 
                   <div className={`border p-5 rounded-xl space-y-3 backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                     <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
-                    {urgentFiscalAlerts.length > 0 ? (
+                    {urgentPrescriptionAlerts.length > 0 ? (
                       <div className="space-y-2">
-                        {urgentFiscalAlerts.map(fc => (
+                        {urgentPrescriptionAlerts.map(fc => (
                           <div 
                             key={fc.id} 
                             className={`p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950' : 'bg-amber-50/50'}`}
