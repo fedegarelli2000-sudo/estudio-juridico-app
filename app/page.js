@@ -2531,12 +2531,11 @@ Firma Abogado / Apoderado`;
               ⚠️ PRESCRIPCIÓN PRÓXIMA
             </span>
             <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
-            <p className="text-[11px] text-zinc-400 mt-1">
-              Prescripción: <strong className="text-amber-500">{fc.plazoPrescripcion || fc.fechaVencimientoLiquidacion || 'Sin fecha'}</strong>
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
+<p className="text-[11px] text-zinc-400 mt-1">
+            Prescripción: <strong className="text-amber-500">{fc.plazoPrescripcion || fc.fechaPrescripcion || fc.prescripcion || fc.fechaVencimientoLiquidacion || fc.vtoLiquidacion || fc.vencimiento || 'Sin fecha'}</strong>
+          </p>
+        </div>
+        <div className="flex items-center gap-2">            <button
               onClick={() => setSelectedFiscalId(fc.id)}
               className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded hover:bg-orange-400 transition-colors"
             >
