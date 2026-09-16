@@ -4068,14 +4068,14 @@ Firma Abogado / Apoderado`;
                     </form>
 
                     <div className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <div>
-                        <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Resguardo Completa (Backup Descargable)</h4>
-                        <p className="text-[11px] text-zinc-400">Descargue un archivo de texto/JSON puro con todos los expedientes, clientes, movimientos y finanzas.</p>
-                      </div>
-                      <button onClick={handleDownloadFullBackup} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
-                        Descargar Backup .txt
-                      </button>
-</div>
+        <div>
+          <h4 className="text-xs font-bold text-orange-500 uppercase">💾 Copia de Resguardo Completa (Backup Descargable)</h4>
+          <p className="text-[11px] text-zinc-400">Descargue un archivo de texto/JSON puro con todos los expedientes, clientes, movimientos y finanzas.</p>
+        </div>
+        <button onClick={handleDownloadFullBackup} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
+          Descargar Backup .txt
+        </button>
+      </div>
     </main>
   );
 }
