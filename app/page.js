@@ -2730,7 +2730,6 @@ Firma Abogado / Apoderado`;
                     </div>
                   </div>
                 </div>
-              )}
 
               {activeTab === 'expedientes' && (
                 <div className="space-y-6 relative z-10">
@@ -4079,10 +4078,7 @@ Firma Abogado / Apoderado`;
                     </div>
                   </div>
                 </div>
-              )}
-            </>
-          )}
-        </main>
+            </main>
       </div>
     </div>
   );
