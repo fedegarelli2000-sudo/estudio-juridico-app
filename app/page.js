@@ -1049,11 +1049,42 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
 const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     
-    // Incluimos fechaVencimientoLiquidacion que es el nombre real del campo
     const fechaCruda = fc.vtoLiquidacion || fc.fechaVencimientoLiquidacion || fc.vencimientoLiquidacion || fc.vtoLiq;
-    return fechaCruda ? true : false;
-  });
-  
+    if (!fechaCruda) return false;
+    
+    let partes = [];
+    if (fechaCruda.includes('/')) {
+      partes = fechaCruda.split('/');
+    } else if (fechaCruda.includes('-')) {
+      partes = fechaCruda.split('-');
+    }
+    
+    if (partes.length !== 3) return false;
+
+    let dia, mes, anio;
+    if (partes[0].length === 4) {
+      anio = parseInt(partes[0], 10);
+      mes = parseInt(partes[1], 10) - 1;
+      dia = parseInt(partes[2], 10);
+    } else {
+      dia = parseInt(partes[0], 10);
+      mes = parseInt(partes[1], 10) - 1;
+      anio = parseInt(partes[2], 10);
+    }
+
+    const fechaVenc = new Date(anio, mes, dia);
+    if (isNaN(fechaVenc)) return false;
+
+    const fechaPrescripcion = new Date(fechaVenc);
+    fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    const diffTime = fechaPrescripcion - hoy;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays <= 60 || diffDays < 0;
+  });  
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
