@@ -1049,10 +1049,11 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
 const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     
-    // TRUCO DE FUERZA BRUTA: Si tiene cargada una fecha de liquidación, la mostramos en el Dashboard
-    const fechaCruda = fc.vtoLiquidacion || fc.vencimientoLiquidacion || fc.fechaVencimiento || fc.vtoLiq;
+    // Incluimos fechaVencimientoLiquidacion que es el nombre real del campo
+    const fechaCruda = fc.vtoLiquidacion || fc.fechaVencimientoLiquidacion || fc.vencimientoLiquidacion || fc.vtoLiq;
     return fechaCruda ? true : false;
-  });  
+  });
+  
   if (!isAuthenticated) {
     return (
       <div className={`flex h-screen font-sans items-center justify-center p-4 ${isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-100 text-zinc-900'}`}>
