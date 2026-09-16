@@ -2532,7 +2532,7 @@ Firma Abogado / Apoderado`;
             </span>
             <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
             <p className="text-[11px] text-zinc-400 mt-1">
-              Vto. Liquidación: <strong className="text-amber-500">{fc.vtoLiquidacion}</strong>
+              Prescripción: <strong className="text-amber-500">{fc.plazoPrescripcion || fc.fechaVencimientoLiquidacion || 'Sin fecha'}</strong>
             </p>
           </div>
           <div className="flex items-center gap-2">
