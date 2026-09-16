@@ -2527,9 +2527,15 @@ Firma Abogado / Apoderado`;
           className="p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs bg-amber-500/10"
         >
           <div>
-            <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-              ⚠️ PRESCRIPCIÓN PRÓXIMA
-            </span>
+            {diffDays < 0 ? (
+  <span className="bg-red-900 text-red-200 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+    ⚠️ ¡PRESCRIPTO!
+  </span>
+) : (
+  <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+    ⚠️ PRESCRIPCIÓN PRÓXIMA
+  </span>
+)}
             <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
             <p className="text-[11px] text-zinc-400 mt-1">
               Vto. Liquidación: <strong className="text-amber-500">{fc.vtoLiquidacion}</strong>
