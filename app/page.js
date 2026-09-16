@@ -1040,14 +1040,20 @@ export default function Home() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays <= 10;
   });
-const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
+const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() => {
+    const saved = localStorage.getItem('lex_prescripciones_cumplidas');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
+    if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vencimientoLiquidacion) return false;
     const fechaVenc = new Date(fc.vencimientoLiquidacion);
     const fechaPrescripcion = new Date(fechaVenc);
     fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
     const diffTime = fechaPrescripcion - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays <= 30 || diffDays < 0;
+    return diffDays <= 60 || diffDays < 0;
   });
   if (!isAuthenticated) {
     return (
@@ -2527,6 +2533,44 @@ Firma Abogado / Apoderado`;
                     )}
                   </div>
 
+{/* --- TARJETA VISUAL DE PRESCRIPCIÓN EN EL DASHBOARD --- */}
+{urgentPrescriptionAlerts.map(fc => {
+  const fechaVenc = new Date(fc.vencimientoLiquidacion);
+  const fechaPresc = new Date(fechaVenc);
+  fechaPresc.setFullYear(fechaPresc.getFullYear() + 5);
+  const diffDays = Math.ceil((fechaPresc - new Date()) / (1000 * 60 * 60 * 24));
+  
+  return (
+    <div key={fc.id} className="p-4 rounded-xl border border-orange-500/50 bg-orange-500/10 mb-3 flex items-center justify-between">
+      <div>
+        <span className="bg-orange-500 text-black font-bold text-[10px] px-2 py-0.5 rounded uppercase mr-2">
+          {diffDays < 0 ? '¡PRESCRIPTO!' : `Prescribe en ${diffDays} días`}
+        </span>
+        <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+        <p className="text-xs text-zinc-400 mt-1">Fecha límite de prescripción (5 años): {fechaPresc.toLocaleDateString()}</p>
+      </div>
+      <div className="flex gap-2">
+        <button 
+          onClick={() => seleccionarCausa(fc.id)}
+          className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-3 py-1.5 rounded transition-all"
+        >
+          Revisar Causa →
+        </button>
+        <button 
+          onClick={() => {
+            const actualizadas = [...prescripcionesCumplidas, fc.id];
+            setPrescripcionesCumplidas(actualizadas);
+            localStorage.setItem('lex_prescripciones_cumplidas', JSON.stringify(actualizadas));
+          }}
+          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-bold text-xs px-3 py-1.5 rounded transition-all border border-zinc-700"
+        >
+          ✓ Marcar como Listo
+        </button>
+      </div>
+    </div>
+  );
+})}
+                    
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
