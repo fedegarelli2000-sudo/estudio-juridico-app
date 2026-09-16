@@ -1048,11 +1048,19 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
   const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
     if (prescripcionesCumplidas.includes(fc.id)) return false;
     if (!fc.vencimientoLiquidacion) return false;
+    
     const fechaVenc = new Date(fc.vencimientoLiquidacion);
+    if (isNaN(fechaVenc)) return false;
+
     const fechaPrescripcion = new Date(fechaVenc);
     fechaPrescripcion.setFullYear(fechaPrescripcion.getFullYear() + 5);
-    const diffTime = fechaPrescripcion - today;
+    
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    const diffTime = fechaPrescripcion - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
     return diffDays <= 60 || diffDays < 0;
   });
   if (!isAuthenticated) {
