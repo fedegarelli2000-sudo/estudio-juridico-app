@@ -4075,9 +4075,7 @@ Firma Abogado / Apoderado`;
                       <button onClick={handleDownloadFullBackup} className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-4 py-2.5 rounded shadow">
                         Descargar Backup .txt
                       </button>
-            </div>
-        </div>
-      </div>
+</div>
     </main>
   );
 }
