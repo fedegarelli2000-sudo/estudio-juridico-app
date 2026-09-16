@@ -2503,52 +2503,53 @@ Firma Abogado / Apoderado`;
                     </div>
                   </div>
 
-                  <div className={`border p-5 rounded-xl space-y-3 backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
-                    <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Próximos Vencimientos)</h4>
-                    {urgentPrescriptionAlerts.length > 0 ? (
-                      <div className="space-y-2">
-                        {urgentPrescriptionAlerts.map(fc => (
-                          <div 
-                            key={fc.id} 
-                            className={`p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs ${isDarkMode ? 'bg-zinc-950' : 'bg-amber-50/50'}`}
-                          >
-                            <div>
-                              <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-                                VENCE PRONTO
-                              </span>
-                              <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
-                              <p className="text-[11px] text-zinc-500 mt-1">
-                                Vencimiento Excepción (Demandado): <strong className="text-amber-500">{formatDateToArg(fc.plazoExcepcionesFecha)}</strong>
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button 
-                                onClick={() => setSelectedFiscalId(fc.id)}
-                                className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded"
-                              >
-                                Revisar Causa →
-                              </button>
-                              <button 
-                                onClick={() => {
-                                  const updated = fiscalCases.map(item => item.id === fc.id ? { ...item, alertaExcepcionCumplida: true } : item);
-                                  setFiscalCases(updated);
-                                  updateFiscalCases(updated);
-                                }}
-                                className={`font-bold text-xs px-3 py-1.5 rounded border transition-colors ${isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-emerald-400 border-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200 text-emerald-600 border-zinc-300'}`}
-                                title="Descartar o marcar alerta como cumplida"
-                              >
-                                ✓ Cumplida
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className={`text-xs italic p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-500' : 'bg-zinc-50 border-zinc-200 text-zinc-600'}`}>
-                        No hay vencimientos de excepciones próximos a vencer en los siguientes 10 días. Todo al día.
-                      </p>
-                    )}
-                  </div>
+                  <div className="border p-5 rounded-xl space-y-3 backdrop-blur-sm ${darkModeClasses}">
+  <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Prescripciones a 5 Años)</h4>
+  
+  {urgentPrescriptionAlerts.length > 0 ? (
+    <div className="space-y-2">
+      {urgentPrescriptionAlerts.map(fc => (
+        <div 
+          key={fc.id} 
+          className="p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs bg-amber-500/10"
+        >
+          <div>
+            <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
+              ⚠️ PRESCRIPCIÓN PRÓXIMA
+            </span>
+            <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+            <p className="text-[11px] text-zinc-400 mt-1">
+              Vto. Liquidación: <strong className="text-amber-500">{fc.vtoLiquidacion}</strong>
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedFiscalId(fc.id)}
+              className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded hover:bg-orange-400 transition-colors"
+            >
+              Revisar Causa →
+            </button>
+            <button
+              onClick={() => {
+                const cumplidasActuales = [...prescripcionesCumplidas, fc.id];
+                setPrescripcionesCumplidas(cumplidasActuales);
+                localStorage.setItem('lex_prescripciones_cumplidas', JSON.stringify(cumplidasActuales));
+              }}
+              className="font-bold text-xs px-3 py-1.5 rounded border transition-colors border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/20"
+              title="Descartar o marcar alerta como cumplida"
+            >
+              ✓ Cumplida
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-zinc-400 text-xs italic py-2">
+      No hay causas fiscales próximas a prescribir en los siguientes 60 días. Todo al día.
+    </div>
+  )}
+</div>
 
 {/* --- TARJETA VISUAL DE PRESCRIPCIÓN EN EL DASHBOARD --- */}
 {urgentPrescriptionAlerts.map(fc => {
