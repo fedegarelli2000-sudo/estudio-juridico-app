@@ -1050,9 +1050,9 @@ const [prescripcionesCumplidas, setPrescripcionesCumplidas] = React.useState(() 
     console.log("Causa:", fc.nroLiquidacion, "| Vto Liq:", fc.vencimientoLiquidacion, "| ID:", fc.id);
 
     if (prescripcionesCumplidas.includes(fc.id)) return false;
-    if (!fc.vencimientoLiquidacion) return false;
+    if (!fc.vtoLiquidacion) return false;
     
-    const fechaVenc = new Date(fc.vencimientoLiquidacion);
+    const fechaVenc = new Date(fc.vtoLiquidacion);
     if (isNaN(fechaVenc)) return false;
 
     const fechaPrescripcion = new Date(fechaVenc);
