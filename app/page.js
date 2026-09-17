@@ -2979,10 +2979,34 @@ Firma Abogado / Apoderado`;
                                 <div className="text-[9px] text-red-500 font-bold truncate">🎉 {holidayName}</div>
                               )}
                               {dayHearings.map(h => (
-                                <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded truncate shadow" title={`${h.title} (${h.tipoAudiencia})`}>
-                                  ⚖️ {h.tipoAudiencia}: {h.title}
-                                </div>
-                              ))}
+  <div key={h.id} className={`p-1.5 rounded shadow text-[10px] font-bold ${h.status === 'REALIZADA' ? 'bg-zinc-800 text-zinc-400 border border-zinc-700 line-through' : 'bg-orange-500 text-black'}`}>
+    <div className="flex items-center justify-between gap-1 mb-1">
+      <span>⚖️ {h.tipoAudiencia}: {h.title}</span>
+    </div>
+    <div className="flex items-center gap-1 pt-1 border-t border-black/20">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleHearingStatus(h.id);
+        }}
+        className="px-1.5 py-0.5 bg-black/20 hover:bg-black/40 rounded text-[9px] font-bold"
+      >
+        {h.status === 'REALIZADA' ? '✓ Hecha' : 'Marcar Lista'}
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (confirm('¿Eliminar esta audiencia?')) deleteHearing(h.id);
+        }}
+        className="px-1.5 py-0.5 bg-red-900/40 text-white hover:bg-red-900 rounded text-[9px] font-bold ml-auto"
+      >
+        🗑️ Borrar
+      </button>
+    </div>
+  </div>
+))}                              ))}
                             </div>
                           </div>
                         );
