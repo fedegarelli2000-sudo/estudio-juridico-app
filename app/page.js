@@ -26,6 +26,7 @@ export default function Home() {
 
   // --- ESTADO DEL BUSCADOR GLOBAL EN LA BARRA SUPERIOR ---
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [juzgadosSearch, setJuzgadosSearch] = useState('');
 
   // --- CONTROL DE ACCESO Y CONTRASEÑA UNIVERSAL EN NUBE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -139,6 +140,68 @@ export default function Home() {
   const [selectedFiscalId, setSelectedFiscalId] = useState(null);
 
   const [teamEmails, setTeamEmails] = useState(['fedegarelli2000@gmail.com', 'mmanginim@hotmail.com', 'estudiojuridicogarelli@gmail.com', '', '', '']);
+
+  const directorioJuzgadosRC = [
+                        { fuero: 'Mesa de atención ciudadana - RIO CUARTO', tel: '0358-4677860', mail: 'atencionciudadana-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Archivo Regional - RIO CUARTO', tel: '0358-4672142', mail: 'archivoreg-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Asesoria de niñez, adoles., viol familiar y de genero 1 turno - rio cuarto', tel: '0358-4677837', mail: 'asevfa1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Asesoria Letrada con Funciones Mult turno 1 - RIO CUARTO', tel: '0358-4677835', mail: 'asemuf1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Asesoria Letrada con Funciones Mult turno 2 - RIO CUARTO', tel: '0358-4677857', mail: 'asemuf2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Asesoria Letrada con Funciones Mult turno 3 - RIO CUARTO', tel: '0358-4677836', mail: 'asemuf3-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Camara de Apelacion Civil y cont. Administrativo 1  - RIO CUARTO', tel: '0358-4677821', mail: 'camcivmf1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Camara de Apelacion Civil y cont. Administrativo 2  - RIO CUARTO', tel: '0358-4677822', mail: 'camcivmf2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Camara del Crimen 2  - RIO CUARTO', tel: '0358-4677811', mail: 'campen2sec2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Camara del Crimen 1 - RIO CUARTO', tel: '0358-4677810', mail: 'campen1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Camara Laboral 1 secretaria 1 - RIO CUARTO', tel: '0358-4677830', mail: 'camlab1sec1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Camara Laboral 1 secretaria 2 - RIO CUARTO', tel: '0358-4677830', mail: 'camlab1sec2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Centro Judicial de Mediacion - RIO CUARTO', tel: '0358-4677838', mail: 'mediacion-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Delegacion Administracion General - RIO CUARTO', tel: '0358-4677848', mail: 'tribunales-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Direccion de Policia Judicial - RIO CUARTO', tel: '', mail: 'poljud-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Equipo Tecnico del Interior - RIO CUARTO', tel: '0358-4677840', mail: 'equitec-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Camara Civil y Familia- RIO CUARTO', tel: '0358-4677816', mail: 'fiscivc-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Camara del Crimen y Correccional - RIO CUARTO', tel: '0358-4677817', mail: 'fispenc-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Instruccion Movil de lucha contra el narcotrafico - RIO CUARTO', tel: '0358-4677858', mail: 'fispenmvnt-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Instruccion Multiple 3 - RIO CUARTO', tel: '0358-4677814', mail: 'fispen3-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Instruccion Multiple 4 - RIO CUARTO', tel: '0358-4677815', mail: 'fispen4-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Instruccion y Familia 1 - RIO CUARTO', tel: '0358-4677812', mail: 'fispen1-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Fiscalia de Instruccion y Familia 2 - RIO CUARTO', tel: '0358-4677813', mail: 'fispen2-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Intendencia - RIO CUARTO', tel: '0358-4677845', mail: 'intendencia-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 1 Familia 1 Secretaria 1 - RIO CUARTO', tel: '0358-4677823', mail: 'juzcivmf1sec1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 1 Familia 1 Secretaria 2 - RIO CUARTO', tel: '0358-4677823', mail: 'juzciv1mfsec2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 5 Familia 2 Secretaria 10 - RIO CUARTO', tel: '0358-4677827', mail: 'juzcivmf5sec10-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 5 Familia 2 Secretaria 9 - RIO CUARTO', tel: '0358-4677827', mail: 'juzcivmf5sec9-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 6 Secretaria 11 - RIO CUARTO', tel: '0358-4677828', mail: 'juzcivmf6sec11-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 6 Secretaria 12 - RIO CUARTO', tel: '0358-4677828', mail: 'juzcivmf6sec12-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil 7 Secretaria 13 - RIO CUARTO', tel: '0358-4677852', mail: 'juzcivmf7sec13-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 2 Secretaria 3 - RIO CUARTO', tel: '0358-4677824', mail: 'juzcivmf2sec3-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 2 Secretaria 4 - RIO CUARTO', tel: '0358-4677824', mail: 'juzcivmf2sec4-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 3 Secretaria 5 - RIO CUARTO', tel: '0358-4677825', mail: 'juzcivmf3sec5-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 3 Secretaria 6 - RIO CUARTO', tel: '0358-4677825', mail: 'juzcivmf3sec6-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 4 Secretaria 7 - RIO CUARTO', tel: '0358-4677826', mail: 'juzcivmf4sec7-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 4 Secretaria 8 - RIO CUARTO', tel: '0358-4677826', mail: 'juzcivmf4sec8-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado Civil Multiple 7 Secretaria 14 - RIO CUARTO', tel: '0358-4677852', mail: 'juzcivmf7sec14-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Conciliacion 1 - RIO CUARTO', tel: '0358-4677831', mail: 'juzlab1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Conciliacion 2 - RIO CUARTO', tel: '0358-4677832', mail: 'juzlab2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Control Secretaria 1 - RIO CUARTO', tel: '0358-4677819', mail: 'juzpenctsec1-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Control Secretaria 2 - RIO CUARTO', tel: '0358-4677819', mail: 'juzpenctsec2-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Ejecucion Penal - RIO CUARTO', tel: '0358-4677820', mail: 'juzpenej-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Niñez, Adol., Viol. Fliar, Pen. JUv. y Genero 1 Secretaria 1 - RIO CUARTO', tel: '0358-4677833', mail: 'juzvfa1sec1-rc2@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Niñez, Adol., Viol. Fliar, Pen. JUv. y Genero 1 Secretaria 2 - RIO CUARTO', tel: '0358-4677833', mail: 'juzvfa1sec2-rc2@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Niñez, Adol., Viol. Fliar, Pen. JUv. y Genero 2 Secretaria 3 - RIO CUARTO', tel: '0358-4677834', mail: 'juzvfa2sec3-rc2@justiciacordoba.gob.ar' },
+                        { fuero: 'Juzgado de Niñez, Adol., Viol. Fliar, Pen. JUv. y Genero 2 Secretaria 4 - RIO CUARTO', tel: '0358-4677834', mail: 'juzvfa2sec4-rc2@justiciacordoba.gob.ar' },
+                        { fuero: 'Medicina Forense - RIO CUARTO', tel: '0358-4677839', mail: 'medforense-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Oficiales de Justicia, Ujieres y Notificadores - RIO CUARTO', tel: '0358-4677841', mail: 'ojun-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Ujieres y Notificadores - RIO CUARTO', tel: '0358-4677842', mail: '' },
+                        { fuero: 'Oficina de Informática', tel: '0358-4677843', mail: '' },
+                        { fuero: 'Biblioteca', tel: '0358-4677844', mail: '' },
+                        { fuero: 'Oficina de Ejecuciones Particulares - RIO CUARTO', tel: '0358-4677854', mail: 'oficivep-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Oficina Unica de Ejecucion Fiscal - RIO CUARTO', tel: '0358-4677829', mail: 'ofucivef-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Policia Cientifica - RIO CUARTO', tel: '', mail: 'polcientifica-RC@justiciacordoba.gob.ar' },
+                        { fuero: 'Unidad de la Defensa Publica Oficial - RIO CUARTO', tel: 'NO POSEE', mail: 'udppen-rc@justiciacordoba.gob.ar' },
+                        { fuero: 'Unidad Judicial Número Uno', tel: '0358-4677846', mail: '' },
+                        { fuero: 'Unidad Judicial Número Dos', tel: '0358-4677847', mail: '' },
+                        { fuero: 'Unidad Judicial Número Tres', tel: '0358-4750061', mail: '' },
+  ];
 
   const formatDateToArg = (dateStr) => {
     if (!dateStr || dateStr.includes('Sin fecha') || dateStr.includes('Pendiente') || dateStr.includes('A calcular')) return dateStr;
@@ -4001,28 +4064,34 @@ Firma Abogado / Apoderado`;
               {activeTab === 'juzgados_rc' && (
                 <div className="space-y-6 relative z-10">
                   <div className={`border p-6 rounded-2xl shadow-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                    <div className="flex justify-between items-center border-b pb-3">
+                    <div className="flex flex-col md:flex-row justify-between items-center border-b pb-3 gap-3">
                       <div>
                         <h3 className="text-sm font-bold text-orange-500 uppercase">🏛️ Directorio de Juzgados y Tribunales • Río Cuarto</h3>
-                        <p className="text-xs text-zinc-500">Información de contacto, fueros y dependencias judiciales en la circunscripción.</p>
+                        <p className="text-xs text-zinc-500">Información de contacto, fueros y dependencias judiciales en la circunscripción ({directorioJuzgadosRC.length} dependencias cargadas).</p>
                       </div>
+                      <input
+                        type="text"
+                        placeholder="🔍 Buscar por oficina, fuero o número..."
+                        value={juzgadosSearch}
+                        onChange={(e) => setJuzgadosSearch(e.target.value)}
+                        className={`border p-2.5 rounded text-xs outline-none focus:border-orange-500 w-full md:w-72 ${isDarkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'}`}
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {[
-                        { fuero: 'Civil y Comercial Nº 1', tel: '0358-4678000', dir: 'Palacio de Tribunales - Alvear y Pringles' },
-                        { fuero: 'Civil y Comercial Nº 2', tel: '0358-4678001', dir: 'Palacio de Tribunales - Alvear y Pringles' },
-                        { fuero: 'Civil y Comercial Nº 12', tel: '0358-4678012', dir: 'Palacio de Tribunales - Alvear y Pringles' },
-                        { fuero: 'Juzgado Fiscal Río Cuarto', tel: '0358-4678050', dir: 'Sede Rentas / Tribunales Provinciales' },
-                        { fuero: 'Cámara del Trabajo', tel: '0358-4678020', dir: 'Palacio de Tribunales - 2do Piso' },
-                        { fuero: 'Fuero de Familia', tel: '0358-4678030', dir: 'Sede Tribunales II' }
-                      ].map((j, i) => (
+                      {directorioJuzgadosRC
+                        .filter(j => j.fuero.toLowerCase().includes(juzgadosSearch.toLowerCase()) || j.tel.toLowerCase().includes(juzgadosSearch.toLowerCase()) || j.mail.toLowerCase().includes(juzgadosSearch.toLowerCase()))
+                        .map((j, i) => (
                         <div key={i} className={`p-4 rounded-xl border text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                           <strong className={`text-sm ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{j.fuero}</strong>
-                          <p className="text-orange-500 font-bold">Tel: {j.tel}</p>
-                          <p className="text-zinc-500">Dirección: {j.dir}</p>
+                          <p className="text-orange-500 font-bold">Tel: {j.tel || 'No posee'}</p>
+                          {j.mail && <p className="text-zinc-500 break-all">Mail: {j.mail}</p>}
                         </div>
                       ))}
+
+                      {directorioJuzgadosRC.filter(j => j.fuero.toLowerCase().includes(juzgadosSearch.toLowerCase()) || j.tel.toLowerCase().includes(juzgadosSearch.toLowerCase()) || j.mail.toLowerCase().includes(juzgadosSearch.toLowerCase())).length === 0 && (
+                        <p className="text-zinc-500 text-xs italic col-span-2">No se encontraron dependencias que coincidan con la búsqueda.</p>
+                      )}
                     </div>
                   </div>
                 </div>
