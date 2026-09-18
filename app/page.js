@@ -100,6 +100,39 @@ export default function Home() {
     setIsAuthenticated(false);
   };
 
+  const handleToggleBiometric = async () => {
+    if (biometricEnabled) {
+      setBiometricEnabled(false);
+      localStorage.setItem('lex_biometric_enabled', 'false');
+      return;
+    }
+    if (!window.PublicKeyCredential) {
+      alert('Este dispositivo o navegador no soporta ingreso con huella digital / Face ID.');
+      return;
+    }
+    try {
+      const publicKey = {
+        challenge: new Uint8Array([21, 31, 105, 78, 18, 45, 99, 50]),
+        rp: { name: "Estudio Jurídico MM" },
+        user: {
+          id: new Uint8Array([1, 2, 3, 4]),
+          name: "usuario@estudio.com",
+          displayName: "Estudio Jurídico MM"
+        },
+        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+        authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+        timeout: 60000,
+        attestation: "none"
+      };
+      await navigator.credentials.create({ publicKey });
+      setBiometricEnabled(true);
+      localStorage.setItem('lex_biometric_enabled', 'true');
+      alert('✅ Ingreso con huella digital activado en este dispositivo.');
+    } catch (err) {
+      alert('No se pudo activar la huella digital. Verifique que su dispositivo tenga sensor de huella o Face ID configurado.');
+    }
+  };
+
   const handleRecoverPassword = (e) => {
     e.preventDefault();
     if (recoveryInputEmail.trim().toLowerCase() === recoveryEmailConfig.toLowerCase()) {
@@ -208,6 +241,24 @@ export default function Home() {
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
+  // HELPER: calcula días restantes y color de alerta para plazos de Perención/Prescripción (Procuración Fiscal)
+  // warnDays: a cuántos días antes empieza la alerta amarilla (default 30, configurable en Configuración)
+  const getPlazoStatus = (dateStr, warnDays) => {
+    const dias = warnDays || 30;
+    if (!dateStr || dateStr.includes('Pendiente') || dateStr.includes('A calcular') || dateStr.includes('Sin fecha')) {
+      return { diffDays: null, color: 'zinc', label: 'A calcular' };
+    }
+    const target = new Date(dateStr.includes('T') ? dateStr.split('T')[0] : dateStr);
+    if (isNaN(target)) return { diffDays: null, color: 'zinc', label: 'Fecha inválida' };
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((target - hoy) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { diffDays, color: 'red', label: `Vencido hace ${Math.abs(diffDays)} días` };
+    if (diffDays <= dias) return { diffDays, color: 'amber', label: `Vence en ${diffDays} días` };
+    return { diffDays, color: 'emerald', label: `Vence en ${diffDays} días` };
   };
 
   // FUNCIÓN AUXILIAR MEJORADA PARA PASAR MONTO NUMÉRICO A LETRAS (EN ESPAÑOL)
@@ -544,7 +595,7 @@ export default function Home() {
     let cidiStatus = 'Notificado vía Cédula/CIDI';
 
     const perDate = new Date(movDateObj);
-    perDate.setMonth(perDate.getMonth() + 6);
+    perDate.setFullYear(perDate.getFullYear() + 2); // Ley 9024, Art. 5° quinquies: 2 años en primera instancia
     perencionStr = perDate.toISOString().split('T')[0];
 
     if (newFiscalMovement.title.toLowerCase().includes('cédula') || newFiscalMovement.title.toLowerCase().includes('notificación') || newFiscalMovement.estadoProcesal.includes('3 días')) {
@@ -1177,7 +1228,20 @@ const urgentPrescriptionAlerts = fiscalCases.filter(fc => {
     const diffTime = fechaPrescripcion - hoy;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    return diffDays <= 60 || diffDays < 0;
+    return diffDays <= 30 || diffDays < 0;
+  });
+
+  const [perencionesCumplidas, setPerencionesCumplidas] = React.useState(() => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('lex_perenciones_cumplidas');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const urgentPerencionAlerts = fiscalCases.filter(fc => {
+    if (perencionesCumplidas.includes(fc.id)) return false;
+    if (!fc.plazoPerencion || fc.plazoPerencion.includes('Pendiente') || fc.plazoPerencion.includes('A calcular')) return false;
+    const status = getPlazoStatus(fc.plazoPerencion, 30);
+    return status.diffDays !== null && status.diffDays <= 30;
   });  
   if (!isAuthenticated) {
     return (
@@ -2293,8 +2357,20 @@ Firma Abogado / Apoderado`;
                 <div className={`grid grid-cols-1 md:grid-cols-4 gap-2 text-xs p-3 rounded border ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                   <div>📅 <strong>Vto. Liquidación:</strong> {formatDateToArg(selectedFiscalData.fechaVencimientoLiquidacion) || 'No especificada'}</div>
                   <div>⚠️ <strong className="text-amber-500">Vence Excepción (3d):</strong> {formatDateToArg(selectedFiscalData.plazoExcepcionesFecha)}</div>
-                  <div>⏳ <strong className="text-red-500">Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)}</div>
-                  <div>🔒 <strong className="text-purple-500">Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)}</div>
+                  {(() => {
+                    const perStatus = getPlazoStatus(selectedFiscalData.plazoPerencion, 30);
+                    const perColorClass = perStatus.color === 'red' ? 'text-red-500' : perStatus.color === 'amber' ? 'text-amber-500' : perStatus.color === 'emerald' ? 'text-emerald-500' : 'text-zinc-500';
+                    return (
+                      <div>⏳ <strong className={perColorClass}>Perención (Últ. Mov.):</strong> {formatDateToArg(selectedFiscalData.plazoPerencion)} {perStatus.diffDays !== null && <span className={perColorClass}>({perStatus.label})</span>}</div>
+                    );
+                  })()}
+                  {(() => {
+                    const presStatus = getPlazoStatus(selectedFiscalData.plazoPrescripcion, 30);
+                    const presColorClass = presStatus.color === 'red' ? 'text-red-500' : presStatus.color === 'amber' ? 'text-amber-500' : presStatus.color === 'emerald' ? 'text-emerald-500' : 'text-purple-500';
+                    return (
+                      <div>🔒 <strong className={presColorClass}>Prescripción (5 Años):</strong> {formatDateToArg(selectedFiscalData.plazoPrescripcion)} {presStatus.diffDays !== null && <span className={presColorClass}>({presStatus.label})</span>}</div>
+                    );
+                  })()}
                 </div>
 
                 <div className={`pt-2 flex justify-between items-center p-3 rounded border text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
@@ -2611,22 +2687,25 @@ Firma Abogado / Apoderado`;
                   </div>
 
                   <div className="border p-5 rounded-xl space-y-3 backdrop-blur-sm ${darkModeClasses}">
-  <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Procuración Fiscal (Prescripciones a 5 Años)</h4>
-  
+  <h4 className="text-xs font-bold text-orange-500 uppercase">🚨 Alertas Urgentes de Prescripción (Procuración Fiscal)</h4>
+
   {urgentPrescriptionAlerts.length > 0 ? (
     <div className="space-y-2">
-      {urgentPrescriptionAlerts.map(fc => (
-        <div 
-          key={fc.id} 
-          className="p-3 border border-amber-500/40 rounded flex justify-between items-center text-xs bg-amber-500/10"
+      {urgentPrescriptionAlerts.map(fc => {
+        const status = getPlazoStatus(fc.plazoPrescripcion, 30);
+        const isRed = status.color === 'red';
+        return (
+        <div
+          key={fc.id}
+          className={`p-3 border rounded flex justify-between items-center text-xs ${isRed ? 'border-red-500/50 bg-red-500/10' : 'border-amber-500/40 bg-amber-500/10'}`}
         >
           <div>
-            <span className="bg-amber-500/20 text-amber-500 font-bold px-2 py-0.5 rounded text-[10px] mr-2">
-              ⚠️ PRESCRIPCIÓN PRÓXIMA
+            <span className={`font-bold px-2 py-0.5 rounded text-[10px] mr-2 ${isRed ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>
+              {isRed ? '🔴 PRESCRIPTA' : '⚠️ PRESCRIPCIÓN PRÓXIMA'}
             </span>
             <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
             <p className="text-[11px] text-zinc-400 mt-1">
-              Vto. Liquidación: <strong className="text-amber-500">{fc.vtoLiquidacion}</strong>
+              Vence: <strong className={isRed ? 'text-red-500' : 'text-amber-500'}>{formatDateToArg(fc.plazoPrescripcion)}</strong> ({status.label})
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -2649,114 +2728,67 @@ Firma Abogado / Apoderado`;
             </button>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   ) : (
     <div className="text-zinc-400 text-xs italic py-2">
-      No hay causas fiscales próximas a prescribir en los siguientes 60 días. Todo al día.
+      No hay causas fiscales próximas a prescribir en los siguientes 30 días. Todo al día.
     </div>
   )}
 </div>
 
-{/* --- TARJETA VISUAL DE PRESCRIPCIÓN EN EL DASHBOARD --- */}
-{urgentPrescriptionAlerts.map(fc => {
-  if (!fc.vencimientoLiquidacion) return null;
-  const partes = fc.vencimientoLiquidacion.split('T')[0].split('-');
-  let fechaVenc;
-  if (partes.length === 3) {
-    fechaVenc = new Date(partes[0], partes[1] - 1, partes[2]);
-  } else {
-    fechaVenc = new Date(fc.vencimientoLiquidacion);
-  }
-  if (isNaN(fechaVenc)) return null;
+<div className="border p-5 rounded-xl space-y-3 backdrop-blur-sm ${darkModeClasses}">
+  <h4 className="text-xs font-bold text-orange-500 uppercase">⏳ Alertas Urgentes de Perención de Instancia (Procuración Fiscal)</h4>
 
-  const fechaPresc = new Date(fechaVenc);
-  fechaPresc.setFullYear(fechaPresc.getFullYear() + 5);
-  
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const diffDays = Math.ceil((fechaPresc - hoy) / (1000 * 60 * 60 * 24));
-  
-  return (
-    <div key={fc.id} className="p-4 rounded-xl border border-orange-500/50 bg-orange-500/10 mb-3 flex items-center justify-between">
-      <div>
-        <span className="bg-orange-500 text-black font-bold text-[10px] px-2 py-0.5 rounded uppercase mr-2">
-          {diffDays < 0 ? '¡PRESCRIPTO!' : `Prescribe en ${diffDays} días`}
-        </span>
-        <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
-        <p className="text-xs text-zinc-400 mt-1">Fecha límite de prescripción (5 años): {fechaPresc.toLocaleDateString()}</p>
-      </div>
-      <div className="flex gap-2">
-        <button 
-          onClick={() => seleccionarCausa(fc.id)}
-          className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-3 py-1.5 rounded transition-all"
+  {urgentPerencionAlerts.length > 0 ? (
+    <div className="space-y-2">
+      {urgentPerencionAlerts.map(fc => {
+        const status = getPlazoStatus(fc.plazoPerencion, 30);
+        const isRed = status.color === 'red';
+        return (
+        <div
+          key={fc.id}
+          className={`p-3 border rounded flex justify-between items-center text-xs ${isRed ? 'border-red-500/50 bg-red-500/10' : 'border-amber-500/40 bg-amber-500/10'}`}
         >
-          Revisar Causa →
-        </button>
-        <button 
-          onClick={() => {
-            const actualizadas = [...prescripcionesCumplidas, fc.id];
-            setPrescripcionesCumplidas(actualizadas);
-            localStorage.setItem('lex_prescripciones_cumplidas', JSON.stringify(actualizadas));
-          }}
-          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-bold text-xs px-3 py-1.5 rounded transition-all border border-zinc-700"
-        >
-          ✓ Marcar como Listo
-        </button>
-      </div>
+          <div>
+            <span className={`font-bold px-2 py-0.5 rounded text-[10px] mr-2 ${isRed ? 'bg-red-500/20 text-red-500' : 'bg-amber-500/20 text-amber-500'}`}>
+              {isRed ? '🔴 PERIMIDA' : '⏳ PERENCIÓN PRÓXIMA'}
+            </span>
+            <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
+            <p className="text-[11px] text-zinc-400 mt-1">
+              Vence: <strong className={isRed ? 'text-red-500' : 'text-amber-500'}>{formatDateToArg(fc.plazoPerencion)}</strong> ({status.label})
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedFiscalId(fc.id)}
+              className="bg-orange-500 text-black font-bold text-xs px-3 py-1.5 rounded hover:bg-orange-400 transition-colors"
+            >
+              Revisar Causa →
+            </button>
+            <button
+              onClick={() => {
+                const actualizadas = [...perencionesCumplidas, fc.id];
+                setPerencionesCumplidas(actualizadas);
+                localStorage.setItem('lex_perenciones_cumplidas', JSON.stringify(actualizadas));
+              }}
+              className="font-bold text-xs px-3 py-1.5 rounded border transition-colors border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/20"
+              title="Descartar o marcar alerta como cumplida (registrá un movimiento en la causa para renovar el plazo real)"
+            >
+              ✓ Cumplida
+            </button>
+          </div>
+        </div>
+        );
+      })}
     </div>
-  );
-})}             
-
-{/* --- TARJETA DE PRESCRIPCIÓN EN EL DASHBOARD --- */}
-{urgentPrescriptionAlerts.map(fc => {
-  if (!fc.vencimientoLiquidacion) return null;
-  const partes = fc.vencimientoLiquidacion.split('T')[0].split('-');
-  let fechaVenc;
-  if (partes.length === 3) {
-    fechaVenc = new Date(partes[0], partes[1] - 1, partes[2]);
-  } else {
-    fechaVenc = new Date(fc.vencimientoLiquidacion);
-  }
-  if (isNaN(fechaVenc)) return null;
-
-  const fechaPresc = new Date(fechaVenc);
-  fechaPresc.setFullYear(fechaPresc.getFullYear() + 5);
-  
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const diffDays = Math.ceil((fechaPresc - hoy) / (1000 * 60 * 60 * 24));
-  
-  return (
-    <div key={fc.id} className="p-4 rounded-xl border border-orange-500/50 bg-orange-500/10 mb-3 mt-3 flex items-center justify-between">
-      <div>
-        <span className="bg-orange-500 text-black font-bold text-[10px] px-2 py-0.5 rounded uppercase mr-2">
-          {diffDays < 0 ? '¡PRESCRIPTO!' : `Prescribe en ${diffDays} días`}
-        </span>
-        <span className="font-bold text-sm">Liq: {fc.nroLiquidacion} - {fc.contribuyente}</span>
-        <p className="text-xs text-zinc-400 mt-1">Fecha límite de prescripción (5 años): {fechaPresc.toLocaleDateString()}</p>
-      </div>
-      <div className="flex gap-2">
-        <button 
-          onClick={() => seleccionarCausa(fc.id)}
-          className="bg-orange-500 hover:bg-orange-400 text-black font-bold text-xs px-3 py-1.5 rounded transition-all"
-        >
-          Revisar Causa →
-        </button>
-        <button 
-          onClick={() => {
-            const actualizadas = [...prescripcionesCumplidas, fc.id];
-            setPrescripcionesCumplidas(actualizadas);
-            localStorage.setItem('lex_prescripciones_cumplidas', JSON.stringify(actualizadas));
-          }}
-          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-bold text-xs px-3 py-1.5 rounded transition-all border border-zinc-700"
-        >
-          ✓ Marcar como Listo
-        </button>
-      </div>
+  ) : (
+    <div className="text-zinc-400 text-xs italic py-2">
+      No hay causas fiscales próximas a perimir en los siguientes 30 días. Todo al día.
     </div>
-  );
-})}
+  )}
+</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className={`border p-5 rounded-xl backdrop-blur-sm ${isDarkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
                       <h4 className="text-xs font-bold text-orange-500 uppercase mb-3">Próximos Vencimientos Procesales</h4>
@@ -4172,6 +4204,27 @@ Firma Abogado / Apoderado`;
                         Actualizar Credenciales en la Nube
                       </button>
                     </form>
+
+                    <div className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      <div>
+                        <h4 className="text-xs font-bold text-orange-500 uppercase">🧬 Ingreso con Huella Digital / Face ID</h4>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          {biometricSupported
+                            ? 'Permite desbloquear la app con la huella o el reconocimiento facial del dispositivo, sin escribir la contraseña.'
+                            : 'Este dispositivo o navegador no soporta ingreso biométrico.'}
+                        </p>
+                        <p className="text-[11px] font-bold mt-1">
+                          Estado: <span className={biometricEnabled ? 'text-emerald-500' : 'text-zinc-500'}>{biometricEnabled ? 'Activada' : 'Desactivada'}</span>
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleToggleBiometric}
+                        disabled={!biometricSupported}
+                        className={`font-bold text-xs px-4 py-2.5 rounded shadow transition-colors ${!biometricSupported ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed' : biometricEnabled ? 'bg-zinc-800 hover:bg-zinc-700 text-red-400 border border-zinc-700' : 'bg-orange-500 hover:bg-orange-400 text-black'}`}
+                      >
+                        {biometricEnabled ? 'Desactivar' : 'Activar Huella'}
+                      </button>
+                    </div>
 
                     <div className={`p-4 rounded-xl border flex justify-between items-center ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
                       <div>
