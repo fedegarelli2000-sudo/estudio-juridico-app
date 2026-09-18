@@ -823,6 +823,7 @@ export default function Home() {
     observaciones: '',
     assignedMails: [] 
   });
+  const [editingHearingId, setEditingHearingId] = useState(null);
 
   const [newTask, setNewTask] = useState({ caseId: '', title: '', priority: 'MEDIA' });
 
@@ -844,7 +845,29 @@ export default function Home() {
   };
 
   const deleteHearing = (hearingId) => {
+    if (!confirm('¿Está seguro de eliminar esta audiencia? Esta acción no se puede deshacer.')) return;
     updateHearings(hearings.filter(h => h.id !== hearingId));
+    if (editingHearingId === hearingId) cancelEditHearing();
+  };
+
+  const startEditHearing = (hearing) => {
+    setNewHearing({
+      caseId: hearing.caseId || '',
+      title: hearing.title || '',
+      date: hearing.date || '',
+      location: hearing.location || '',
+      tipoAudiencia: hearing.tipoAudiencia || 'Preliminar',
+      modalidad: hearing.modalidad || 'Presencial',
+      enlaceVideo: hearing.enlaceVideo || '',
+      observaciones: hearing.observaciones || '',
+      assignedMails: hearing.assignedMails || []
+    });
+    setEditingHearingId(hearing.id);
+  };
+
+  const cancelEditHearing = () => {
+    setEditingHearingId(null);
+    setNewHearing({ caseId: '', title: '', date: '', location: '', tipoAudiencia: 'Preliminar', modalidad: 'Presencial', enlaceVideo: '', observaciones: '', assignedMails: [] });
   };
 
   const deleteDeadline = (deadlineId) => {
@@ -998,6 +1021,14 @@ export default function Home() {
     if (!newHearing.title || !newHearing.date) return;
 
     const caseTarget = selectedCaseId || newHearing.caseId || cases[0]?.id || '1';
+
+    if (editingHearingId) {
+      updateHearings(hearings.map(h => h.id === editingHearingId ? { ...h, ...newHearing, caseId: caseTarget } : h));
+      setEditingHearingId(null);
+      setNewHearing({ caseId: caseTarget, title: '', date: '', location: '', tipoAudiencia: 'Preliminar', modalidad: 'Presencial', enlaceVideo: '', observaciones: '', assignedMails: [] });
+      return;
+    }
+
     const hearingObj = { ...newHearing, caseId: caseTarget, id: Date.now().toString(), status: 'PENDIENTE' };
     updateHearings([...hearings, hearingObj]);
 
@@ -2979,8 +3010,12 @@ Firma Abogado / Apoderado`;
                                 <div className="text-[9px] text-red-500 font-bold truncate">🎉 {holidayName}</div>
                               )}
                               {dayHearings.map(h => (
-                                <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded truncate shadow" title={`${h.title} (${h.tipoAudiencia})`}>
-                                  ⚖️ {h.tipoAudiencia}: {h.title}
+                                <div key={h.id} className="bg-orange-500 text-black text-[9px] font-bold p-1 rounded shadow flex items-center justify-between gap-1" title={`${h.title} (${h.tipoAudiencia})`}>
+                                  <span className="truncate">⚖️ {h.tipoAudiencia}: {h.title}</span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button type="button" onClick={() => startEditHearing(h)} className="hover:text-white" title="Editar audiencia">✏️</button>
+                                    <button type="button" onClick={() => deleteHearing(h.id)} className="hover:text-red-900" title="Eliminar audiencia">✕</button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -3031,8 +3066,41 @@ Firma Abogado / Apoderado`;
                     </div>
                   </div>
 
+                  <div className={`border p-5 rounded-xl space-y-3 shadow-xl ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    <h3 className="text-xs font-bold text-orange-500 uppercase">📋 Listado de Audiencias (Editar / Eliminar / Reprogramar)</h3>
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {hearings.length === 0 && (
+                        <p className="text-zinc-500 text-xs italic">No hay audiencias cargadas.</p>
+                      )}
+                      {[...hearings].sort((a, b) => new Date(a.date) - new Date(b.date)).map(h => (
+                        <div key={h.id} className={`flex flex-col md:flex-row md:items-center justify-between gap-2 p-2.5 rounded border text-xs ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                          <div className="min-w-0">
+                            <p className={`font-bold truncate ${isDarkMode ? 'text-white' : 'text-zinc-900'}`}>{h.tipoAudiencia}: {h.title}</p>
+                            <p className="text-zinc-500">{formatDateToArg(h.date?.split('T')[0])} {h.date?.split('T')[1] ? `- ${h.date.split('T')[1]}` : ''} · {h.modalidad} · {h.status}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button type="button" onClick={() => toggleHearingStatus(h.id)} className={`font-bold px-2 py-1 rounded border ${isDarkMode ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800' : 'border-zinc-300 text-zinc-700 hover:bg-zinc-100'}`}>
+                              {h.status === 'REALIZADA' ? 'Marcar Pendiente' : 'Marcar Realizada'}
+                            </button>
+                            <button type="button" onClick={() => startEditHearing(h)} className="font-bold px-2 py-1 rounded bg-orange-500 hover:bg-orange-400 text-black">
+                              Editar
+                            </button>
+                            <button type="button" onClick={() => deleteHearing(h.id)} className="font-bold px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white">
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <form onSubmit={handleAddHearingAndSyncGoogle} className={`border p-5 rounded-xl space-y-4 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                    <h3 className="text-xs font-bold text-orange-500 uppercase">+ Agendar y Sincronizar Nueva Audiencia (Bidireccional y Google Calendar)</h3>
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <h3 className="text-xs font-bold text-orange-500 uppercase">{editingHearingId ? '✏️ Editando Audiencia Seleccionada' : '+ Agendar y Sincronizar Nueva Audiencia (Bidireccional y Google Calendar)'}</h3>
+                      {editingHearingId && (
+                        <button type="button" onClick={cancelEditHearing} className="text-[10px] font-bold text-zinc-500 hover:text-red-500 uppercase">Cancelar Edición</button>
+                      )}
+                    </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                       <input 
@@ -3141,7 +3209,7 @@ Firma Abogado / Apoderado`;
                     </div>
 
                     <button type="submit" className="bg-orange-500 text-black font-bold text-xs px-5 py-2.5 rounded hover:bg-orange-400">
-                      Agendar y Sincronizar en Google Calendar
+                      {editingHearingId ? 'Guardar Cambios de la Audiencia' : 'Agendar y Sincronizar en Google Calendar'}
                     </button>
                   </form>
                 </div>
