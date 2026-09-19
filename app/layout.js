@@ -20,6 +20,19 @@ export default function RootLayout({ children }) {
       </head>
       <body className="bg-zinc-950 text-white min-h-screen">
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.log('Error registrando el service worker:', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );
