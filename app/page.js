@@ -808,6 +808,8 @@ export default function Home() {
 
   const [editingMovementId, setEditingMovementId] = useState(null);
   const [editMovementForm, setEditMovementForm] = useState({ title: '', date: '', text: '' });
+  const [editingFiscalMovementId, setEditingFiscalMovementId] = useState(null);
+  const [editFiscalMovementForm, setEditFiscalMovementForm] = useState({ title: '', date: '', text: '' });
 
   // --- ESTADO PARA EL CALENDARIO INTERACTIVO DINÁMICO ---
   const currentDateObj = new Date();
@@ -1120,6 +1122,22 @@ export default function Home() {
     const updated = movements.map(m => m.id === movId ? { ...m, ...editMovementForm } : m);
     updateMovements(updated);
     setEditingMovementId(null);
+  };
+
+  const handleDeleteFiscalMovement = (movId) => {
+    if (!confirm('¿Está seguro de eliminar esta actuación?')) return;
+    updateFiscalMovements(fiscalMovements.filter(fm => fm.id !== movId));
+  };
+
+  const handleStartEditFiscalMovement = (fm) => {
+    setEditingFiscalMovementId(fm.id);
+    setEditFiscalMovementForm({ title: fm.title, date: fm.date, text: fm.text || '' });
+  };
+
+  const handleSaveEditFiscalMovement = (movId) => {
+    const updated = fiscalMovements.map(fm => fm.id === movId ? { ...fm, ...editFiscalMovementForm } : fm);
+    updateFiscalMovements(updated);
+    setEditingFiscalMovementId(null);
   };
 
   const handleAddDeadline = (e) => {
@@ -2596,12 +2614,44 @@ Firma Abogado / Apoderado`;
                 <h4 className="text-xs font-bold text-orange-500 uppercase">Historial de Actuaciones</h4>
                 <div className="space-y-2">
                   {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).map(fm => (
-                    <div key={fm.id} className={`p-3 border rounded text-xs space-y-1 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
-                      <div className={`flex justify-between font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
-                        <span>{fm.title}</span>
-                        <span className="text-zinc-500">{formatDateToArg(fm.date)}</span>
-                      </div>
-                      {fm.text && <p className="text-zinc-500">{fm.text}</p>}
+                    <div key={fm.id} className={`p-3 border rounded text-xs space-y-2 ${isDarkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'}`}>
+                      {editingFiscalMovementId === fm.id ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editFiscalMovementForm.title}
+                            onChange={e => setEditFiscalMovementForm({...editFiscalMovementForm, title: e.target.value})}
+                            className={`w-full border border-orange-500 p-2 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                          />
+                          <input
+                            type="date"
+                            value={editFiscalMovementForm.date}
+                            onChange={e => setEditFiscalMovementForm({...editFiscalMovementForm, date: e.target.value})}
+                            className={`w-full border border-orange-500 p-2 rounded ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                          />
+                          <textarea
+                            value={editFiscalMovementForm.text}
+                            onChange={e => setEditFiscalMovementForm({...editFiscalMovementForm, text: e.target.value})}
+                            className={`w-full border border-orange-500 p-2 rounded h-16 ${isDarkMode ? 'bg-zinc-900 text-white' : 'bg-white text-zinc-900'}`}
+                          />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleSaveEditFiscalMovement(fm.id)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1 rounded">Guardar Cambios</button>
+                            <button onClick={() => setEditingFiscalMovementId(null)} className={`px-3 py-1 rounded ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}>Cancelar</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={`flex justify-between items-center font-bold ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                            <span>{fm.title}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-zinc-500">{formatDateToArg(fm.date)}</span>
+                              <button onClick={() => handleStartEditFiscalMovement(fm)} className={`px-2 py-0.5 rounded border ${isDarkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-300' : 'bg-white border-zinc-300 text-zinc-700'}`} title="Editar Actuación">✏️</button>
+                              <button onClick={() => handleDeleteFiscalMovement(fm.id)} className="text-red-500 hover:text-red-600 px-2 py-0.5 bg-red-500/10 rounded border border-red-500/20" title="Eliminar Actuación">🗑️</button>
+                            </div>
+                          </div>
+                          {fm.text && <p className="text-zinc-500">{fm.text}</p>}
+                        </>
+                      )}
                     </div>
                   ))}
                   {fiscalMovements.filter(fm => fm.fiscalId === selectedFiscalId).length === 0 && (
@@ -2964,6 +3014,19 @@ Firma Abogado / Apoderado`;
 
               {activeTab === 'plazos' && (
                 <div className="space-y-6 relative z-10">
+                  <a
+                    href="https://www.justiciacordoba.gob.ar/JusticiaCordoba/servicios/CalculadoraPlazos.aspx"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`border p-4 rounded-xl flex items-center justify-between gap-3 shadow-sm transition-colors ${isDarkMode ? 'bg-zinc-900 border-zinc-800 hover:border-orange-500' : 'bg-white border-zinc-200 hover:border-orange-500'}`}
+                  >
+                    <div>
+                      <h3 className="text-xs font-bold text-orange-500 uppercase">🧮 Calculadora Oficial de Plazos - Poder Judicial de Córdoba</h3>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">Abre en una pestaña nueva la calculadora de plazos procesales de justiciacordoba.gob.ar</p>
+                    </div>
+                    <span className="text-orange-500 font-bold text-lg shrink-0">↗</span>
+                  </a>
+
                   <form onSubmit={handleAddDeadline} className={`border p-4 rounded-xl space-y-3 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <h3 className="text-xs font-bold text-orange-500 uppercase">+ Cargar Plazo Procesal</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
